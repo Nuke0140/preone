@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "target": "ES2022",
     "lib": ["ES2022"],
     "declaration": true,
@@ -27,7 +27,7 @@
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
     "paths": {
-      "@app/*": ["src/*"],
+      "@app/*": ["src/app/*"],
       "@common/*": ["src/common/*"],
       "@config/*": ["src/config/*"],
       "@infra/*": ["src/infrastructure/*"],

@@ -10,8 +10,8 @@
  *   const student = result.value;
  */
 
-export type Ok<T> = { ok: true; value: T };
-export type Err<E> = { ok: false; error: E };
+export interface Ok<T> { ok: true; value: T }
+export interface Err<E> { ok: false; error: E }
 
 export type Result<T, E = Error> = Ok<T> | Err<E>;
 
@@ -29,11 +29,4 @@ export function isErr<T, E>(r: Result<T, E>): r is Err<E> {
 export function unwrap<T, E>(r: Result<T, E>): T {
   if (isErr(r)) throw r.error;
   return r.value;
-}
-
-declare module '@preone/shared' {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace PreOne {
-    export { Result, Ok, Err, ok, err, isOk, isErr, unwrap };
-  }
 }

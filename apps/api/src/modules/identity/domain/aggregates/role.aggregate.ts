@@ -14,22 +14,44 @@
  *   negatives (denials).
  */
 import { AggregateRoot } from '@shared/kernel/aggregate-root';
+import { DomainEvent } from '@shared/kernel/domain-event';
 
 export type RoleScope = 'PLATFORM' | 'TENANT' | 'BRANCH' | 'CLASSROOM';
 
 export interface RoleProps {
-  tenantId?: string;      // undefined for PLATFORM scope (super_admin)
-  code: string;            // 'SCHOOL_ADMIN'
-  name: string;            // 'School Administrator'
+  tenantId?: string;
+  code: string;
+  name: string;
   description?: string;
   scope: RoleScope;
-  isSystem: boolean;       // true = built-in role, cannot be deleted
-  permissionIds: string[]; // permission.id values
-  color?: string;          // for UI badge
+  isSystem: boolean;
+  permissionIds: string[];
+  color?: string;
   sortOrder: number;
   isActive: boolean;
   deletedAt?: string;
 }
+
+export class RoleCreatedEvent extends DomainEvent<{
+  roleId: string;
+  tenantId?: string;
+  code: string;
+  createdBy: string;
+}> {}
+
+export class RolePermissionGrantedEvent extends DomainEvent<{
+  roleId: string;
+  permissionId: string;
+  grantedBy: string;
+}> {}
+
+export class RolePermissionRevokedEvent extends DomainEvent<{
+  roleId: string;
+  permissionId: string;
+  revokedBy: string;
+}> {}
+
+export class RoleDeletedEvent extends DomainEvent<{ roleId: string; deletedAt: string }> {}
 
 export class RoleAggregate extends AggregateRoot<RoleProps> {
   get code(): string { return this._props.code; }
@@ -42,27 +64,63 @@ export class RoleAggregate extends AggregateRoot<RoleProps> {
   get sortOrder(): number { return this._props.sortOrder; }
   get isActive(): boolean { return this._props.isActive; }
   get tenantId(): string | undefined { return this._props.tenantId; }
+  get deletedAt(): string | undefined { return this._props.deletedAt; }
 
-  grantPermission(permissionId: string): void {
+  grantPermission(permissionId: string, grantedBy: string): void {
     if (!this._props.permissionIds.includes(permissionId)) {
       this._props.permissionIds.push(permissionId);
+      this._addDomainEvent(new RolePermissionGrantedEvent({ roleId: this.id, permissionId, grantedBy }));
     }
   }
 
-  revokePermission(permissionId: string): void {
+  revokePermission(permissionId: string, revokedBy: string): void {
+    const before = this._props.permissionIds.length;
     this._props.permissionIds = this._props.permissionIds.filter((p) => p !== permissionId);
+    if (this._props.permissionIds.length !== before) {
+      this._addDomainEvent(new RolePermissionRevokedEvent({ roleId: this.id, permissionId, revokedBy }));
+    }
   }
 
-  static create(props: Omit<RoleProps, 'permissionIds' | 'isActive' | 'sortOrder'> & {
-    permissionIds?: string[];
-    isActive?: boolean;
-    sortOrder?: number;
-  }): RoleAggregate {
-    return new RoleAggregate({
+  updateProfile(props: Partial<Pick<RoleProps, 'name' | 'description' | 'color' | 'sortOrder' | 'isActive'>>): void {
+    if (props.name !== undefined) this._props.name = props.name;
+    if (props.description !== undefined) this._props.description = props.description;
+    if (props.color !== undefined) this._props.color = props.color;
+    if (props.sortOrder !== undefined) this._props.sortOrder = props.sortOrder;
+    if (props.isActive !== undefined) this._props.isActive = props.isActive;
+  }
+
+  /**
+   * Soft-delete — blocked if isSystem=true (BRC R-HR-012).
+   */
+  delete(now: string): void {
+    if (this._props.isSystem) {
+      throw new Error('System roles cannot be deleted.');
+    }
+    this._props.deletedAt = now;
+    this._props.isActive = false;
+    this._addDomainEvent(new RoleDeletedEvent({ roleId: this.id, deletedAt: now }));
+  }
+
+  static create(
+    props: Omit<RoleProps, 'permissionIds' | 'isActive' | 'sortOrder'> & {
+      permissionIds?: string[];
+      isActive?: boolean;
+      sortOrder?: number;
+    },
+    createdBy: string,
+  ): RoleAggregate {
+    const aggregate = new RoleAggregate({
       ...props,
       permissionIds: props.permissionIds ?? [],
       isActive: props.isActive ?? true,
       sortOrder: props.sortOrder ?? 100,
     });
+    aggregate._addDomainEvent(new RoleCreatedEvent({
+      roleId: aggregate.id,
+      tenantId: props.tenantId,
+      code: props.code,
+      createdBy,
+    }));
+    return aggregate;
   }
 }

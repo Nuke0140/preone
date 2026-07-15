@@ -23,14 +23,13 @@
 
 generator client {
   provider      = "prisma-client-js"
-  output        = "../node_modules/@prisma/client"
+  output        = "../node_modules/.prisma/client"
   binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  schemas   = ["public", "audit"]
   directUrl = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
@@ -178,6 +177,7 @@ model School {
   users           User[]
   roles           Role[]
   sessions        Session[]
+  otpChallenges   OtpChallenge[]
   subscription    SchoolSubscription?
   integrations    PlatformIntegration[]
   featureFlags    FeatureFlag[]
@@ -332,7 +332,7 @@ model Permission {
   module          String        @db.VarChar(64)            // 'student', 'finance'
   action          String        @db.VarChar(32)            // 'create','read','update','delete','execute','approve','reject','export','assign','configure'
   resource        String        @db.VarChar(64)            // 'student', 'invoice'
-  scopeType       String        @default('TENANT') @db.VarChar(16) @map("scope_type")
+  scopeType       String        @default("TENANT") @db.VarChar(16) @map("scope_type")
   abacCondition   Json?         @map("abac_condition")     // ABAC rule JSON
   isDangerous     Boolean       @default(false) @map("is_dangerous")
 
@@ -594,7 +594,7 @@ model PlatformIntegration {
   schoolId        String        @map("school_id") @db.Uuid
   type            IntegrationType
   name            String        @db.VarChar(80)
-  credentials     Bytes         @db.Bytea
+  credentials     Bytes
   config          Json
   isActive        Boolean       @default(true) @map("is_active")
   lastSyncedAt    DateTime?     @map("last_synced_at") @db.Timestamptz

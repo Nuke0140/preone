@@ -24,26 +24,27 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 
-import { envValidator } from './config/env/env.validator';
-import { appConfigSchema } from './config/env/app-config.schema';
-import type { AppConfig } from './config/env/app-config.type';
+import { appConfigSchema } from '../config/env/app-config.schema';
+import { envValidator } from '../config/env/env.validator';
+import { CacheModule } from '../infrastructure/cache/cache.module';
+import { EventBusModule } from '../infrastructure/event-bus/event-bus.module';
+import { HealthModule } from '../infrastructure/health/health.module';
+import { PrismaModule } from '../infrastructure/prisma/prisma.module';
+import { RedisModule } from '../infrastructure/redis/redis.module';
+import { S3Module } from '../infrastructure/s3/s3.module';
 
-import { PrismaModule } from './infrastructure/prisma/prisma.module';
-import { RedisModule } from './infrastructure/redis/redis.module';
-import { EventBusModule } from './infrastructure/event-bus/event-bus.module';
-import { CacheModule } from './infrastructure/cache/cache.module';
-import { S3Module } from './infrastructure/s3/s3.module';
-import { HealthModule } from './infrastructure/health/health.module';
 
-import { AllExceptionsFilter } from './app/filters/all-exceptions.filter';
-import { HttpLoggingInterceptor } from './app/interceptors/http-logging.interceptor';
-import { TraceContextInterceptor } from './app/interceptors/trace-context.interceptor';
-
-import { JwtAuthGuard } from './app/guards/jwt-auth.guard';
-import { PermissionsGuard } from './app/guards/permissions.guard';
 
 // 14 bounded contexts (will be uncommented progressively as built)
-import { IdentityModule } from './modules/identity/identity.module';
+import { IdentityModule } from '../modules/identity/identity.module';
+
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { PermissionsGuard } from './guards/permissions.guard';
+import { HttpLoggingInterceptor } from './interceptors/http-logging.interceptor';
+import { TraceContextInterceptor } from './interceptors/trace-context.interceptor';
+
+import type { AppConfig } from '../config/env/app-config.type';
 // import { CrmModule } from './modules/crm/crm.module';
 // import { AdmissionsModule } from './modules/admissions/admissions.module';
 // import { StudentModule } from './modules/student/student.module';

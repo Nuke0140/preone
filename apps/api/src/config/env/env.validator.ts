@@ -98,10 +98,10 @@ export type EnvSchema = z.infer<typeof envSchema>;
 export function envValidator(config: Record<string, string | undefined>) {
   const result = envSchema.safeParse(config);
   if (!result.success) {
-    // eslint-disable-next-line no-console
+     
     console.error('❌ Invalid environment configuration:');
     for (const issue of result.error.issues) {
-      // eslint-disable-next-line no-console
+       
       console.error(`   ${issue.path.join('.')}: ${issue.message}`);
     }
     throw new Error('Environment validation failed — see errors above.');

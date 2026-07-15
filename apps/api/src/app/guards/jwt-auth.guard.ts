@@ -12,16 +12,19 @@
  *   5. Optionally check session revocation via Redis (short-circuited cache).
  */
 import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { jwtVerify, importSPKI } from 'jose';
-import type { AppConfig } from '@config/env/app-config.type';
+
 import { IS_PUBLIC_KEY } from '@app/decorators/auth.decorators';
 import type { AuthenticatedUser } from '@app/decorators/auth.decorators';
+import type { AppConfig } from '@config/env/app-config.type';
+
+type KeyLike = Awaited<ReturnType<typeof import('jose')['importSPKI']>>;
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private cachedPublicKey: CryptoKey | undefined;
+  private cachedPublicKey: KeyLike | undefined;
 
   constructor(
     private readonly reflector: Reflector,
@@ -38,7 +41,7 @@ export class JwtAuthGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest();
     const auth = req.headers.authorization as string | undefined;
-    if (!auth || !auth.startsWith('Bearer ')) {
+    if (!auth?.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing or malformed Authorization header.');
     }
 
@@ -51,10 +54,6 @@ export class JwtAuthGuard implements CanActivate {
   private async verifyToken(token: string, req: any): Promise<AuthenticatedUser> {
     let publicKey = this.cachedPublicKey;
     if (!publicKey) {
-      const pem = this.config.get('app.jwtAccessTokenTtl', { infer: true });
-      // Note: actual env key is JWT_ACCESS_PUBLIC_KEY — ConfigService env path
-      // exposes it through `app` namespace via app-config.schema.
-      // The raw env access below is a fallback for clarity.
       const rawPem =
         process.env.JWT_ACCESS_PUBLIC_KEY ??
         (() => {
@@ -72,14 +71,14 @@ export class JwtAuthGuard implements CanActivate {
 
       return {
         id: payload.sub!,
-        tenantId: payload['tenant_id'] as string,
-        branchId: payload['branch_id'] as string | undefined,
-        academicYearId: payload['academic_year_id'] as string | undefined,
-        email: payload['email'] as string,
-        phone: payload['phone'] as string | undefined,
-        roles: payload['roles'] as string[],
-        permissionsVersion: payload['perms_version'] as number,
-        sessionId: payload['session_id'] as string,
+        tenantId: payload.tenant_id as string,
+        branchId: payload.branch_id as string | undefined,
+        academicYearId: payload.academic_year_id as string | undefined,
+        email: payload.email as string,
+        phone: payload.phone as string | undefined,
+        roles: payload.roles as string[],
+        permissionsVersion: payload.perms_version as number,
+        sessionId: payload.session_id as string,
         iat: payload.iat!,
         exp: payload.exp!,
       };

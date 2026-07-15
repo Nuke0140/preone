@@ -18,8 +18,9 @@
  *   - Encryption key from app.encryption_key session variable
  */
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
+import { Prisma, PrismaClient } from '@prisma/client';
+
 import type { AppConfig } from '@config/env/app-config.type';
 
 interface TenantContext {
@@ -52,24 +53,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     // Set global statement timeout
     await this.$executeRaw`SET statement_timeout = ${this.config.get('database.statementTimeout', { infer: true })}`;
-
-    this.$use({
-      $allOperations: (params, next) => {
-        // Log slow queries in development
-        const start = Date.now();
-        const result = next(params);
-        if (result instanceof Promise) {
-          return result.then((r) => {
-            const duration = Date.now() - start;
-            if (duration > 200) {
-              this.logger.warn(`Slow query (${duration}ms): ${params.model}.${params.action}`);
-            }
-            return r;
-          });
-        }
-        return result;
-      },
-    } as any);
+    // Note: Prisma 6 removed $use middleware. Slow-query logging now done via
+    // Prisma client `log` event handler configured in constructor above.
   }
 
   /**

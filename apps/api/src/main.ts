@@ -22,15 +22,15 @@ import { startOpenTelemetry } from './infrastructure/otel/otel.startup';
 await startOpenTelemetry();
 
 // 2. Standard NestJS imports
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { Logger as PinoLogger } from 'nestjs-pino';
-import helmet from 'helmet';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import helmet from 'helmet';
+import { Logger as PinoLogger } from 'nestjs-pino';
 
 // 3. App-level imports
 import { AppModule } from './app/app.module';
@@ -39,6 +39,7 @@ import { HttpLoggingInterceptor } from './app/interceptors/http-logging.intercep
 import { TimeoutInterceptor } from './app/interceptors/timeout.interceptor';
 import { TraceIdMiddleware } from './app/middleware/trace-id.middleware';
 import { envValidator } from './config/env/env.validator';
+
 import type { AppConfig } from './config/env/app-config.type';
 
 async function bootstrap(): Promise<void> {
@@ -58,7 +59,13 @@ async function bootstrap(): Promise<void> {
   const corsOrigin = configService.get('app.corsOrigin', { infer: true }) ?? '*';
 
   // 1. Trust proxy (behind NGINX/CloudFront)
-  app.set('trust proxy', 1);
+  const httpAdapter = app.getHttpAdapter();
+  if (httpAdapter && typeof (httpAdapter as any).getInstance === 'function') {
+    const instance = (httpAdapter as any).getInstance();
+    if (instance && typeof instance.set === 'function') {
+      instance.set('trust proxy', 1);
+    }
+  }
 
   // 2. Security: Helmet, CORS, Cookie-parser
   app.use(helmet({ contentSecurityPolicy: false }));
@@ -148,7 +155,7 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((err) => {
-  // eslint-disable-next-line no-console
+   
   console.error('❌ Bootstrap failed:', err);
   process.exit(1);
 });

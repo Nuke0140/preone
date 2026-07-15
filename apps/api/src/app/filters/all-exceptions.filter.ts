@@ -10,8 +10,8 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 
 import { AppException, FieldError } from '@common/errors/exceptions';
@@ -39,7 +39,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const errorResponse = this.mapException(exception, traceId, request.path);
 
     // Log only 5xx (server errors) — 4xx are client errors, expected flow
-    if (errorResponse.errorCode.startsWith('INFRA') || exception instanceof Prisma.PrismaClientKnownQueryError) {
+    if (errorResponse.errorCode.startsWith('INFRA') || exception instanceof Prisma.PrismaClientKnownRequestError) {
       this.logger.error(
         `[${traceId}] ${request.method} ${request.path} → 500`,
         exception instanceof Error ? exception.stack : String(exception),

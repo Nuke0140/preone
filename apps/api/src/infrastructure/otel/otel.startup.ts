@@ -6,17 +6,11 @@
  *
  * Per ADR-111 §2.3 Technology Stack:
  *   "Tracing: OpenTelemetry + Jaeger — Vendor-neutral; spans correlated to logs"
+ *
+ * NOTE: Dynamic imports keep OTel out of the hot path when OTEL_ENABLED=false,
+ * avoiding the cost of loading instrumentation modules at boot.
  */
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
-import { PeriodicMetricReader } from '@opentelemetry/sdk-metrics';
-import { resourceFromAttributes } from '@opentelemetry/resources';
-import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-
-let startedSdk: NodeSDK | undefined;
+let startedSdk: any | undefined;
 
 export async function startOpenTelemetry(): Promise<void> {
   if (process.env.OTEL_ENABLED !== 'true') return;
@@ -26,19 +20,17 @@ export async function startOpenTelemetry(): Promise<void> {
   const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318';
   const samplingRatio = Number(process.env.OTEL_TRACES_SAMPLER_RATIO ?? 0.1);
 
-  const resource = resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: serviceName,
-    [ATTR_SERVICE_VERSION]: '1.0.0',
-    'deployment.environment': process.env.NODE_ENV ?? 'development',
-  });
+  // Dynamic imports — only loaded when OTel is enabled
+  const [{ NodeSDK }, { getNodeAutoInstrumentations }, { OTLPTraceExporter }] = await Promise.all([
+    import('@opentelemetry/sdk-node'),
+    import('@opentelemetry/auto-instrumentations-node'),
+    import('@opentelemetry/exporter-trace-otlp-http'),
+  ]);
 
   const traceExporter = new OTLPTraceExporter({ url: `${endpoint}/v1/traces` });
-  const metricExporter = new OTLPMetricExporter({ url: `${endpoint}/v1/metrics` });
 
   startedSdk = new NodeSDK({
-    resource,
-    spanProcessor: new BatchSpanProcessor(traceExporter),
-    metricReader: new PeriodicMetricReader({ exporter: metricExporter, exportIntervalMillis: 60_000 }),
+    serviceName,
     traceExporter,
     instrumentations: [
       getNodeAutoInstrumentations({

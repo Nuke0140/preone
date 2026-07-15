@@ -7,6 +7,7 @@
  *   - /health       — full status report (for ops dashboard)
  */
 import { Module } from '@nestjs/common';
+
 import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
 

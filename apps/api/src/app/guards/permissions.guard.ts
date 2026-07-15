@@ -10,6 +10,7 @@
  */
 import { CanActivate, ExecutionContext, Inject, Injectable, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+
 import { PERMISSIONS_KEY } from '@app/decorators/auth.decorators';
 import type { AuthenticatedUser } from '@app/decorators/auth.decorators';
 import { RedisService } from '@infra/redis/redis.service';

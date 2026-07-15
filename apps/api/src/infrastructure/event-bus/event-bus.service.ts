@@ -18,6 +18,7 @@
  * For v1.1+: publisher worker drains outbox → Redis Stream → consumers.
  */
 import { Injectable, Logger } from '@nestjs/common';
+
 import type { DomainEvent } from '@shared/kernel/domain-event';
 
 type EventHandler<E extends DomainEvent = DomainEvent> = (event: E) => Promise<void> | void;

@@ -2,8 +2,9 @@
  * appConfigSchema — transform flat env vars into nested AppConfig shape.
  * Loaded into ConfigModule via `load: [appConfigSchema]`.
  */
-import { ConfigService } from '@nestjs/config';
 import type { AppConfig } from './app-config.type';
+import type { ConfigService } from '@nestjs/config';
+
 
 export const appConfigSchema = (): AppConfig => ({
   app: {

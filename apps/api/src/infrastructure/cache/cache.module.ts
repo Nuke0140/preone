@@ -6,6 +6,7 @@
  *   versioned cache keys for atomic invalidation
  */
 import { Global, Module } from '@nestjs/common';
+
 import { CacheService } from './cache.service';
 
 @Global()

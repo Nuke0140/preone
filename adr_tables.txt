@@ -1,0 +1,664 @@
+
+=== Table 0 ===
+A  D  R     V  1  .  0
+PreOne Enterprise
+Architecture
+Decision Records
+Identity & Authorization Platform — LOCKED v1.0
+Document Type: Engineering Architecture Reference
+Status: LOCKED — Additive Changes Only
+Version: 1.0
+Date: 2026-07-12
+Prepared by: PreOne Engineering Architecture Team
+Classification: Internal Engineering Reference
+
+PreOne Platform                                        Architecture Decision Records v1.0
+
+=== Table 1 ===
+Domain | ADR Range | Count | Criticality
+Foundation & Architecture | ADR-001 to ADR-005 | 5 | Critical
+Identity & Roles | ADR-006 to ADR-009 | 4 | High
+Authorization | ADR-010 to ADR-016 | 7 | Critical
+Assignment | ADR-017 to ADR-020 | 4 | Critical
+Permission Caching | ADR-021 to ADR-023 | 3 | Critical
+Multi-Tenancy & System Roles | ADR-024 to ADR-026 | 3 | Critical
+Inventory & Engineering Patterns | ADR-027 to ADR-030 | 4 | High
+Operations & Resilience | ADR-031 to ADR-037 | 7 | High
+TOTAL | ADR-001 to ADR-037 | 37 | —
+
+=== Table 2 ===
+ADR # | Title | Domain | Criticality
+ADR-001 | Multi-Tenant SaaS Architecture | Foundation & Architecture | Critical
+ADR-002 | Multi-School, Multi-Branch, Multi-Academic-Year Isolation | Foundation & Architecture | Critical
+ADR-003 | Module-Based Architecture (Not Role-Based) | Foundation & Architecture | Critical
+ADR-004 | 3-Layer Architecture (Business / Module / Role) | Foundation & Architecture | High
+ADR-005 | 13 Business Domains | Foundation & Architecture | High
+ADR-006 | 11 Final Roles | Identity & Roles | High
+ADR-007 | User-Role Separation | Identity & Roles | Critical
+ADR-008 | User Groups Only (Drop Role Groups) | Identity & Roles | Medium
+ADR-009 | User Groups as Workflow Engine Input | Identity & Roles | Medium
+ADR-010 | Context-Based Access (Role Switch UI Only) | Authorization | Critical
+ADR-011 | Scope-Per-Role-Per-Module | Authorization | Critical
+ADR-012 | Permission UNION + Data Scope from Assignment UNION | Authorization | Critical
+ADR-013 | 3-Level Permission Bundle (Business → Module → Action) | Authorization | High
+ADR-014 | Reusable Action Library (Level 0) | Authorization | Medium
+ADR-015 | ABAC-Ready Schema (Condition JSON, Future) | Authorization | Low
+ADR-016 | Effective Access Resolver (Single Service) | Authorization | Critical
+ADR-017 | Hybrid Assignment Model (Master + Scope Tables) | Assignment | Critical
+ADR-018 | Whole School Scope (No Rows = Global) | Assignment | Medium
+ADR-019 | Assignment Temporal Validity (ValidFrom/ValidTo, No Status) | Assignment | Medium
+ADR-020 | Allow Overlapping Assignments with UI Warning | Assignment | Low
+ADR-021 | Permission Caching Mandatory (Redis) | Permission Caching | Critical
+ADR-022 | Cache Versioning Over TTL | Permission Caching | Critical
+ADR-023 | Menu Cache Key | Permission Caching | Low
+ADR-024 | Multi-Tenancy Mandatory (tenant_id, school_id, CreatedBy, UpdatedBy) | Multi-Tenancy & System Roles | Critical
+ADR-025 | Repository-Level Auto-Inject tenant_id | Multi-Tenancy & System Roles | Critical
+ADR-026 | System Roles (Super Admin as System Role, Not Bypass) | Multi-Tenancy & System Roles | Critical
+ADR-027 | Inventory as Separate Business Domain | Inventory & Engineering Patterns | High
+ADR-028 | Modular Monolith Initially | Inventory & Engineering Patterns | High
+ADR-029 | DDD (Domain-Driven Design) | Inventory & Engineering Patterns | High
+ADR-030 | Clean Architecture + CQRS Where Justified | Inventory & Engineering Patterns | Medium
+ADR-031 | Authorization Cache Resilience (Fail-Closed + LKG) | Operations & Resilience | Critical
+ADR-032 | Permission Cache Invalidation (Event-Driven) | Operations & Resilience | High
+ADR-033 | Migration Identity (SYSTEM_MIGRATION Role) | Operations & Resilience | High
+ADR-034 | Soft Delete Policy | Operations & Resilience | High
+ADR-035 | Audit Strategy | Operations & Resilience | High
+ADR-036 | Domain Events | Operations & Resilience | High
+ADR-037 | Feature Flags (3-Level: Platform/School/Plan) | Operations & Resilience | Medium
+
+=== Table 3 ===
+Term | Definition
+ABAC | Attribute-Based Access Control. Authorization model that uses attributes (user, resource, environment) to make access decisions. PreOne reserves schema space for ABAC (ADR-015) but does not implement it in v1.0.
+Action Library | Centralized collection of 10 primitive actions (View, Create, Edit, Delete, Approve, Reject, Export, Import, Print, Share) defined once and referenced by module bundles (ADR-014).
+Aggregate Root | DDD concept. The root entity of an aggregate that enforces consistency boundaries. All modifications to the aggregate go through the root. Example: FeeInvoice is an aggregate root containing FeeInvoiceItem entities.
+Assignment | A link between a user, a role, and a scope (branch, class, section, activity, route, shift). Assignments determine what data a user can access within a module (ADR-017).
+Bounded Context | DDD concept. A boundary within which a ubiquitous language and domain model apply. PreOne has 13 bounded contexts, one per business domain (ADR-005, ADR-029).
+Business Bundle | Level 1 of the 3-level permission bundle. Groups module bundles by business domain (Finance, Inventory, Academics, etc.) (ADR-013).
+Business Domain | Top-level architecture partition. PreOne has 13 business domains (ADR-005).
+Cache Invalidation | Process of marking cached data as stale so it is rebuilt from the source. PreOne uses version-based invalidation (ADR-022) with event-driven staggered rebuild (ADR-032).
+Cache Stampede | Failure mode where many cache misses occur simultaneously, overwhelming the source database with concurrent rebuilds. Prevented by single-flight pattern and staggered rebuild (ADR-032).
+Clean Architecture | Architectural pattern that separates concerns into layers: Presentation, Application, Domain, Infrastructure. Dependencies point inward toward domain (ADR-030).
+Context-Based Access | Authorization model where permissions are unioned across roles and data scope is computed per-module based on the user's role assignments for that module (ADR-010).
+CQRS | Command Query Responsibility Segregation. Pattern that separates read operations from write operations, enabling independent optimization. PreOne uses CQRS where justified (ADR-030).
+DDD | Domain-Driven Design. Approach to software development that models the domain explicitly using aggregates, entities, value objects, and domain events (ADR-029).
+Domain Event | A fact about a state change in a domain, published to other domains for loose coupling. Example: StudentCreatedEvent published by Admission domain (ADR-036).
+Effective Access Resolver | Single service that computes a user's effective permissions and scopes by resolving their roles, assignments, and permission bundles. Cached in Redis (ADR-016).
+Fail-Closed | Authorization failure mode where access is denied when the system cannot determine permissions. PreOne uses fail-closed with LKG snapshot fallback (ADR-031).
+Feature Flag | Configuration that enables or disables a feature without code deployment. PreOne uses 3-level flags: platform, school, plan (ADR-037).
+Hybrid Assignment Model | Assignment schema with a master assignment table plus scope-specific child tables (assignment_branch, assignment_class, etc.) preserving referential integrity (ADR-017).
+LKG | Last Known Good. A snapshot of a user's last known permissions, used as fallback when the primary cache (Redis) is unavailable (ADR-031).
+Modular Monolith | Deployment architecture where the application is a single deployable unit with strong module boundaries. Modules can be extracted to microservices later if scale demands (ADR-028).
+Module Bundle | Level 2 of the 3-level permission bundle. Groups action bundles by module (Fee Collection, Invoices, Receipts) (ADR-013).
+Multi-Tenant | Architecture where a single software instance serves multiple customers (tenants). PreOne uses shared database with tenant_id column (ADR-001).
+Permission Bundle | Pre-packaged set of permissions assignable to a role in one action. PreOne uses 3-level bundles (ADR-013).
+RBAC | Role-Based Access Control. Authorization model where permissions are assigned to roles, and users gain permissions via role assignments. PreOne's core authorization model (ADR-010 to ADR-016).
+RLS | Row-Level Security. PostgreSQL feature that enforces row-level access control via policies. PreOne uses RLS as defense-in-depth for tenant isolation (ADR-025).
+Scope | Data boundary for a user's access within a module. Examples: class scope (Jr.KG B), branch scope (Mumbai HQ), school scope (whole school) (ADR-011).
+Scope-Per-Role-Per-Module | Algorithm that computes a user's data scope for a module by unioning the scopes of all their roles that grant access to that module (ADR-011).
+Single-Flight | Pattern where multiple concurrent requests for the same resource share a single in-flight operation, preventing thundering herd (ADR-032).
+Soft Delete | Marking a record as deleted (is_deleted=true) without physically removing it. PreOne uses tiered soft delete policy (ADR-034).
+System Role | A role with is_system=true that bypasses tenant isolation but goes through permission checks and audit logging. Examples: SUPER_ADMIN, SUPPORT_ENGINEER, MIGRATION_TOOL (ADR-026).
+Tenant | A customer organization in a multi-tenant SaaS. In PreOne, each School is a tenant (ADR-001).
+TTL | Time To Live. Cache expiry duration. PreOne uses TTL as safety net but relies on version-based invalidation for correctness (ADR-022).
+Ubiquitous Language | DDD concept. Shared vocabulary between domain experts and code. PreOne enforces this per domain (ADR-029).
+User Group | HR/organizational classification for users (Teaching Staff, Office, Operations, Management, Support). Doubles as workflow routing input (ADR-008, ADR-009).
+User-Role Separation | Pattern where users and roles are separate entities linked by many-to-many relationship, enabling multi-role users (ADR-007).
+Version-Based Invalidation | Cache invalidation strategy where a global version number tracks changes; cache entries with stale versions are rebuilt on next access (ADR-022).
+
+=== Table 4 ===
+Field | Value
+ADR Number | ADR-001
+Domain | Foundation & Architecture
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 5 ===
+Risk | Likelihood | Impact | Mitigation
+Cross-tenant data leakage via query bug | Medium | Critical | Repository auto-injection + PostgreSQL RLS as defense-in-depth + CI tests that verify tenant isolation
+Noisy-neighbor query performance degradation | Medium | High | Per-tenant query timeout (30s default), per-tenant rate limiting, separate read replicas for analytics
+Migration failure affects all tenants | Low | Critical | ADR-033: SYSTEM_MIGRATION role with mandatory dry-run on staging replica before production
+
+=== Table 6 ===
+Field | Value
+ADR Number | ADR-002
+Domain | Foundation & Architecture
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 7 ===
+Risk | Likelihood | Impact | Mitigation
+Table bloat over 10+ years of operation | High | Medium | Partition high-volume tables by academic_year_id; archive partitions older than 7 years to cold storage with restore-on-demand
+Default query filter forgotten, showing cross-year data | Medium | High | Repository auto-injection of academic_year_id from branch context; CI tests verify default queries are scoped
+Year-end promotion race condition (concurrent users) | Low | High | Promotion is a transactional operation with advisory lock per branch_id; only one promotion can run at a time
+
+=== Table 8 ===
+Field | Value
+ADR Number | ADR-003
+Domain | Foundation & Architecture
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 9 ===
+Risk | Likelihood | Impact | Mitigation
+Navigation becomes overwhelming for multi-role users | Medium | Medium | Group modules by Business Domain in UI; allow user to pin/favorite frequently used modules
+Module teams accidentally couple via shared database tables | Medium | High | DDD bounded contexts: each module owns its tables; cross-module access via domain events only, enforced by code review
+Permission matrix becomes unmaintainable | Low | Medium | ADR-013 Permission Bundles pre-package common sets; UI for admins to view/edit matrix at bundle level
+
+=== Table 10 ===
+Field | Value
+ADR Number | ADR-004
+Domain | Foundation & Architecture
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 11 ===
+Risk | Likelihood | Impact | Mitigation
+Layers drift out of sync (orphan module references) | Low | Medium | Referential integrity via FK + CI test that verifies every role_module_permission references an existing module
+New engineers confused by 3-layer indirection | Medium | Low | This ADR + onboarding documentation + visual diagrams in architecture wiki
+Business domain restructuring breaks navigation | Low | Low | Business domains are presentation-only; module URLs are stable (e.g., /fee_collection always works regardless of domain grouping)
+
+=== Table 12 ===
+Field | Value
+ADR Number | ADR-005
+Domain | Foundation & Architecture
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 13 ===
+Risk | Likelihood | Impact | Mitigation
+Domain boundaries become porous under deadline pressure | Medium | High | Architecture review board (weekly) + CI test that fails if a domain module imports another domain's repository directly
+13 domains too many for early-stage startup team | High | Medium | Initially one team owns 2-3 related domains (e.g., Admission + Student Lifecycle); split as team grows
+Cross-domain workflows become event-spaghetti | Medium | Medium | ADR-036 Domain Events with explicit event schemas and versioning; saga orchestration for multi-step workflows
+
+=== Table 14 ===
+Field | Value
+ADR Number | ADR-006
+Domain | Identity & Roles
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 15 ===
+Risk | Likelihood | Impact | Mitigation
+Schools want to rename system roles | Medium | Low | Display name override per school (system role name is immutable; display name is configurable)
+Schools want roles not in the 11 (e.g., Librarian, Nurse) | Medium | Medium | Custom roles via copy-and-modify pattern; permission matrix UI for admins to define new roles
+Role proliferation in 5 years (50+ custom roles per school) | Low | Medium | Permission Bundle system (ADR-013) keeps roles as bundle compositions; bundle cleanup tooling in admin
+
+=== Table 16 ===
+Field | Value
+ADR Number | ADR-007
+Domain | Identity & Roles
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 17 ===
+Risk | Likelihood | Impact | Mitigation
+Permission queries become slow with many users × many roles | Medium | Medium | ADR-021 Permission Caching with Redis; cache per user, invalidate on role change
+Historical role resolution at audit time is complex | Low | Medium | Temporal validity queries are well-understood; audit log includes role_id at action time for direct resolution
+Primary role becomes stale after promotion | Medium | Low | Promotion workflow updates primary_role_id atomically; UI warns admin if primary role is not in active user_roles
+
+=== Table 18 ===
+Field | Value
+ADR Number | ADR-008
+Domain | Identity & Roles
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Medium
+Decider | Engineering Architecture Team
+
+=== Table 19 ===
+Risk | Likelihood | Impact | Mitigation
+Schools want role grouping for batch permission assignment | Low | Low | Use Permission Bundles (ADR-013) — assign bundle to multiple roles in one action
+User Groups drift from org reality (outdated memberships) | Medium | Low | Annual HR review workflow prompts admins to verify group memberships
+
+=== Table 20 ===
+Field | Value
+ADR Number | ADR-009
+Domain | Identity & Roles
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Medium
+Decider | Engineering Architecture Team
+
+=== Table 21 ===
+Risk | Likelihood | Impact | Mitigation
+Empty group breaks workflow (no recipients) | Medium | High | Validation prevents empty system groups; workflow engine has fallback 'admin fallback' if group is empty at runtime
+Group membership change causes workflow storm (many re-evaluations) | Low | Medium | Batch re-evaluation with debounce (5s window); rate limit on group membership changes
+Workflow definitions reference groups that no longer exist | Low | Medium | CI test on workflow definition changes; runtime fallback to admin if group is missing
+
+=== Table 22 ===
+Field | Value
+ADR Number | ADR-010
+Domain | Authorization
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 23 ===
+Risk | Likelihood | Impact | Mitigation
+Per-module scope computation is slow at scale | Medium | High | ADR-021 Permission Caching in Redis; cache built at login, invalidated on role/assignment change
+UI role switcher confuses users into thinking it's a security boundary | Medium | Low | Tooltip explaining 'filter only'; permissions always reflect full role union regardless of switcher state
+Cache stale after role change → user sees old scope | Medium | High | ADR-022 Cache Versioning; role change bumps version, cache rebuilt on next request
+
+=== Table 24 ===
+Field | Value
+ADR Number | ADR-011
+Domain | Authorization
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 25 ===
+Risk | Likelihood | Impact | Mitigation
+Scope computation slow for users with many roles | Medium | Medium | Cache per (user, module); prefetch common modules at login; ADR-021 Permission Caching
+Incorrect scope filter implementation leaks data | Low | Critical | CI tests verify scope isolation; integration tests for each role combination; ADR-035 Audit Strategy logs scope evaluation
+Cache stale after assignment change → wrong scope | Medium | High | ADR-022 Cache Versioning; assignment change bumps version; ADR-032 Event-driven invalidation
+
+=== Table 26 ===
+Field | Value
+ADR Number | ADR-012
+Domain | Authorization
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 27 ===
+Risk | Likelihood | Impact | Mitigation
+Engineers under pressure implement broadest-scope shortcut | Medium | Critical | Code review checklist item; CI test that verifies scope isolation for sample multi-role users
+Performance regression from per-role scope iteration | Medium | Medium | Redis cache (ADR-021); version invalidation (ADR-022); batch prefetch at login
+Edge case: role with no assignments but with permissions | Low | Low | Role with no assignments produces empty scope — user can access module but sees no data. This is correct behavior.
+
+=== Table 28 ===
+Field | Value
+ADR Number | ADR-013
+Domain | Authorization
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 29 ===
+Risk | Likelihood | Impact | Mitigation
+Bundle versioning complexity (updates break existing roles) | Medium | Medium | Bundles are immutable; updates create new versions. Roles reference specific versions; migration tooling for bulk role updates.
+Admins override bundles with custom permissions, breaking consistency | Medium | Low | Custom permissions allowed but flagged in audit; bundle report shows drift between bundle and role's effective permissions
+Bundle proliferation over time (50+ bundles per school) | Low | Medium | Bundle cleanup tooling; deprecate unused bundles; default bundles for system roles are immutable
+
+=== Table 30 ===
+Field | Value
+ADR Number | ADR-014
+Domain | Authorization
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Medium
+Decider | Engineering Architecture Team
+
+=== Table 31 ===
+Risk | Likelihood | Impact | Mitigation
+Schools want custom actions not in the 10 primitives | Low | Low | Action library is extensible; schools can add custom actions, but system actions remain immutable
+condition_json syntax varies across consumers | Medium | Medium | JSON schema validation on write; rules engine (ADR-015) validates on read
+
+=== Table 32 ===
+Field | Value
+ADR Number | ADR-015
+Domain | Authorization
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Low
+Decider | Engineering Architecture Team
+
+=== Table 33 ===
+Risk | Likelihood | Impact | Mitigation
+v1.0 implementers assume conditions are enforced | Medium | High | Code comments + resolver documentation + code review checklist item verifying conditions are NOT assumed
+Future rules engine incompatible with stored JSON structures | Low | Medium | JSON structure documented in schema; future engine supports documented structure or migration tooling provided
+
+=== Table 34 ===
+Field | Value
+ADR Number | ADR-016
+Domain | Authorization
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 35 ===
+Risk | Likelihood | Impact | Mitigation
+Resolver is single point of failure | Medium | Critical | ADR-031 LKG snapshot for resilience; ADR-021 Redis HA deployment; resolver circuit breaker
+Cache stampede on mass invalidation | Low | High | ADR-032 event-driven invalidation with staggered rebuild; single-flight cache rebuild per user
+Resolver adds latency to every request | Low | Medium | Redis cache hit ~1ms; guard runs once per request; prefetch at login for common modules
+
+=== Table 36 ===
+Field | Value
+ADR Number | ADR-017
+Domain | Assignment
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 37 ===
+Risk | Likelihood | Impact | Mitigation
+Orphan child rows after assignment deletion | Low | Medium | ON DELETE CASCADE on child tables; assignment deletion is a soft-delete (status=DELETED), physical delete only after retention period
+Cross-scope queries (e.g., all assignments for user X) require multiple joins | Medium | Medium | Repository pattern abstracts joins; prefetch all child rows in one query using LEFT JOIN
+New scope type requires schema migration (new child table) | Low | Low | Migrations are additive (new table only); no changes to existing tables
+
+=== Table 38 ===
+Field | Value
+ADR Number | ADR-018
+Domain | Assignment
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Medium
+Decider | Engineering Architecture Team
+
+=== Table 39 ===
+Risk | Likelihood | Impact | Mitigation
+Developer unaware of convention adds a child row to a global assignment | Low | Medium | Schema comment on assignment table; repository method name resolveScopesOrGlobal; code review checklist
+Query for 'all global assignments' is non-obvious (LEFT JOIN ... WHERE child IS NULL) | Low | Low | Repository method findGlobalAssignments abstracts the query
+
+=== Table 40 ===
+Field | Value
+ADR Number | ADR-019
+Domain | Assignment
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Medium
+Decider | Engineering Architecture Team
+
+=== Table 41 ===
+Risk | Likelihood | Impact | Mitigation
+Expired rows accumulate, slowing queries | Low | Medium | Index on (user_id, school_id, valid_from, valid_to); partition assignment table by year if > 1M rows
+Transfer workflow is non-atomic if process crashes mid-transaction | Low | High | Transfer is a single database transaction; crash rolls back both UPDATE and INSERT
+Status and temporal fields get out of sync (admin sets status=INACTIVE but doesn't set valid_to) | Low | Medium | Repository method endAssignment(assignmentId, endDate) sets both atomically; admin UI uses this method, not raw updates
+
+=== Table 42 ===
+Field | Value
+ADR Number | ADR-020
+Domain | Assignment
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Low
+Decider | Engineering Architecture Team
+
+=== Table 43 ===
+Risk | Likelihood | Impact | Mitigation
+Race condition: two admins assign simultaneously, both see no overlap | Low | Medium | Post-creation audit job flags overlaps created within 5 seconds of each other; admin notification to review
+Overlaps accumulate without cleanup | Low | Low | Quarterly report of users with >3 active assignments for the same role; admin reviews and cleans up
+
+=== Table 44 ===
+Field | Value
+ADR Number | ADR-021
+Domain | Permission Caching
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 45 ===
+Risk | Likelihood | Impact | Mitigation
+Redis failure causes auth to fail | Medium | Critical | ADR-031 LKG snapshot; Redis HA with automatic failover; circuit breaker falls back to DB if Redis down
+Cache stampede after mass invalidation | Medium | High | ADR-032 staggered rebuild; single-flight pattern per user; jitter on rebuild timing
+Memory bloat with many users | Low | Medium | allkeys-lru eviction; per-user cache ~5KB; 10K users = 50MB (well within Redis capacity)
+
+=== Table 46 ===
+Field | Value
+ADR Number | ADR-022
+Domain | Permission Caching
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 47 ===
+Risk | Likelihood | Impact | Mitigation
+Mass invalidation causes cache stampede | Medium | High | ADR-032 staggered rebuild with jitter; single-flight pattern per user; prefetch high-priority users' caches after version bump
+Version bump forgotten on some RBAC change code path | Low | High | CI test that monkey-patches bumpPermissionVersion and verifies it's called for every RBAC mutation; code review checklist item
+Version key grows unbounded over years | Low | Low | Version is integer; Redis handles large integers fine; reset on cache wipe is safe
+
+=== Table 48 ===
+Field | Value
+ADR Number | ADR-023
+Domain | Permission Caching
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Low
+Decider | Engineering Architecture Team
+
+=== Table 49 ===
+Risk | Likelihood | Impact | Mitigation
+Menu and access caches get out of sync (one rebuilt, other not) | Low | Low | Both use same version key; both rebuilt on version mismatch; menu derives from access so always consistent
+Module metadata (labels, icons) changes but menu cache not invalidated | Low | Low | Module metadata is static (compiled into code); changes require deployment, which restarts the app and clears cache
+
+=== Table 50 ===
+Field | Value
+ADR Number | ADR-024
+Domain | Multi-Tenancy & System Roles
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 51 ===
+Risk | Likelihood | Impact | Mitigation
+New table created without mandatory columns | Low | High | CI linter fails the build; code review checklist item; BaseRepository pattern encourages compliance
+branch_id misused (set when should be NULL, or vice versa) | Medium | Medium | Documentation on which aggregates are school-level vs branch-level; repository method signatures enforce correct usage
+Soft delete columns inconsistent (is_deleted=true but deleted_at NULL) | Low | Low | Repository method softDelete() sets all three columns atomically; raw updates discouraged
+
+=== Table 52 ===
+Field | Value
+ADR Number | ADR-025
+Domain | Multi-Tenancy & System Roles
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 53 ===
+Risk | Likelihood | Impact | Mitigation
+Developer writes raw SQL bypassing repository | Medium | Critical | RLS catches bypass; code review bans raw SQL outside tenantContext helper; CI grep for db.query without tenantContext
+RLS policy misconfigured, allowing bypass | Low | Critical | Integration test per table verifies RLS blocks cross-tenant queries; policy review on schema migration
+System role bypass overused (everything marked is_system_role) | Low | High | ADR-026 restricts system roles to specific roles; audit log flags system role access for review
+
+=== Table 54 ===
+Field | Value
+ADR Number | ADR-026
+Domain | Multi-Tenancy & System Roles
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 55 ===
+Risk | Likelihood | Impact | Mitigation
+Super Admin credentials compromised → catastrophic data access | Medium | Critical | MFA required for system role login; IP allowlist for system role access; anomaly detection on system role actions
+System role used for routine operations (lazy convenience) | Medium | High | Audit log flags frequent system role use; admin review of system role activity weekly
+New module added but Super Admin bundle not updated | Low | Medium | 'all permissions' bundle auto-grants new modules via database trigger on module creation
+
+=== Table 56 ===
+Field | Value
+ADR Number | ADR-027
+Domain | Inventory & Engineering Patterns
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 57 ===
+Risk | Likelihood | Impact | Mitigation
+Activity module not yet integrated with Inventory | Medium | Low | v1.0 ships without integration; v1.1 adds the event listener. Inventory domain is ready.
+Preschools want custom categories not in the 15 defaults | Low | Low | Schools can add custom categories via admin UI; system categories are immutable but extensible
+Inventory data grows large (thousands of items × hundreds of schools) | Low | Low | Standard multi-tenant scaling; index on (school_id, category, item_name) for query performance
+
+=== Table 58 ===
+Field | Value
+ADR Number | ADR-028
+Domain | Inventory & Engineering Patterns
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 59 ===
+Risk | Likelihood | Impact | Mitigation
+Module boundaries erode under deadline pressure | Medium | High | CI test bans cross-module imports; architecture review board weekly; lint rule on table access
+Single module's performance issue affects all | Medium | Medium | Background jobs in separate process; circuit breakers on heavy operations; monitoring per module
+Extraction never happens, monolith grows too large | Low | Medium | Quarterly architecture review identifies extraction candidates; trigger: module > 50K LOC or > 5 RPS sustained
+
+=== Table 60 ===
+Field | Value
+ADR Number | ADR-029
+Domain | Inventory & Engineering Patterns
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 61 ===
+Risk | Likelihood | Impact | Mitigation
+DDD learning curve slows initial development | Medium | Medium | Pair programming with DDD-experienced engineers; event storming workshops for complex domains; reference implementations for patterns
+Ubiquitous Language drifts over time (code uses different terms) | Medium | Medium | Glossary document per domain, reviewed quarterly; code review checklist item verifying term usage
+Over-engineering simple domains with DDD patterns | Low | Low | Pragmatic DDD policy: only complex domains get rich models; simple domains use anemic CRUD
+
+=== Table 62 ===
+Field | Value
+ADR Number | ADR-030
+Domain | Inventory & Engineering Patterns
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Medium
+Decider | Engineering Architecture Team
+
+=== Table 63 ===
+Risk | Likelihood | Impact | Mitigation
+Read model out of sync with write model (eventual consistency lag) | Medium | Medium | Synchronous event handling for critical updates; lag <1 second for non-critical; reconciliation job weekly
+CQRS complexity slows feature development in early stages | Medium | Medium | Start with simple write + read model; introduce CQRS only when read performance demands it
+Engineers bypass layers (controller calls repository directly) | Low | Medium | Lint rule banning repository imports in controllers; code review checklist item
+
+=== Table 64 ===
+Field | Value
+ADR Number | ADR-031
+Domain | Operations & Resilience
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Critical
+Decider | Engineering Architecture Team
+
+=== Table 65 ===
+Risk | Likelihood | Impact | Mitigation
+LKG snapshot corrupted | Low | Medium | JSON validation on read; if corrupted, treat as missing (deny access)
+LKG storage (filesystem) fills up | Low | Low | Cleanup job removes LKG files older than 7 days; size per user ~5KB; 10K users = 50MB
+Redis outage lasts >1 hour, LKG expires for active users | Low | Medium | Admin alerting on first LKG use; ops monitoring on Redis health; priority P1 incident for Redis outage
+
+=== Table 66 ===
+Field | Value
+ADR Number | ADR-032
+Domain | Operations & Resilience
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 67 ===
+Risk | Likelihood | Impact | Mitigation
+Worker falls behind on rebuilds during mass role changes | Low | Medium | Worker scales horizontally; priority queue for recently-active users; monitoring on rebuild lag
+Single-flight map grows unbounded if rebuilds are slow | Low | Low | Map entries auto-removed in finally block; max 1 entry per active user
+Jitter spreads rebuild too long (user sees stale for 30s) | Medium | Low | 30s max stale window is acceptable; user request triggers immediate rebuild if cache stale (single-flight)
+
+=== Table 68 ===
+Field | Value
+ADR Number | ADR-033
+Domain | Operations & Resilience
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 69 ===
+Risk | Likelihood | Impact | Mitigation
+SYSTEM_MIGRATION credentials compromised → mass data manipulation | Low | Critical | Credentials in secrets manager, not code; MFA required; IP allowlist to migration network only; audit alerts on use outside maintenance windows
+Validation bypass during migration lets bad data in | Medium | Medium | Post-migration validation report; reconciliation queries; mandatory review before migration marked complete
+Rollback fails midway, leaves partial state | Low | Medium | Rollback is transactional; if it fails, manual cleanup using correlation_id; rollback tested in staging before production
+
+=== Table 70 ===
+Field | Value
+ADR Number | ADR-034
+Domain | Operations & Resilience
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 71 ===
+Risk | Likelihood | Impact | Mitigation
+Soft-deleted rows accumulate, slowing queries | Low | Medium | Index on is_deleted; partition old soft-deleted rows to archive schema after 1 year
+Audit log table grows unbounded | Low | Medium | Partition by month; archive partitions older than 7 years to cold storage (still queryable, slower)
+Transactional deletion approval workflow blocks urgent corrections | Medium | Low | Emergency deletion path with two-admin approval; audit logs emergency deletions for review
+
+=== Table 72 ===
+Field | Value
+ADR Number | ADR-035
+Domain | Operations & Resilience
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 73 ===
+Risk | Likelihood | Impact | Mitigation
+Audit log category missed (new compliance requirement) | Medium | Medium | Annual audit strategy review; compliance officer participates; add categories as needed
+Decorator-based logging missed on new endpoints | Low | Medium | CI test verifies PII-related endpoints have @AuditLog decorator; lint rule flags missing decorators
+Audit log query performance degrades over years | Low | Medium | Partition by month; archive >7 years to cold storage; index on (school_id, category, created_at)
+
+=== Table 74 ===
+Field | Value
+ADR Number | ADR-036
+Domain | Operations & Resilience
+Status | LOCKED
+Date | 2026-07-12
+Criticality | High
+Decider | Engineering Architecture Team
+
+=== Table 75 ===
+Risk | Likelihood | Impact | Mitigation
+Eventual consistency lag causes user-visible issues | Medium | Medium | Synchronous event handling for critical workflows (e.g., admission→invoice must complete before user sees confirmation); async for non-critical
+Event schema changes break subscribers | Medium | High | Versioned schemas; subscriber version negotiation; staging environment tests all subscribers against new event versions before production
+Event bus is single point of failure | Low | Medium | In-process bus fails with the app (no separate infra); if extracted to Kafka/RabbitMQ, those have HA configurations
+Debugging event chains is hard | Medium | Medium | Correlation IDs propagated through event chains; distributed tracing (OpenTelemetry) for production debugging
+
+=== Table 76 ===
+Field | Value
+ADR Number | ADR-037
+Domain | Operations & Resilience
+Status | LOCKED
+Date | 2026-07-12
+Criticality | Medium
+Decider | Engineering Architecture Team
+
+=== Table 77 ===
+Risk | Likelihood | Impact | Mitigation
+Flag changes take 5 minutes to propagate (cache TTL) | Low | Low | 5-min TTL is acceptable for feature flags; cache invalidated on flag change via event
+Admin enables feature at school level, but plan doesn't include it — confusion | Medium | Low | UI shows effective state with explanation ('Disabled: upgrade to Premium to use this feature')
+Platform-wide disable during outage leaves features off accidentally | Low | Medium | Alerting on platform flag changes; daily report of disabled features; ops review
+
+=== Table 78 ===
+# | Artifact | Purpose | Estimated Size | Status
+1 | ADR Document (this document) | Authoritative architecture decisions record | 60-80 pages | Complete
+2 | Database Schema v3 (Prisma) | 200+ models reflecting all ADRs | schema.prisma + ER diagrams | Planned
+3 | API Contract v1 (OpenAPI) | REST + WebSocket + AI endpoints | 300+ endpoints | Planned
+4 | Master PRD v1 | 13 domains × modules × features with user stories and acceptance criteria | 250-300 pages | Planned
+5 | Module Spec Sheets | Per-module detailed specification (one per domain) | 13 documents | Planned

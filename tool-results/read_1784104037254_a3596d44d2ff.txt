@@ -1,0 +1,216 @@
+     1→[Normal] Table of Contents
+     2→[Normal] Note: This Table of Contents is generated via field codes. To ensure page number accuracy after editing, please right-click the TOC and select "Update Field."
+     3→[Heading 1] 1. Vision Statement
+     4→[Normal] PreOne चे Vision म्हणजे Preschool चालवण्यासाठी आवश्यक असलेले प्रत्येक business process एका एकात्मिक, आधुनिक आणि AI-ready platform वर आणणे, ज्यामुळे preschool management, teaching, parent engagement आणि administration अधिक सोपे, पारदर्शक आणि कार्यक्षम होईल.
+     5→[Normal] PreOne हे केवळ School ERP नसून Enterprise Preschool Operating System (Preschool OS) असेल.
+     6→[Normal] ही vision statement मध्ये दोन महत्त्वाचे shifts दिसतात. पहिला — आम्ही सांगत नाही की PreOne हे ERP आहे; आम्ही सांगत आहोत की हे एक Operating System आहे. ERP फक्त records ट्रॅक करतो, पण Operating System म्हणजे असे platform ज्यावर preschool चा प्रत्येक कर्मचारी, शिक्षक आणि पालक रोजच्या सकाळीपासून संध्याकाळपर्यंत काम करतो. दुसरा — "AI-ready" हा शब्द जाणीवपूर्वक निवडला आहे. PreOne हे केवळ AI chatbot टाकून AI-first बनणार नाही; तर platform च्या प्रत्येक layer मध्ये (data model, workflows, notifications, reports) AI capabilities embed केल्या जातील ज्यामुळे teachers चा administrative burden कमी होईल आणि parents ना personalized insights मिळतील.
+     7→[Heading 1] 2. Mission Statement
+     8→[Normal] PreOne चे Mission आहे:
+     9→[Normal] •  Preschool operations पूर्णपणे digital करणे.
+    10→[Normal] •  Teachers चा administrative workload कमी करणे.
+    11→[Normal] •  Parents ना real-time visibility देणे.
+    12→[Normal] •  School management ला data-driven decisions घेण्यास सक्षम करणे.
+    13→[Normal] •  Multi-school preschool chains साठी scalable SaaS platform उपलब्ध करणे.
+    14→[Normal] ह्या पाच mission statements प्रत्येक एका specific stakeholder च्या pain point ला address करतात. "Digital करणे" हे preschool industry मधील paper-based records ची सर्वात मोठी समस्या सोडवते; "teacher workload कमी करणे" हे education industry मधील teacher burnout ला हाताळते; "real-time parent visibility" हे traditional parent-teacher meetings च्या wait-and-see model ला replace करते; "data-driven management" हे gut-feel decisions ला evidence-based decisions मध्ये बदलते; आणि "scalable SaaS" हे multi-branch chains च्या operational fragmentation ला भेदते. प्रत्येक mission statement measurable आहे — digital adoption percentage, teacher hours saved per week, parent app DAU, management report usage, आणि multi-school onboarding velocity यांनी track करता येईल.
+    15→[Heading 1] 3. Product Vision
+    16→[Heading 2] Today
+    17→[Normal] Preschool मध्ये आज अनेक वेगवेगळे systems वापरले जातात:
+    18→[Normal] •  WhatsApp (parent communication, fee reminders, photo sharing)
+    19→[Normal] •  Excel (fee tracking, attendance registers, student lists)
+    20→[Normal] •  Paper Registers (admission enquiries, visitor logs, stock books)
+    21→[Normal] •  Manual Attendance (paper sheets, monthly consolidation)
+    22→[Normal] •  Printed Fee Receipts (counter books, manual ledgers)
+    23→[Normal] •  Separate Accounting (Tally/Busy, disconnected from operations)
+    24→[Normal] •  Manual Reports (hand-crafted PPTs/Excel for management reviews)
+    25→[Normal] ह्या fragmented setup मुळे पाच गंभीर दुष्परिणाम होतात: data duplication (एकच student ची माहिती 5 ठिकाणी), human errors (typos, missing entries, miscalculations), poor parent communication (delays, lost messages, inconsistent tone), lack of analytics (trends दिसत नाहीत, forecasting अशक्य), आणि time-consuming administration (teachers चा 40% वेळ non-teaching tasks मध्ये जातो). एका Mumbai-based preschool chain ने केलेल्या internal audit नुसार, एका single student ची complete record compile करण्यासाठी average 7 different tools check करावे लागतात — हे PreOne मध्ये 3 seconds मध्ये होईल.
+    26→[Heading 2] Future with PreOne
+    27→[Normal] सर्व operations एका platform मध्ये. खालील pipeline हा data flow दर्शवतो:
+    28→[Normal] Marketing  →  Admission  →  Student Lifecycle  →  Academics  →  Daily Operations  →  Parent Communication  →  Finance  →  Inventory  →  Reports  →  AI Insights
+    29→[Normal] ही vertical integration म्हणजे केवळ tools एकत्र करणे नाही, तर data ची natural flow सुनिश्चित करणे आहे. उदाहरणार्थ: एक lead Marketing module मध्ये entry होतो → तो Admission stage मध्ये convert होतो → Student Lifecycle मध्ये active student बनतो → Academics आणि Daily Operations मध्ये daily activities capture होतात → Parent Communication मध्ये त्याचे parents ला automated updates जातात → Finance मध्ये fee invoices auto-generate होतात → सर्व हे data Reports आणि AI Insights मध्ये aggregate होऊन school management ला predictive visibility देते. हा data flow automated, consistent आणि auditable आहे — manual handoffs नाहीत, data silos नाहीत.
+    30→[Heading 1] 4. Product Positioning
+    31→[Heading 2] Position Statement
+    32→[Normal] PreOne is an enterprise-grade Preschool Management Platform designed exclusively for early childhood education institutions, combining operations, academics, finance, communication, and analytics into a single AI-ready ecosystem.
+    33→[Normal] ही positioning statement मध्ये तीन strategic choices reflect होतात. पहिला — "enterprise-grade": PreOne हे small preschool साठी simple app नाही, तर 1000+ schools scale करण्यासाठी built आहे (multi-tenant, RBAC, audit, SOC2-ready). दुसरा — "exclusively for early childhood": PreOne हे K-12 schools किंवा colleges साठी बनवणार नाही; preschool-specific workflows (daily child timeline, learning observations, activity-based curriculum, age-appropriate milestones) हे core differentiators आहेत जे generic ERPs retrofit करू शकत नाहीत. तिसरा — "AI-ready ecosystem": AI हा bolted-on feature नाही, तर platform च्या architecture मध्ये embedded आहे — observations लिहिताना AI suggestions, daily sheets auto-draft करणे, parent replies auto-compose करणे, report cards AI-assisted generate होणे. हे तीन choices PreOne ला "yet another school ERP" पासून स्पष्टपणे वेगळे करतात.
+    34→[Heading 1] 5. Problem Statement
+    35→[Normal] आज preschool industry मध्ये खालील समस्या सामान्य आहेत. ह्या चार stakeholder groups नुसार categorized केल्या आहेत:
+    36→[Heading 2] Administrative
+    37→[Normal] •  Paper-based records — admission forms, attendance registers, stock books सर्व paper मध्ये.
+    38→[Normal] •  Duplicate entries — same student data 4-5 ठिकाणी manually भरावे लागते.
+    39→[Normal] •  Manual admissions — application tracking Excel मध्ये, document verification physical.
+    40→[Normal] •  Fee tracking कठीण — pending dues, instalments, receipts ची reconciliation weekly.
+    41→[Normal] •  Inventory tracking नाही — classroom materials, art supplies, kitchen stock invisible.
+    42→[Heading 2] Teachers
+    43→[Normal] •  Daily reports manually तयार करावे लागतात — प्रत्येक child साठी 15-20 minutes.
+    44→[Normal] •  Attendance अनेक ठिकाणी भरावी लागते — register, app, Excel.
+    45→[Normal] •  Parent communication fragmented — WhatsApp groups, individual chats, calls.
+    46→[Normal] •  Observation management कठीण — milestone tracking paper मध्ये, photos ठेवणे कठीण.
+    47→[Heading 2] Parents
+    48→[Normal] •  Child updates वेळेवर मिळत नाहीत — evening पर्यंत wait.
+    49→[Normal] •  Photos scattered — WhatsApp groups मध्ये 50+ photos, child ची identify कठीण.
+    50→[Normal] •  Fee visibility कमी — pending dues, receipts, history साठी school ला call करावे लागते.
+    51→[Normal] •  Communication inconsistent — different teachers, different tones, different formats.
+    52→[Heading 2] Management
+    53→[Normal] •  Real-time dashboard नाही — branch performance review मासिक बसणे.
+    54→[Normal] •  Reports manually तयार होतात — 2-3 दिवस preparation.
+    55→[Normal] •  School performance मोजणे कठीण — teacher productivity, parent satisfaction, revenue trends invisible.
+    56→[Normal] •  Multi-branch management अवघड — प्रत्येक branch ची data वेगवेगळ्या format मध्ये.
+    57→[Normal] ह्या सर्व problems चा common root cause एकच आहे: एक unified data layer चा अभाव. जेव्हा preschool चे data 8-10 वेगवेगळ्या systems मध्ये scattered असते, तेव्हा कोणताही single workflow smoothly चालू शकत नाही — कारण प्रत्येक step ला दुसऱ्या system मधून data pull करावा लागतो, manually reconcile करावे लागते, आणि पुन्हा दुसऱ्या system मध्ये push करावे लागते. PreOne हे fragmentation दूर करून single source of truth बनवते. एकदा student ची record platform वर आली की, ती Admission, Academics, Daily Ops, Finance, Communication — सर्वत्र automatically वापरले जाते. हा एक change जवळजवळ वरील सर्व 18 problems सोडवते.
+    58→[Heading 1] 6. Solution Vision
+    59→[Normal] PreOne खालील गोष्टी एकाच platform मध्ये आणेल:
+    60→[Normal] •  CRM (lead capture, counselling, follow-ups, conversion)
+    61→[Normal] •  Admissions (online applications, document verification, workflow)
+    62→[Normal] •  Student Lifecycle (allocation, transfers, archives, graduation)
+    63→[Normal] •  Academics (curriculum, milestones, observations, portfolios, report cards)
+    64→[Normal] •  Daily Operations (attendance, daily sheet, meals, nap, activities, incidents)
+    65→[Normal] •  Parent App (timeline, photos, fees, chat, events, growth reports)
+    66→[Normal] •  Teacher App (today dashboard, my class, observations, talk, insights)
+    67→[Normal] •  Finance (fee plans, invoices, payments, receipts, expenses, refunds)
+    68→[Normal] •  Inventory (purchase requests, POs, GRN, issues, returns, audits)
+    69→[Normal] •  HR (staff, recruitment, leave, payroll, training, performance)
+    70→[Normal] •  Administration (assets, maintenance, visitors, compliance, meal plans)
+    71→[Normal] •  Analytics (real-time dashboards, KPI tracking, trends, predictions)
+    72→[Normal] •  AI (observation assistant, daily sheet generator, report cards, fee reminders, growth prediction, chatbot)
+    73→[Normal] ह्या 13 components चे integration केवळ feature count वाढवत नाही — ते compounding value तयार करते. उदाहरणार्थ: जेव्हा teacher Daily Operations मध्ये observation लिहिते की "child ने puzzle solve केला", तेव्हा हे data point एकाच वेळी तीन ठिकाणी वापरले जाते: (1) Parent App मध्ये child च्या timeline वर automatically publish होते, (2) Academics module मध्ये milestone tracking update होते, (3) Report Card generation वेळी AI हे observation use करून cognitive development चा paragraph draft करते. हीच integration value आहे — एक data entry, three outputs, zero manual handoffs. Generic ERPs हे achieve करू शकत नाहीत कारण त्यांचे modules bolted-on असतात, deeply integrated नाहीत.
+    74→[Heading 1] 7. Target Market
+    75→[Heading 2] Primary Market
+    76→[Normal] •  Preschool (general)
+    77→[Normal] •  Playgroup (1.5-2.5 years)
+    78→[Normal] •  Nursery (2.5-3.5 years)
+    79→[Normal] •  Jr.KG (3.5-4.5 years)
+    80→[Normal] •  Sr.KG (4.5-5.5 years)
+    81→[Normal] •  Montessori (mixed-age, 2-6 years)
+    82→[Normal] •  Kindergarten (3-6 years)
+    83→[Normal] •  Early Learning Centres (0-6 years, standalone)
+    84→[Heading 2] School Size Tiers
+    85→[Normal] India मध्ये preschool market size approximately 3.5 lakh institutions आहे, ज्यात 80% small (1-50 students) आहेत, 15% medium (50-500) आहेत, आणि 5% large + enterprise chains आहेत. PreOne ची GTM strategy tier-wise असेल: small tier साठी self-serve onboarding + affordable monthly pricing (₹999-2999/month), medium tier साठी inside sales + demo-driven conversions (₹4999-14999/month), आणि large + enterprise tier साठी field sales + custom POC (₹25,000-100,000+/month). पहिल्या 18 months मध्ये focus medium आणि large tiers वर असेल कारण त्यांचे ACV उच्च, sales cycle shorter, आणि product-market fit demonstrate करण्यासाठी reference customers हवे आहेत.
+    86→[Heading 1] 8. Customer Personas
+    87→[Normal] PreOne चे 7 primary personas खालीलप्रमाणे आहेत. प्रत्येक persona ची top needs documented केली आहेत ज्यामुळे feature prioritization सुलभ होईल:
+    88→[Normal] ह्या personas ची feature prioritization सोपी आहे — ज्या feature ने 2+ personas च्या needs address होतात त्या P0 (must-have), एका persona-specific feature P1, आणि niche feature P2. उदाहरणार्थ: Daily Sheet हे Teacher ला हवे (creation) आणि Parent ला हवे (consumption) — दोन personas — तर P0. Payroll केवळ Accounts आणि HR ला हवे — दोन personas — पण frequency monthly आहे म्हणून P1. Visitor Management केवळ Reception ला हवे — एक persona — पण compliance साठी critical म्हणून P1. हे persona-driven prioritization product roadmap मध्ये clarity आणते आणि feature bloat टाळते.
+    89→[Heading 1] 9. Value Proposition
+    90→[Heading 2] For Schools
+    91→[Normal] Complete preschool operations in one platform. Reduced paperwork. Better operational visibility. Scalable for multiple branches. School owners ला एकच dashboard वर संपूर्ण business चे health दिसते — admissions pipeline, revenue trends, staff productivity, parent satisfaction, branch comparisons. Multi-branch chains साठी standardized workflows ensure करते की हर branch एकाच process follow करत असेल, ज्यामुळे management ला apples-to-apples comparison करता येते.
+    92→[Heading 2] For Teachers
+    93→[Normal] Less administrative work. More focus on children. Easy observation recording. Quick parent updates. Teachers चा 40% administrative time PreOne च्या automated workflows मुळे कमी होईल — daily sheet auto-draft (AI सुधारित), attendance biometric tap, parent notifications auto-send. हा saved time directly children सोबत quality interaction मध्ये invest होईल, ज्यामुळे learning outcomes improve होतील.
+    94→[Heading 2] For Parents
+    95→[Normal] Real-time child updates. Better communication. Transparent fee management. Stronger engagement. Parent App मुळे parents ना दिवसभरातील child ची complete visibility मिळते — morning drop-off, breakfast, activities, nap, meal, evening summary. Fee portal मध्ये invoices, payment history, upcoming dues एका click मध्ये. हे transparency trust build करते आणि parent retention improve करते.
+    96→[Heading 2] For Management
+    97→[Normal] Data-driven dashboards. Financial visibility. Operational analytics. Growth insights. Management ला real-time KPI dashboard मिळते — admissions conversion, fee collection %, teacher productivity, parent NPS, branch-wise performance. Historical trends आणि AI predictions मुळे management proactive decisions घेऊ शकते — example: which branch needs marketing push, which teacher needs training, which class needs capacity expansion.
+    98→[Normal] ही चार value propositions केवळ features list नाहीत — ते PreOne च्या revenue retention engine चे चार pillars आहेत. Schools चे ROI positive असल्यामुळे churn कमी; teachers चा workload कमी असल्यामुळे product adoption high; parents ची satisfaction high असल्यामुळे school ला platform switch करण्याचा pressure कमी; management चे decisions data-driven असल्यामुळे PreOne चे strategic value वाढते. हे चार pillars मिळून Net Revenue Retention (NRR) 110%+ आणि word-of-mouth referrals सुनिश्चित करतात — जे SaaS business च्या long-term success चे खरे North Star metrics आहेत.
+    99→[Heading 1] 10. Product Pillars
+   100→[Heading 2] 1. Preschool First
+   101→[Normal] Platform specifically preschool साठी design केलेला असेल. हे केवळ marketing tagline नाही — architecture decisions पासून UI copy पर्यंत preschool context reflect होईल. उदाहरणार्थ: K-12 ERPs मध्ये "subjects" आणि "exams" असतात; PreOne मध्ये "activities" आणि "observations" असतील. Gradebook च्या जागी milestone tracker. Timetable च्या जागी daily routine builder. Report card च्या जागी holistic development portfolio.
+   102→[Heading 2] 2. Mobile First
+   103→[Normal] Teacher आणि Parent दोघांसाठी mobile-first experience. Teachers साठी tablet-optimized app (classroom मध्ये हातात घेऊन attendance, observations, photos capture करता येतील). Parents साठी phone-first app (push notifications, photo timeline, fee payments). Admin portal desktop-first पण responsive — multi-branch owners travel करताना mobile वरून dashboard check करू शकतील.
+   104→[Heading 2] 3. Enterprise Ready
+   105→[Normal] Multi-school, multi-branch, RBAC, audit, security, SaaS. हे pillars large preschool chains साठी non-negotiable आहेत. RBAC चा अर्थ प्रत्येक user ला फक्त त्याच्या role ला authorize असलेले data दिसेल. Audit log हर action traceable. SOC2 / DPDP Act 2023 compliance built-in. SaaS architecture म्हणजे कोणत्याही school ला on-premise deployment करायची गरज नाही.
+   106→[Heading 2] 4. AI Ready
+   107→[Normal] Future AI capabilities: observation assistance (AI suggests milestones based on teacher notes), report generation (AI drafts holistic development paragraph), learning insights (AI identifies children needing extra attention), predictive analytics (AI predicts admission conversion, fee default risk). AI हे teachers चा assistant, replacement नाही — final decisions नेहमी human चे.
+   108→[Heading 2] 5. Simple Yet Powerful
+   109→[Normal] Small preschool सहज वापरू शकेल आणि enterprise chains सहज scale करू शकतील. हे pillar सर्वात hard आहे — कारण enterprise-grade complexity आणि small-preschool simplicity यांचा balance कठीण आहे. Solution: progressive disclosure. Default view मध्ये फक्त essential features (attendance, daily sheet, fee). Advanced features (custom workflows, integrations, multi-branch analytics) settings मध्ये hidden पण accessible.
+   110→[Normal] हे पाच pillars एकमेकांशी सुसंगत आहेत — "Preschool First" आणि "Mobile First" product ची direction define करतात, "Enterprise Ready" आणि "AI Ready" platform ची depth define करतात, आणि "Simple Yet Powerful" हा balancing force आहे जो इतर चार pillars ची tension resolve करतो. उदाहरणार्थ: "Enterprise Ready" हे pillar complexity वाढवते (RBAC, multi-tenant, audit), पण "Simple Yet Powerful" हे pillar ती complexity default-hide करते (user ला फक्त त्याच्या role-specific UI दिसते). हाच tension "AI Ready" आणि "Simple Yet Powerful" मध्येही दिसतो — AI features advanced users साठी powerful, पण beginners साठी opt-in. हे pillars design review चा framework आहे — प्रत्येक feature decision या pillars शी align असला पाहिजे.
+   111→[Heading 1] 11. Core Business Domains
+   112→[Normal] PreOne खालील 13 business domains cover करेल:
+   113→[Normal] ही 13 domains ची choice Domain-Driven Design (DDD) philosophy वर आधारित आहे — प्रत्येक domain एका bounded context ला represent करतो ज्याची own data model, business rules, आणि workflows आहेत. ह्या number 13 वर आल्याचे तीन कारणे आहेत: (1) खूप कमी domains (5-7) होते तर coupling जास्त — Finance आणि Inventory एकत्र केले तर both ची complexity वाढते; (2) खूप जास्त domains (20+) होते तर over-engineering — Administration आणि Settings वेगळे करण्याची गरज नाही; (3) industry-standard preschool workflows चे natural partitioning हे 13 domains मध्ये perfectly map होते. हे domains ADR-005 मध्ये locked आहेत आणि Prisma schema v3 मध्ये directly reflect होतील.
+   114→[Heading 1] 12. Competitive Positioning
+   115→[Normal] PreOne हा generic School ERP नसून Preschool-specialized Enterprise ERP असेल. मुख्य differentiators:
+   116→[Normal] •  Preschool-specific workflows — daily child timeline, learning observations, activity-based curriculum, age-appropriate milestones (generic ERPs मध्ये हे नाही).
+   117→[Normal] •  Daily child timeline — parent ला प्रत्येक child ची real-time activity stream (breakfast, activities, nap, meals, photos) — K-12 ERPs मध्ये फक्त attendance + marks.
+   118→[Normal] •  Learning observations — teacher milestone-based qualitative observations लिहिते, portfolio मध्ये aggregate होते — generic ERPs मध्ये फक्त gradebook.
+   119→[Normal] •  Parent engagement — dedicated parent app with photo timeline, two-way chat, event RSVPs, fee portal — K-12 ERPs मध्ये फक्त SMS alerts.
+   120→[Normal] •  Activity-based curriculum — circle time, learning, snack, outdoor, creative, story, lunch, nap, activity, dismissal slots — K-12 ERPs मध्ये period-wise subject timetable.
+   121→[Normal] •  Inventory for classroom materials — Montessori materials, art supplies, learning kits (not just stationery).
+   122→[Normal] •  AI-ready architecture — observations लिहिताना AI suggestions, daily sheet auto-draft, report card AI-assisted — generic ERPs मध्ये AI bolted-on नाही.
+   123→[Normal] •  Multi-school SaaS platform — true multi-tenant architecture (RBAC, school_id isolation, audit) — most Indian preschool ERPs single-tenant per deployment.
+   124→[Normal] Generic School ERPs preschool workflows मध्घे retrofit होऊ शकत नाहीत कारण त्यांची data model fundamentally different आहे. K-12 ERP मध्ये student ची identity marks/grades च्या context मध्ये असते (exam-centric); preschool मध्ये child ची identity daily behaviors आणि observations च्या context मध्ये असते (development-centric). K-12 मध्ये teacher ची role subject teaching; preschool मध्ये teacher ची role whole-child caregiving + observation. हे fundamental difference म्हणजे generic ERP ला preschool मध्ये adapt करण्यासाठी 60-70% customization लागते — जे economic sense मध्ये नाही. PreOne हे ground-up preschool-specific design केलेले आहे, ज्यामुळे customization शून्य आणि time-to-value 7 दिवस.
+   125→[Heading 1] 13. Long-Term Product Vision (5–10 Years)
+   126→[Normal] PreOne चे उद्दिष्ट:
+   127→[Normal] •  भारतातील अग्रगण्य Preschool ERP बनणे (target: 25,000+ schools by year 5, 75,000+ by year 10).
+   128→[Normal] •  Multi-language support — Hindi, Marathi, Tamil, Telugu, Kannada, Bengali, Gujarati (8 languages by year 3).
+   129→[Normal] •  AI-powered preschool assistant — voice-based daily sheet entry, AI-generated parent replies, predictive milestone alerts.
+   130→[Normal] •  National-level preschool analytics — aggregated, anonymized benchmarks (attendance patterns, fee structures, growth trends).
+   131→[Normal] •  Parent ecosystem — parent community, parenting content, child development courses, second-child planning.
+   132→[Normal] •  Teacher learning platform — certified preschool teacher training, peer observation sharing, career progression pathways.
+   133→[Normal] •  Marketplace for preschool resources — curriculum kits, Montessori materials, art supplies, books (commission-based revenue).
+   134→[Normal] •  Global expansion — Southeast Asia (Indonesia, Philippines, Vietnam), Middle East, Africa (year 5+).
+   135→[Normal] ही long-term vision PreOne चे platform evolution तीन phases मध्ये दर्शवते. Phase 1 (years 1-3): SaaS — core operations platform, 25,000 schools, ₹500 Cr ARR. Phase 2 (years 4-6): Ecosystem — parent + teacher + content layers, network effects compound, marketplace launch, ₹2,500 Cr ARR. Phase 3 (years 7-10): Operating System — preschool industry चा de-facto OS, third-party integrations, international expansion, ₹7,500 Cr ARR. हे तीन phases compound — SaaS layer data generate करतो, तो data ecosystem layer ला fuel करतो, ecosystem layer marketplace ला demand generate करतो. ही compounding flywheel PreOne ला defensible बनवते — competitors केवळ features copy करू शकतात, पण network effects आणि data advantages copy करू शकत नाहीत.
+   136→[Heading 1] 14. Success Metrics (North Star)
+   137→[Normal] PreOne चे success तीन metric categories मध्ये measure होईल. ह्या metrics ची hierarchy top-down आहे — business metrics सर्वात वर, त्याखाली product metrics, आणि सर्वात खाली customer metrics जे business metrics चे leading indicators आहेत.
+   138→[Heading 2] Business Metrics
+   139→[Normal] •  Active Schools — total schools with ≥1 active user in last 30 days.
+   140→[Normal] •  Active Students — total students enrolled across all active schools.
+   141→[Normal] •  Parent App Adoption — % of parents who installed + logged in at least once.
+   142→[Normal] •  Teacher Daily Usage — DAU/MAU ratio for teacher app (target: ≥60%).
+   143→[Normal] •  Monthly Recurring Revenue (MRR) — predictable monthly subscription revenue.
+   144→[Normal] •  Customer Retention — gross + net revenue retention (target: NRR ≥110%).
+   145→[Normal] •  Net Revenue Retention (NRR) — expansion + retained / churned (target: ≥110%).
+   146→[Heading 2] Product Metrics
+   147→[Normal] •  Daily Active Users (DAU) — unique users across all apps per day.
+   148→[Normal] •  Weekly Active Users (WAU) — unique users across all apps per week.
+   149→[Normal] •  Feature Adoption — % of schools using each major feature module.
+   150→[Normal] •  Task Completion Time — avg time for key tasks (attendance, daily sheet, fee collection).
+   151→[Normal] •  Crash-Free Sessions — ≥99.5% for mobile apps.
+   152→[Normal] •  API Reliability — ≥99.9% success rate for critical endpoints.
+   153→[Normal] •  System Uptime — ≥99.9% monthly uptime (≤43 min downtime/month).
+   154→[Heading 2] Customer Metrics
+   155→[Normal] •  Parent Satisfaction (CSAT) — post-interaction survey (target: ≥4.5/5).
+   156→[Normal] •  School Satisfaction (NPS) — quarterly NPS survey (target: ≥50).
+   157→[Normal] •  Support Resolution Time — median time-to-resolution for support tickets (target: ≤4 hours P1, ≤24 hours P2).
+   158→[Normal] •  Admission Conversion Rate — leads converted to enrolled students (target: ≥25%).
+   159→[Normal] •  Teacher Productivity Improvement — baseline vs. post-PreOne time spent on admin tasks (target: 40% reduction).
+   160→[Normal] ह्या सर्व metrics मध्ये एक North Star आहे जो सर्वांना drive करतो: **Active Schools using PreOne daily** (DAU/MAU ≥60%). हा metric खास आहे कारण तो एकाच वेळी business health (schools active = revenue retained), product value (daily usage = indispensable), आणि customer satisfaction (teachers choose to use) reflect करतो. केवळ MRR high असू शकते पण daily usage low — तर churn risk high. केवळ adoption high पण low usage — तर contract renewal risk. पण daily active usage high असेल तर सर्व other metrics automatic positive होतात. हाच North Star metric product roadmap चे prioritization देखील drive करतो — जे feature daily usage वाढवते ते P0, जे feature केवल occasional usage देते ते P1.
+   161→[Heading 1] 15. Vision Principles
+   162→[Normal] PreOne मधील प्रत्येक feature खालील तत्त्वांशी सुसंगत असावा. हे principles design decisions चे framework आहेत — जेव्हा tradeoffs येतात तेव्हा हे principles tie-breaker म्हणून वापरले जातील:
+   163→[Normal] •  Child First: प्रत्येक निर्णय मुलाच्या अनुभवाला प्राधान्य देईल. जर feature teachers ची सुविधा करतो पण child चा experience harm करतो, तर तो feature reject होईल. उदा.: automated daily sheet जो teacher चा time save करतो पण child ची personalized observations miss करतो — तो acceptable नाही.
+   164→[Normal] •  Teacher Empowerment: शिक्षकांचा वेळ paperwork पेक्षा शिक्षणासाठी वापरला जाईल. प्रत्येक feature review मध्ये question: हे feature teacher चा admin time कमी करते का? जर नाही, तर prioritize नाही.
+   165→[Normal] •  Parent Transparency: पालकांना योग्य माहिती योग्य वेळी मिळेल. Notification design मध्ये question: ही information parent decision-affecting आहे का? जर हो, तर real-time push; जर नाही, तर end-of-day summary.
+   166→[Normal] •  Operational Excellence: शाळेच्या सर्व प्रक्रिया कार्यक्षम आणि मोजता येण्यासारख्या असतील. कोणतीही workflow ज्याचा outcome measure करता येत नाही तो acceptable नाही.
+   167→[Normal] •  Security & Privacy by Design: विद्यार्थी व पालकांचा डेटा सुरक्षित ठेवणे ही मूलभूत जबाबदारी असेल. DPDP Act 2023 + SOC2 compliance baseline. Encryption at-rest + in-transit. RBAC every API. Audit log every action.
+   168→[Normal] •  Scalable by Default: एका preschool पासून multi-branch enterprise पर्यंत कोणताही architectural बदल न करता scale होईल. Multi-tenant from day 1. No "we will add multi-tenant later" — it must be built-in.
+   169→[Normal] •  AI as an Assistant, Not a Replacement: AI शिक्षक आणि प्रशासनाला मदत करेल; निर्णय मानवच घेतील. AI suggestions, human approval. AI drafts, human edits. AI predicts, human decides.
+   170→[Normal] हे सात principles एकमेकांशी tension मध्ये असतात आणि त्यातूनच product decisions ची depth येते. उदाहरणार्थ: "Child First" सांगते की personalized observations हवीत; पण "Teacher Empowerment" सांगते की teacher चा time save हवा. ही tension resolve करण्यासाठी AI Observation Assistant बनवला — AI draft करतो (saves time), teacher review + edit करते (preserves personalization), child चा experience intact राहतो. हेच principle-based design प्रत्येक feature review मध्ये apply होईल. जेव्हा कोणता feature priority confuse करतो, तेव्हा principle hierarchy वर जा: Child First > Teacher Empowerment > Parent Transparency > Operational Excellence > Security > Scalability > AI as Assistant. ह्या order चे rationale: जे child ला benefit करते ते ultimate priority; जे teacher चा time save करते ते दुसऱ्या क्रमांकावर; बाकी सर्व supporting pillars.
+   171→[Heading 1] Vision Summary
+   172→[Normal] PreOne चे ध्येय म्हणजे preschool साठी जगातील सर्वात विश्वासार्ह, AI-ready आणि enterprise-grade operating platform तयार करणे—जे marketing पासून admission, classroom, parent engagement, finance, inventory आणि analytics पर्यंत संपूर्ण preschool ecosystem एकाच platform वर आणेल.
+   173→[Normal] ही vision statement मध्ये तीन keywords deliberate आहेत: "विश्वासार्ह" (trustworthy) — security, compliance, audit, reliability; "AI-ready" — not AI-bolted, but AI-embedded across platform; "enterprise-grade" — not just for small preschools, but for 1000+ school chains. ही तीन words PreOne चे strategic moat define करतात — competitors कदाचित features copy करतील, पण trust + AI depth + enterprise scale हे तीन competitive advantages compound करतात आणि copy होऊ शकत नाहीत.
+   174→---TABLES---
+   175→Table 0:
+   176→P  R  E  O  N  E    E  N  T  E  R  P  R  I  S  E
+   177→PreOne Vision Document
+   178→Enterprise Preschool Operating System
+   179→Version: 1.0
+   180→Status: Draft (Vision Freeze)
+   181→Date: 2026-07-12
+   182→Product: PreOne — Enterprise Preschool Management Platform
+   183→Classification: Internal Engineering Reference
+   184→Prepared by: PreOne Product & Engineering Team
+   185→
+   186→PreOne Platform                                        Vision v1.0
+   187→Table 1:
+   188→Tier | Student Count | Branches | Pricing Strategy | Sales Motion
+   189→Small | 20–100 | 1 | Low ACV, self-serve onboarding | Inbound + referrals
+   190→Medium | 100–500 | 1-2 | Mid ACV, assisted onboarding | Inside sales + demos
+   191→Large | 500–3000 | 3-10 | High ACV, white-glove onboarding | Field sales + POC
+   192→Enterprise Chains | 3000+ | 10+ | Custom contracts, dedicated CSM | Executive sales + RFP
+   193→Table 2:
+   194→Persona | Role | Top Needs
+   195→Preschool Owner | Business owner / investor | Admissions, revenue, reports, business growth
+   196→Principal | Academic + operational head | School operations, teacher monitoring, parent satisfaction
+   197→Coordinator | Multi-class supervisor | Multiple classes, teacher supervision, academic planning
+   198→Teacher | Classroom execution | Attendance, activities, daily timeline, parent communication, observations
+   199→Parent | Child's guardian | Child progress, photos, attendance, fees, communication
+   200→Accounts Team | Finance operations | Fees, receipts, refunds, reports
+   201→Reception | Front desk | Enquiries, admissions, documents, follow-ups
+   202→Table 3:
+   203→# | Domain | Scope
+   204→1 | Marketing & CRM | Lead capture, counselling, follow-ups, conversion analytics
+   205→2 | Admissions | Online applications, document verification, workflow automation
+   206→3 | Student Lifecycle | Allocation, transfers, archives, graduation
+   207→4 | Academics | Curriculum, milestones, observations, portfolios, report cards
+   208→5 | Daily Operations | Attendance, daily sheet, meals, nap, activities, incidents
+   209→6 | Inventory & Procurement | Purchase requests, POs, GRN, issues, returns, audits
+   210→7 | Communication | Announcements, events, chat, SMS, WhatsApp, email
+   211→8 | Finance | Fee plans, invoices, payments, receipts, expenses, refunds
+   212→9 | Human Resources | Staff, recruitment, leave, payroll, training, performance
+   213→10 | Administration | Assets, maintenance, visitors, compliance, meal plans
+   214→11 | Reports & Analytics | Real-time dashboards, KPIs, trends, predictions
+   215→12 | Settings | Configurations, templates, notification rules, integrations
+   216→13 | Platform Management | Multi-tenant SaaS layer, billing, subscriptions, audit

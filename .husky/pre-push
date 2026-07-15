@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Husky pre-push hook — runs unit tests before push (BTD §26.2)
+# Blocks push on test failures — broken code never reaches remote
+pnpm --filter @preone/api run test:unit

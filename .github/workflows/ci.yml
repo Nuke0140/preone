@@ -1,0 +1,198 @@
+# PreOne CI/CD Pipeline
+# Per ADR-111 §5 — GitHub Actions, blue-green deploys, manual prod approval
+name: CI
+
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20.11'
+  PNPM_VERSION: '9.12.0'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Lint + Typecheck — fastest, fails early
+  # ─────────────────────────────────────────────
+  lint-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }} }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @preone/api run lint
+      - run: pnpm --filter @preone/api run typecheck
+
+  # ─────────────────────────────────────────────
+  # Job 2: Unit tests — fast feedback (BTD §24)
+  # ─────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }} }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @preone/api run test:unit
+      - uses: codecov/codecov-action@v4
+        with:
+          files: ./apps/api/coverage/unit/lcov.info
+          flags: unit
+
+  # ─────────────────────────────────────────────
+  # Job 3: Integration tests — Testcontainers (BTD §24)
+  # ─────────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: preone_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7.2-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/preone_test
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: ${{ env.PNPM_VERSION }} }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @preone/database exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/preone_test
+      - run: pnpm --filter @preone/api run test:integration
+
+  # ─────────────────────────────────────────────
+  # Job 4: Build Docker image + security scan
+  # ─────────────────────────────────────────────
+  build-scan:
+    name: Build & Security Scan
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/api/Dockerfile
+          push: false
+          tags: preone-api:${{ github.sha }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: preone-api:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      - uses: github/codeql-action/upload-sarif@v3
+        with: { sarif_file: trivy-results.sarif }
+
+  # ─────────────────────────────────────────────
+  # Job 5: Deploy to staging (auto on main merge)
+  # ─────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → Staging
+    runs-on: ubuntu-latest
+    needs: build-scan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build, tag, push image to ECR
+        run: |
+          docker build -t preone-api:${{ github.sha }} -f infra/docker/api/Dockerfile .
+          docker tag preone-api:${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/preone-api:staging
+          docker push ${{ secrets.ECR_REGISTRY }}/preone-api:staging
+      - name: Deploy to EKS staging
+        run: |
+          aws eks update-kubeconfig --name preone-staging --region ap-south-1
+          kubectl set image deployment/preone-api preone-api=${{ secrets.ECR_REGISTRY }}/preone-api:staging -n api
+          kubectl rollout status deployment/preone-api -n api --timeout=300s
+
+  # ─────────────────────────────────────────────
+  # Job 6: Deploy to production (manual approval)
+  # ─────────────────────────────────────────────
+  deploy-production:
+    name: Deploy → Production (Manual Approval)
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://api.preone.in
+    steps:
+      - name: Await manual approval
+        run: echo "✓ Production deployment approved"
+      - name: Blue-green deploy to production EKS
+        run: |
+          aws eks update-kubeconfig --name preone-prod --region ap-south-1
+          # Deploy green
+          kubectl set image deployment/preone-api-green preone-api=${{ secrets.ECR_REGISTRY }}/preone-api:prod -n api
+          kubectl rollout status deployment/preone-api-green -n api --timeout=300s
+          # Smoke test green
+          kubectl exec -n api deploy/preone-api-green -- curl -f http://localhost:3001/health/deep
+          # Switch traffic
+          kubectl patch service preone-api -n api -p '{"spec":{"selector":{"version":"green"}}}'
+          # Drain blue after observation period
+          kubectl scale deployment/preone-api-blue -n api --replicas=0

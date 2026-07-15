@@ -1,0 +1,109 @@
+# PreOne Local Development Stack
+# Usage: docker compose -f infra/docker/docker-compose.dev.yml up -d
+#
+# Brings up:
+#   - PostgreSQL 16 (with RLS extensions pre-loaded)
+#   - Redis 7.2 (single instance for dev)
+#   - MinIO (S3-compatible local storage)
+#   - MailHog (SMTP capture for dev)
+#   - LocalStack (for AWS SNS/SQS emulation)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: preone-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: preone
+      POSTGRES_PASSWORD: preone
+      POSTGRES_DB: preone
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U preone -d preone"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: preone-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --requirepass preone
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "preone", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: preone-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: preone
+      MINIO_ROOT_PASSWORD: preone123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Create the S3 bucket on first run
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 preone preone123;
+      mc mb --ignore-existing local/preone-dev;
+      mc mb --ignore-existing local/preone-uploads;
+      mc anonymous set download local/preone-dev;
+      exit 0;
+      "
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: preone-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+
+  localstack:
+    image: localstack/localstack:3.5
+    container_name: preone-localstack
+    restart: unless-stopped
+    environment:
+      SERVICES: sns,sqs
+      DEBUG: 0
+    ports:
+      - "4566:4566"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

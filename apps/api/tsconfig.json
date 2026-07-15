@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": false,
+    "strict": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "resolveJsonModule": true,
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "paths": {
+      "@app/*": ["src/*"],
+      "@common/*": ["src/common/*"],
+      "@config/*": ["src/config/*"],
+      "@infra/*": ["src/infrastructure/*"],
+      "@shared/*": ["src/shared/*"],
+      "@modules/*": ["src/modules/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts", "**/*.test.ts"]
+}

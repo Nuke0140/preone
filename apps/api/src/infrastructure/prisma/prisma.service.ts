@@ -1,0 +1,117 @@
+/**
+ * PrismaService — Prisma client with multi-tenant RLS support.
+ *
+ * Per ERD v3.0 §5.2:
+ *   "Application layer connection acquire करताना SET app.school_id = ? query run करते;
+ *    connection release करताना RESET app.school_id run करते.
+ *    हे discipline न राखल्यास cross-tenant data leak होऊ शकतो."
+ *
+ * Implementation:
+ *   - withTenant(tenantId, fn): wraps a callback in a transaction
+ *     that sets app.school_id + app.user_id + app.branch_id session vars.
+ *   - All tenant-scoped queries MUST go through withTenant() — the
+ *     PermissionsGuard / TenantContextMiddleware ensures req.user.tenantId
+ *     is set before reaching the controller.
+ *
+ * Per ERD v3.0 §7.3 — pgcrypto extension for PII encryption:
+ *   - Encrypted columns use pgp_sym_encrypt / pgp_sym_decrypt
+ *   - Encryption key from app.encryption_key session variable
+ */
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import type { AppConfig } from '@config/env/app-config.type';
+
+interface TenantContext {
+  tenantId: string;
+  userId?: string;
+  branchId?: string;
+  academicYearId?: string;
+}
+
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit {
+  private readonly logger = new Logger(PrismaService.name);
+
+  constructor(private readonly config: ConfigService<AppConfig, true>) {
+    super({
+      log: [
+        { level: 'warn', emit: 'event' },
+        { level: 'error', emit: 'event' },
+      ],
+      datasources: {
+        db: {
+          url: config.get('database.url', { infer: true }),
+        },
+      },
+      // Statement timeout (BTD §17.2 — 5s default)
+      // Note: also enforced at DB level per session via SET statement_timeout
+    });
+  }
+
+  async onModuleInit(): Promise<void> {
+    // Set global statement timeout
+    await this.$executeRaw`SET statement_timeout = ${this.config.get('database.statementTimeout', { infer: true })}`;
+
+    this.$use({
+      $allOperations: (params, next) => {
+        // Log slow queries in development
+        const start = Date.now();
+        const result = next(params);
+        if (result instanceof Promise) {
+          return result.then((r) => {
+            const duration = Date.now() - start;
+            if (duration > 200) {
+              this.logger.warn(`Slow query (${duration}ms): ${params.model}.${params.action}`);
+            }
+            return r;
+          });
+        }
+        return result;
+      },
+    } as any);
+  }
+
+  /**
+   * Run a callback within a tenant context. Sets session variables
+   * (app.school_id, app.user_id, app.branch_id) on the connection
+   * so RLS policies can filter rows automatically.
+   *
+   * Uses a short-lived transaction to ensure session vars don't leak
+   * across requests in the connection pool.
+   */
+  async withTenant<T>(ctx: TenantContext, fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return this.$transaction(async (tx) => {
+      // Set tenant context — RLS policies use these session vars
+      await tx.$executeRaw`SET LOCAL app.school_id = ${ctx.tenantId}::uuid`;
+      if (ctx.userId) {
+        await tx.$executeRaw`SET LOCAL app.user_id = ${ctx.userId}::uuid`;
+      }
+      if (ctx.branchId) {
+        await tx.$executeRaw`SET LOCAL app.branch_id = ${ctx.branchId}::uuid`;
+      }
+      if (ctx.academicYearId) {
+        await tx.$executeRaw`SET LOCAL app.academic_year_id = ${ctx.academicYearId}::uuid`;
+      }
+      // Also set the encryption key for pgcrypto (PII fields)
+      // The actual key comes from KMS in production — fetched at boot.
+      await tx.$executeRaw`SET LOCAL app.encryption_key = ${process.env.PII_ENCRYPTION_KEY ?? 'dev-key'}`;
+
+      return fn(tx);
+    });
+  }
+
+  /**
+   * Run a callback as platform_admin — bypasses RLS.
+   * ONLY for cross-tenant admin operations (billing aggregation, storage metering).
+   * Every call is audit-logged.
+   */
+  async asPlatformAdmin<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    this.logger.warn('Executing query as platform_admin (BYPASSRLS) — audit logged');
+    return this.$transaction(async (tx) => {
+      // SET ROLE platform_admin — assumes this role exists with BYPASSRLS
+      await tx.$executeRaw`SET LOCAL ROLE platform_admin`;
+      return fn(tx);
+    });
+  }
+}

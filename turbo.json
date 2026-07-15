@@ -1,0 +1,57 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "AWS_REGION",
+    "S3_BUCKET",
+    "RAZORPAY_KEY_ID",
+    "MSG91_API_KEY",
+    "WHATSAPP_API_KEY"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "env": ["NODE_ENV"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**/*.ts", "test/**/*.ts", "**/*.spec.ts", "**/*.test.ts"]
+    },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": false
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": false
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

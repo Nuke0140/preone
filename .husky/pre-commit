@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Husky pre-commit hook — runs lint-staged (BTD §26.2)
+# Blocks commit on lint errors, auto-fixes what's safe to auto-fix
+pnpm lint-staged

@@ -1,0 +1,183 @@
+[Normal] Table of Contents
+[Normal] Note: This Table of Contents is generated via field codes. To ensure page number accuracy after editing, please right-click the TOC and select "Update Field."
+[Heading 1] 1. Introduction
+[Heading 2] 1.1 Purpose
+[Normal] या दस्तऐवजाचा उद्देश PreOne Platform मधील सर्व Functional आणि Business Requirements स्पष्टपणे define करणे आहे. हा Master PRD product development lifecycle मधील authoritative reference document आहे, जो engineering team ला implementation scope देतो, QA team ला acceptance criteria देतो, आणि business stakeholders ला commitment lock देतो.
+[Normal] हा document Vision v1.0, BPM v1.0 आणि BRC v1.0 चा natural successor आहे. Vision ने "कुठे जायचे" सांगितले, BPM ने "कसे चालवायचे" detailed केले, BRC ने "कोणते rules enforce करायचे" list केले, आणि Master PRD आता "काय build करायचे" exactly define करते. प्रत्येक requirement traceable आहे — BR वरून FR पर्यंत, FR वरून BRC rule पर्यंत, आणि शेवटी acceptance criterion पर्यंत.
+[Heading 2] 1.2 Scope
+[Normal] PreOne खालील 13 Business Domains कव्हर करेल. हे domains DDD philosophy नुसार bounded contexts म्हणून design केले आहेत — प्रत्येक domain ची स्वतःची data model, business rules, workflows आणि APIs आहेत:
+[Heading 2] 1.3 Document Conventions
+[Normal] हा document काही standard conventions follow करतो जे वाचणं आणि reference करणं सोपं करतात. Requirement IDs (BR-001, FR-001, AC-001) stable identifiers आहेत जे future versions मध्ये change होणार नाहीत — जर कोणती requirement deprecate होईल तर ID retired केली जाईल, reuse होणार नाही. Priority levels: P0 (must-have for v1.0 GA), P1 (should-have for v1.0 GA), P2 (nice-to-have, v1.1+ candidate). Status: Draft, Reviewed, Approved, Frozen.
+[Normal] Marathi + Hindi + English mixed language convention हा document मध्ये जाणीवपूर्वक वापरला आहे — business context Marathi/Hindi मध्ये explain केला आहे ज्यामुळे Indian preschool stakeholders ना native resonance मिळतो, आणि technical terms English मध्ये ठेवले आहे ज्यामुळे engineering team ची implementation clarity राहते. Code snippets, field names, API paths, error codes हे always English मध्ये आहेत.
+[Heading 2] 1.4 Related Documents
+[Heading 1] 2. Product Overview
+[Heading 2] 2.1 Product Vision
+[Normal] PreOne हे AI-ready Enterprise Preschool Operating System आहे जे Preschool मधील सर्व Business Processes एका एकात्मिक Platform वर आणते. ही vision statement तीन strategic choices represent करते: "AI-ready" म्हणजे AI हा bolted-on feature नाही तर platform च्या architecture मध्ये embedded आहे; "Enterprise" म्हणजे multi-school chains साठी scalable, RBAC, audit, compliance built-in; "Operating System" म्हणजे केवळ ERP नाही तर daily users चा primary workspace.
+[Normal] हे vision PreOne ला "yet another school ERP" पासून स्पष्टपणे वेगळे करते. Generic school ERPs फक्त records ट्रॅक करतात (attendance, marks, fees) पण preschool-specific workflows (daily child timeline, learning observations, activity-based curriculum, age-appropriate milestones) त्यांच्या data model मध्ये fundamentally fit होऊ शकत नाहीत. PreOne हे ground-up preschool-specific design केलेले आहे.
+[Heading 2] 2.2 Objectives
+[Normal] PreOne चे पाच primary objectives खालीलप्रमाणे आहेत. हे एकमेकांशी aligned आहेत — कोणताही single objective स्वतःचा priority claim करू शकत नाही, त्यांचा combined effect PreOne चे product character define करतो:
+[Normal] •  Paperless Operations: Preschool मधील प्रत्येक record — admission form, attendance register, fee receipt, observation note, stock book — digital format मध्ये capture होईल. Paper usage 95%+ कमी होईल.
+[Normal] •  Mobile-first Experience: Teacher app (tablet-optimized) आणि Parent app (phone-first) हे primary surfaces आहेत. Admin portal desktop-first पण responsive — owners travel करताना dashboard check करू शकतील.
+[Normal] •  Enterprise-grade Security: JWT auth, MFA, RBAC, audit trail, AES-256 encryption at-rest, TLS 1.3 in-transit, tenant isolation, DPDP Act 2023 compliance, ISO 27001 alignment.
+[Normal] •  Multi-School SaaS: True multi-tenant architecture — single codebase, school_id isolation at every table, per-school configurations, cross-school analytics for chain owners. 10,000+ schools target.
+[Normal] •  AI-ready Architecture: AI capabilities embedded across platform — observation assistant, daily sheet auto-draft, report card AI paragraph generation, fee default prediction, parent reply composer, growth milestone prediction.
+[Heading 2] 2.3 Target Users
+[Normal] PreOne चे 7 primary personas आहेत ज्यांच्यासाठी product design केले गेले आहे. प्रत्येक persona ची distinct context, goals, pain points आणि success metrics आहेत. Feature prioritization चा primary framework हे persona coverage matrix आहे — जे feature 2+ personas च्या needs address करते ते P0.
+[Heading 2] 2.4 Product Pillars
+[Normal] PreOne चे design decisions पाच pillars शी aligned असावे लागतात. हे pillars design review चा framework आहेत आणि जेव्हा feature tradeoffs येतात तेव्हा tie-breaker म्हणून वापरले जातात:
+[Normal] •  Preschool First: Architecture decisions पासून UI copy पर्यंत preschool context reflect होईल — activities वर subjects, milestones वर grades, observations वर exams.
+[Normal] •  Mobile First: Teacher tablet app आणि Parent phone app हे primary surfaces. Desktop portal secondary.
+[Normal] •  Enterprise Ready: Multi-school, multi-branch, RBAC, audit, security, SaaS architecture built-in from day 1.
+[Normal] •  AI Ready: AI capabilities platform च्या प्रत्येक layer मध्ये embedded — data model, workflows, notifications, reports, analytics.
+[Normal] •  Simple Yet Powerful: Progressive disclosure — small preschool सहज वापरू शकेल, enterprise chains सहज scale करू शकतील.
+[Heading 2] 2.5 Architecture Snapshot
+[Normal] PreOne चे architecture Domain-Driven Design (DDD) philosophy वर आधारित आहे. 13 business domains हे 13 bounded contexts आहेत ज्यांची स्वतःची data models, business rules, workflows आणि APIs आहेत. Cross-domain communication event-driven architecture द्वारे होते — Identity, Notification, Audit, Approval, Reporting हे 5 cross-domain flows सर्व domains ला tie करतात.
+[Normal] Tech stack: Next.js 16 (frontend + API routes), Prisma ORM (PostgreSQL multi-tenant), Redis (cache + queue), S3-compatible object storage (file uploads), Razorpay/Cashfree (payments), MSG91/Twilio (SMS), WhatsApp Cloud API, SES/SendGrid (email), LLM APIs (AI features). Multi-tenant isolation strategy: shared database with school_id discriminator on every table + row-level security policies.
+[Heading 1] 3. Business Requirements (BR)
+[Normal] Business Requirements हे "What the business needs" याचे उत्तर देतात. हे requirements technical implementation वर depend करत नाहीत — ते business outcomes आहेत जे PreOne ने achieve करायचे आहेत. प्रत्येक BR चा unique ID, clear objective, measurable business value, priority, owner, related domains, dependencies आणि success metrics आहेत.
+[Normal] खालील 30 Business Requirements 13 domains वर distributed आहेत. Priority distribution: P0 (must-have v1.0) = 18, P1 (should-have v1.0) = 9, P2 (nice-to-have v1.1+) = 3. हे distribution development focus देतो — v1.0 चा scope फक्त P0 + P1 आहे, P2 explicitly v1.1+ मध्ये push केले आहे.
+[Heading 2] 3.1 Business Requirement Template
+[Normal] प्रत्येक Business Requirement खालील template नुसार structured आहे. हा template future BR additions साठी reference format आहे:
+[Heading 1] 4. Functional Requirements (FR)
+[Normal] Functional Requirements हे "System काय करेल?" याचे उत्तर देतात. हे requirements business requirements ला actionable system behavior मध्ये translate करतात. प्रत्येक FR चा unique ID, description, actors, preconditions, workflow, inputs, outputs, validations, exceptions, related business rules आणि priority आहे.
+[Normal] खालील 60 Functional Requirements 13 domains वर distributed आहेत. प्रत्येक FR detailed implementation spec चा anchor point आहे — engineering team त्याच्या आधारे user stories आणि technical tasks derive करेल. Priority distribution: P0 = 36, P1 = 18, P2 = 6.
+[Heading 2] 4.1 Sample FR Detail — FR-001 User Authentication
+[Normal] खालील FR-001 detailed template दर्शवते कसा प्रत्येक FR structured आहे. हेच template सर्व 60 FRs साठी apply होतो, पण space constraints मुळे या document मध्ये फक्त summary table + एक sample detail दिले आहेत. Implementation team ला PRD companion wiki मध्ये प्रत्येक FR चे full detail available असेल.
+[Heading 2] 4.2 Functional Requirement Template
+[Normal] प्रत्येक Functional Requirement खालील template नुसार structured आहे. Engineering team या template चा वापर करून user stories, technical tasks आणि test cases derive करतो:
+[Heading 1] 5. Non-Functional Requirements (NFR)
+[Normal] Non-Functional Requirements हे System Quality Attributes define करतात. हे requirements "how well" the system should perform address करतात — performance, availability, security, scalability. हे requirements architecture आणि infrastructure decisions ला drive करतात.
+[Normal] हे ADR मध्ये freeze केलेल्या Identity आणि Authorization मॉडेलशी सुसंगत असेल. खालील 8 NFR categories each with measurable targets — performance, availability, scalability, security, reliability, maintainability, usability, localization. प्रत्येक NFR चा measurement method आणि acceptance method देखील defined आहे ज्यामुळे QA team ते verify करू शकतो.
+[Heading 2] 5.1 Performance
+[Heading 2] 5.2 Availability
+[Heading 2] 5.3 Scalability
+[Heading 2] 5.4 Security
+[Normal] Security NFRs DPDP Act 2023, ISO 27001, SOC 2 Type II compliance चा baseline define करतात. हे requirements PreOne च्या multi-tenant architecture मध्ये tenant isolation ensure करतात आणि PII protection guarantee करतात. Security design review चा framework हा NFR set आहे.
+[Heading 2] 5.5 Reliability
+[Heading 2] 5.6 Maintainability
+[Heading 2] 5.7 Usability
+[Heading 2] 5.8 Localization
+[Heading 2] 5.9 NFR Template
+[Normal] प्रत्येक NFR खालील template नुसार structured आहे — Category, Requirement, Target, Measurement, Acceptance Method. हा template ensure करतो की NFR measurable आणि verifiable आहे:
+[Heading 1] 6. Business Rules
+[Normal] Business Rules हे PreOne च्या प्रत्येक domain मधील decision points आहेत जे system automatically enforce करते. हे rules BRC v1.0 (Business Rules Catalog) मध्ये comprehensively documented आहेत — 176 rules across 12 categories with 14-field schema per rule. हा section BRC चा executive summary प्रदान करतो आणि key rules example म्हणून दर्शवतो.
+[Normal] Business Rules चा primary purpose हा ensure करणे आहे की system decisions consistent, auditable, आणि compliant आहेत. प्रत्येक rule चा unique ID (R-CATEGORY-XXX format), trigger, condition, action, exception, आणि compliance framework mapping documented आहे. हे rules engine configuration द्वारे enforce होतात — नवीन rule addition किंवा modification साठी Settings > Workflow Builder वापरा.
+[Heading 2] 6.1 Rule Categories Summary
+[Heading 2] 6.2 Sample Business Rules
+[Normal] खालील examples BRC v1.0 मधील representative rules दर्शवतात. प्रत्येक rule चा complete 14-field schema BRC document मध्ये available आहे. येथे फक्त title, trigger, action, आणि compliance mapping दर्शवले आहे:
+[Heading 3] 6.2.1 Eligibility & Admission
+[Heading 3] 6.2.2 Financial & Fee
+[Heading 3] 6.2.3 Compliance
+[Heading 2] 6.3 Compliance Framework Mapping
+[Normal] PreOne 8 compliance frameworks चे enforcement ensure करते. प्रत्येक framework चे specific sections PreOne च्या business rules मध्ये mapped आहेत. हे mapping BRC v1.0 Appendix B मध्ये complete detail मध्ये available आहे:
+[Heading 1] 7. User Roles & Permissions
+[Normal] PreOne चा Role-Based Access Control (RBAC) model 8 primary roles define करतो आणि प्रत्येक role ची per-module permissions specify करतो. हे model ADR-007 (Identity & Authorization) मध्ये freeze केले गेले आहे आणि ते multi-tenant architecture चा core security mechanism आहे.
+[Normal] RBAC चा primary principle हा आहे: "least privilege" — प्रत्येक user ला फक्त त्याच्या role ला आवश्यक असलेले permissions मिळतात. Permissions चे चार levels आहेत: Read (view only), Create (add new), Update (edit existing), Delete (remove). काही actions (e.g., refund approval, fee plan edit) additional approval workflows द्वारे governed आहेत जे role permission पलीकडे आहेत.
+[Heading 2] 7.1 Role Definitions
+[Heading 2] 7.2 RBAC Permission Matrix
+[Normal] खालील matrix role × module चे permission level दर्शवते. Permission codes: R = Read, C = Create, U = Update, D = Delete, Full = CRUD all, Own = only own data, Class = only assigned class data. या matrix चा enforcement every API endpoint वर होतो.
+[Heading 2] 7.3 Permission Principles
+[Normal] RBAC implementation खालील principles follow करतो. हे principles design review चा framework आहेत — जेव्हा permission ambiguity येतो तेव्हा हे principles tie-breaker म्हणून वापरले जातात:
+[Normal] •  Least Privilege: Default deny; explicit allow. User ला फक्त त्याच्या role ला आवश्यक असलेले minimum permissions.
+[Normal] •  Need-to-Know: Data access सीमित — teacher ला फक्त त्याच्या class चा data, parent ला फक्त त्याच्या child चा data.
+[Normal] •  Separation of Duties: Critical actions ला दोन वेगळे roles — e.g., fee refund request ≠ refund approval (different persons).
+[Normal] •  Approval Workflow: Role permission पलीकडे high-value actions (refund, salary edit, fee plan change) ला additional approval chain.
+[Normal] •  Audit Every Action: Permission check result (allow/deny) चा audit log; denial चा reason captured.
+[Normal] •  Context-Aware: Time, location, device, IP — contextual factors role permission ला override करू शकतात (e.g., after-hours access alert).
+[Normal] •  Temporary Elevation: Emergency elevation mechanism with auto-expiry + audit + manager notification.
+[Normal] •  Delegation: Approver out-of-office असल्यास delegation allowed with original approver notified + audit.
+[Heading 1] 8. Module Requirements
+[Normal] हा section PreOne च्या प्रत्येक 13 domain चे detailed module requirements प्रदान करतो. प्रत्येक domain चे overview, goals, business requirements, functional requirements, user stories, business rules, workflows, field specifications, validations, notifications, reports, permissions, APIs, acceptance criteria, आणि estimated size documented आहे.
+[Normal] हे domains DDD bounded contexts म्हणून design केले आहेत — प्रत्येक domain ची स्वतःची data model, business rules, workflows आणि APIs आहेत. Cross-domain communication event-driven architecture द्वारे होते. प्रत्येक domain section त्या domain चा complete specification provide करतो जो engineering team ला implementation करण्यासाठी पुरेसा आहे.
+[Heading 2] 8.1 Marketing & CRM
+[Normal] Marketing & CRM domain preschool चे lead-to-enquiry pipeline manage करतो. यात lead capture (walk-in, call, online, referral, campaign), counselling session booking, follow-up tracking, conversion analytics, आणि campaign ROI tracking यांचा समावेश आहे. Domain चा primary objective म्हणजे every lead ला timely response देणे आणि conversion funnel ची visibility provide करणे.
+[Heading 2] 8.2 Admissions
+[Normal] Admissions domain complete digital admission lifecycle manage करतो — online application form, document upload & verification, multi-stage workflow (application → verification → interaction → offer → enrollment), offer letter generation, आणि student record creation across connected systems. हा domain preschool चा primary revenue driver आहे.
+[Heading 2] 8.3 Student Lifecycle
+[Normal] Student Lifecycle domain child चा complete journey manage करतो — admission पासून graduation पर्यंत. यात class/section allocation, transfers (between classes/sections/branches), promotion to next academic year, archival, alumni access, आणि data retention per DPDP Act यांचा समावेश आहे.
+[Heading 2] 8.4 Academics
+[Normal] Academics domain child च्या learning journey manage करतो — curriculum management, milestone-based observations, portfolio generation, holistic report cards. हा domain preschool चा academic heart आहे जिथे teacher ची expertise आणि AI assistance मिळून child च्या growth ची qualitative record तयार होते.
+[Heading 2] 8.5 Daily Operations
+[Normal] Daily Operations domain preschool च्या दररोज classroom activities capture करतो — attendance, daily sheet, meals, nap, bathroom, activities, incidents. हा domain teacher चा primary workspace आहे जिथे ती प्रत्येक child चा दिवस record करते आणि parents ला real-time visibility देते.
+[Heading 2] 8.6 Parent Communication
+[Normal] Parent Communication domain school आणि parent दरम्यान real-time, two-way communication enable करतो. यात parent app timeline, two-way chat, announcements/broadcasts, event calendar with RSVP, photo gallery, आणि multi-channel notification delivery यांचा समावेश आहे.
+[Heading 2] 8.7 Finance
+[Normal] Finance domain preschool चा complete financial operations manage करतो — fee plan configuration, invoice generation, payment processing (UPI/cards/netbanking/cash/cheque), receipt generation, refund processing, expense tracking, आणि financial reporting. हा domain preschool चा revenue engine आहे.
+[Heading 2] 8.8 Inventory & Procurement
+[Normal] Inventory domain preschool च्या materials चा complete lifecycle manage करतो — purchase requests, purchase orders, goods receipt notes (GRN), stock issues, returns, audits. यात classroom materials (Montessori, art supplies), kitchen stock, office supplies, आणि cleaning materials यांचा समावेश आहे.
+[Heading 2] 8.9 Human Resources
+[Normal] HR domain preschool च्या staff चा complete lifecycle manage करतो — recruitment, leave management, payroll processing, performance reviews, training, आणि offboarding. हा domain staff ची productivity आणि satisfaction ensure करतो जे child care quality ला directly impact करते.
+[Heading 2] 8.10 Administration
+[Normal] Administration domain preschool च्या facility आणि compliance operations manage करतो — asset management, visitor management, maintenance scheduling, compliance dashboard, meal plans. हा domain preschool चा physical operations backbone आहे.
+[Heading 2] 8.11 Reports & Analytics
+[Normal] Reports & Analytics domain PreOne चा intelligence layer आहे जो सर्व domains च्या data ला aggregate करून actionable insights generate करतो — operational dashboards, custom report builder, predictive analytics, आणि role-based KPI tracking.
+[Heading 2] 8.12 Settings
+[Normal] Settings domain school च्या configurations चा master control आहे — school profile, academic year, programs, classes, sections, timings, notification rules, workflow builder, integration settings. हा domain बाकीच्या सर्व domains चा behavior customize करतो.
+[Heading 2] 8.13 Platform Management
+[Normal] Platform Management domain PreOne चा SaaS operations layer आहे जो multi-tenant infrastructure manage करतो — tenant onboarding, subscription & billing, audit log & compliance, feature flags, system health. हा domain internal PreOne team चा primary workspace आहे.
+[Heading 1] 9. Reports & Analytics
+[Normal] Reports & Analytics section PreOne च्या reporting capabilities चा comprehensive catalog प्रदान करतो. Reports चे 5 categories मध्ये classified केले आहे — Operational, Academic, Financial, Management, Compliance. प्रत्येक report चा audience, format, frequency, आणि export options documented आहे.
+[Normal] Reports चा primary objective म्हणजे data-driven decision making enable करणे. Real-time dashboards daily operations monitor करतात, scheduled reports periodic reviews support करतात, आणि on-demand reports ad-hoc analysis enable करतात. सर्व reports role-based access controls follow करतात — user ला फक्त त्याच्या role ला authorized data दिसतो.
+[Heading 2] 9.1 Operational Reports
+[Heading 2] 9.2 Academic Reports
+[Heading 2] 9.3 Financial Reports
+[Heading 2] 9.4 Management Reports
+[Heading 2] 9.5 Compliance Reports
+[Heading 1] 10. Integrations
+[Normal] PreOne च्या platform वर 8 integration categories आहेत ज्या external systems सोबत communicate करतात. प्रत्येक integration चा provider, scope, auth method, SLA, आणि fallback strategy documented आहे. Integrations loosely coupled architecture द्वारे implement होतात — एक integration fail होतो तर बाकीचे system unaffected राहतो.
+[Normal] Integration design principles: (1) Loose coupling via event bus + queue; (2) Idempotent operations with retry; (3) Fallback chain (primary → secondary → manual); (4) Rate limit handling with backoff; (5) Audit log of every external call; (6) Health check + alerting per integration; (7) Cost tracking per integration; (8) Vendor lock-in prevention via abstraction layer.
+[Heading 2] 10.1 Payment Gateway Integration
+[Heading 2] 10.2 SMS Gateway Integration
+[Heading 2] 10.3 WhatsApp Business Integration
+[Heading 2] 10.4 Email Integration
+[Heading 2] 10.5 Biometric Integration
+[Heading 2] 10.6 AI / LLM Integration
+[Heading 2] 10.7 Cloud Storage Integration
+[Heading 2] 10.8 Identity & SSO Integration
+[Heading 1] 11. Acceptance Criteria (AC)
+[Normal] Acceptance Criteria हे QA Team साठी definitive validation rules आहेत. प्रत्येक AC Given/When/Then format मध्ये structured आहे ज्यामुळे test automation सोपं होतं. हे 50 ACs 13 domains च्या critical flows cover करतात.
+[Normal] AC चा primary purpose हा ensure करणे आहे की implementation acceptance च्या वेळी user requirements meet होतात. प्रत्येक AC चा unique ID (AC-XXX format), scenario description, Given (preconditions), When (trigger action), Then (expected outcome), आणि expected result आहे. QA team या ACs पासून test cases derive करतो.
+[Heading 2] 11.1 Acceptance Criteria Template
+[Normal] प्रत्येक AC खालील template नुसार structured आहे. QA team या template चा वापर करून test cases लिहितो आणि automation scripts develop करतो:
+[Heading 1] 12. Out of Scope
+[Normal] Out of Scope section clearly define करतो काय PreOne v1.0 मध्ये deliver होणार नाही. हे scope management चा critical tool आहे — feature creep prevent करतो आणि v1.0 च्या release timeline ला realistic ठेवतो. खालील items explicitly future versions किंवा partner ecosystem कडे delegated केले आहेत.
+[Normal] Out of scope decisions चा rationale तीन principles वर आधारित आहे: (1) Core focus preservation — preschool-specific workflows ला priority; (2) Build vs Buy — generic capabilities (e.g., accounting) ला integrate करणे अपेक्षित नाही; (3) v1.0 timeline — 12-month delivery window मध्ये feasible scope only. प्रत्येक out-of-scope item चा revisit plan documented आहे.
+[Heading 2] 12.1 Explicitly Excluded from v1.0
+[Heading 2] 12.2 Future Roadmap Placeholder
+[Normal] खालील items v1.0 च्या बाहेर आहेत पण product roadmap मध्ये tracked आहेत. हे items Vision v1.0 Section 13 (Long-Term Product Vision 5-10 Years) शी aligned आहेत:
+[Normal] •  v1.1 (Q1 2027): Tally XML export, biometric integration improvements, custom report builder enhancements, transport management with partner, voice daily sheet pilot.
+[Normal] •  v1.2 (Q3 2027): Multi-language expansion (Tamil, Telugu, Kannada), offline-first mobile, advanced HR (LMS), marketing automation, EMI options.
+[Normal] •  v2.0 (2028+): Marketplace launch, parent community (opt-in), wearable integration, advanced AI (vision-based observations, predictive milestone alerts at scale).
+[Normal] •  v3.0 (2029+): International expansion (SE Asia, Middle East, Africa), multi-currency, global compliance frameworks, third-party integrations marketplace.
+[Heading 1] 13. Traceability Matrix (RTM)
+[Normal] Requirement Traceability Matrix (RTM) हा PreOne च्या requirements engineering चा final quality gate आहे. यात प्रत्येश requirement चा complete trace chain documented आहे — Vision → BR → FR → BRC → AC → Test Case → Implementation. हे traceability ensure करते की कोणताही requirement orphaned नाही आणि कोणताही implementation un-traced नाही.
+[Normal] RTM चा primary use case: (1) Impact analysis — BR change केला तर कोणते FRs, BRC rules, ACs affected होतील; (2) Coverage analysis — कोणत्या BRs ची ACs पूर्ण झाली आहेत; (3) Audit compliance — ISO 27001 / SOC 2 audits मध्ये traceability mandatory; (4) Onboarding — new team members ला context मिळतो. खालील master table 30 BRs चा trace chain दर्शवतो.
+[Heading 2] 13.1 Requirements Flow
+[Normal] PreOne च्या requirements hierarchy खालीलप्रमाणे आहे. ही hierarchy top-down आहे — वरचा layer खालच्या layer ला drive करतो, आणि खालचा layer वरच्या layer चा verification provide करतो:
+[Normal] Vision  →  Business Requirement (BR)  →  Functional Requirement (FR)  →  Business Rule (BRC)  →  Acceptance Criteria (AC)  →  Test Case (TC)  →  Implementation
+[Heading 2] 13.2 Master Traceability Matrix
+[Heading 2] 13.3 Coverage Summary
+[Normal] RTM coverage analysis खालीलप्रमाणे आहे. हा summary identify करतो कोणते BRs v1.0 मध्ये fully covered आहेत आणि कोणते future versions कडे deferred आहेत:
+[Heading 2] 13.4 Traceability Process
+[Normal] RTM चा maintenance खालील process द्वारे होतो. हा process software development lifecycle चा embedded step आहे — separate RTM update activity नाही:
+[Normal] •  Requirement Creation: नवीन BR/FR/AC created करताना traceability links mandatory. बिना trace chain कोणताही requirement merged होणार नाही.
+[Normal] •  Sprint Planning: Each sprint RTM review करतो — orphan requirements identified, missing ACs flagged.
+[Normal] •  Code Review: PR template मध्ये "Related AC" field mandatory — code without AC reference rejected.
+[Normal] •  QA Cycle: Test cases traceable to ACs; AC without test case flagged; coverage report auto-generated.
+[Normal] •  Release Sign-off: Release readiness check: 100% P0 BRs covered, ≥95% P1 covered, 0 orphan ACs.
+[Normal] •  Quarterly Audit: RTM completeness audit by Product team; gaps remediated within sprint.
+[Heading 1] Appendix A: Document Control
+[Normal] Document Control section या PRD च्या versioning, approval, distribution, आणि maintenance चा authoritative record आहे. हा section ISO 27001 / SOC 2 documentation requirements शी compliant आहे.
+[Heading 2] A.1 Version History
+[Heading 2] A.2 Approval Matrix
+[Normal] या PRD v1.0 च्या Product Freeze साठी खालील stakeholders ची approval mandatory होती. सर्व approvals documented आणि archived आहेत:
+[Heading 2] A.3 Review Cadence
+[Normal] PRD v1.0 freeze नंतर खालील review cadence follow केला जाईल. ही cadence ensure करते की document living artifact राहतो आणि stale होत नाही:
+[Normal] •  Quarterly Review: Every quarter Product team reviews PRD for accuracy. Minor updates (clarifications, additional examples) push as v1.0.X.
+[Normal] •  Semi-Annual Major Review: Every 6 months comprehensive review. New BRs/FRs added as v1.X.0. Stakeholder re-approval required.
+[Normal] •  Annual Major Release: Once a year, major version bump (v2.0). Triggers re-baseline of BRC + companion docs.
+[Normal] •  Emergency Change: Critical compliance / security changes can be pushed as hotfix with CPO + Compliance Officer approval.
+[Heading 2] A.4 Distribution List
+[Normal] या PRD ची access खालील teams ला granted आहे. Access control via PreOne internal docs portal; download + share restricted:
+[Heading 2] A.5 Companion Documents
+[Normal] या PRD च्या effective use साठी खालील companion documents reference केले जातात. हे documents PreOne documentation portal वर available आहेत:

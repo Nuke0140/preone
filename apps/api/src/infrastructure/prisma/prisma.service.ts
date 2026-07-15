@@ -23,7 +23,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 
 import type { AppConfig } from '@config/env/app-config.type';
 
-interface TenantContext {
+export interface TenantContext {
   tenantId: string;
   userId?: string;
   branchId?: string;

@@ -1,5 +1,5 @@
 /**
- * PermissionsGuard — RBAC check via Casbin policies (cached in Redis).
+ * PermissionsGuard — RBAC check via cached permission resolver (BTD §16.4).
  *
  * Per BTD §20.1: "RBAC — Casbin policies; role → permissions matrix"
  * Per BTD §3.3: "Global PermissionsGuard backed by Casbin enforcer (cached in Redis)"
@@ -7,19 +7,24 @@
  *   - Cache key: user_perms:{userId}:v{perms_version}
  *   - TTL: 300s
  *   - Invalidation: bump perms_version on role change
+ *
+ * This guard delegates to PermissionResolver for the cache + DB lookup.
+ * The resolver is in the Identity module and uses UserRepository.
  */
-import { CanActivate, ExecutionContext, Inject, Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 import { PERMISSIONS_KEY } from '@app/decorators/auth.decorators';
 import type { AuthenticatedUser } from '@app/decorators/auth.decorators';
-import { RedisService } from '@infra/redis/redis.service';
+import { PermissionResolver } from '@modules/identity/application/services/permission-resolver.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly redis: RedisService,
+    @Inject(PermissionResolver) private readonly resolver: PermissionResolver,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -38,51 +43,24 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('Authenticated user context is missing.');
     }
 
+    // Build ResolvedUser — guard only knows what JWT carries
+    const resolved = {
+      id: user.id,
+      tenantId: user.tenantId,
+      permissionsVersion: user.permissionsVersion,
+      roles: user.roles ?? [],
+    };
+
     // Super admin bypass
-    if (user.roles?.includes('SUPER_ADMIN')) return true;
+    if (resolved.roles.includes('SUPER_ADMIN')) return true;
 
-    // Fetch user permissions from cache (or DB on miss)
-    const permissions = await this.getUserPermissions(user);
-
-    // Check ALL required permissions are present (AND semantics)
-    const hasAll = required.every((p) => permissions.has(p));
+    // Check ALL required permissions are present (AND semantics, BTD §3.3)
+    const hasAll = await this.resolver.hasAllPermissions(resolved, required);
     if (!hasAll) {
       throw new ForbiddenException(
-        `Missing required permissions: ${required.filter((p) => !permissions.has(p)).join(', ')}`,
+        `Missing required permissions: ${required.join(', ')}`,
       );
     }
     return true;
-  }
-
-  /**
-   * Permission cache lookup — versioned key per BTD §16.4.
-   *
-   * Key: preone:user_perms:{userId}:v{perms_version}
-   * On MISS: load from DB (role_permission JOIN user_role) → cache with 300s TTL.
-   * On role change: bump user.perms_version → old key expires naturally.
-   */
-  private async getUserPermissions(user: AuthenticatedUser): Promise<Set<string>> {
-    const key = `user_perms:${user.id}:v${user.permissionsVersion}`;
-    const cached = await this.redis.get(key);
-    if (cached) {
-      return new Set(JSON.parse(cached) as string[]);
-    }
-
-    // TODO: Load from DB via Prisma once identity module is wired.
-    // For now, return empty set so unauthorized is thrown (fail-closed).
-    // Real implementation:
-    //   const perms = await this.prisma.$queryRaw`
-    //     SELECT DISTINCT p.code FROM permissions p
-    //     JOIN role_permission rp ON rp.permission_id = p.id
-    //     JOIN user_role ur ON ur.role_id = rp.role_id
-    //     WHERE ur.user_id = ${user.id}
-    //       AND ur.school_id = ${user.tenantId}::uuid
-    //       AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
-    //   `;
-    //   const codes = perms.map((p) => p.code);
-    //   await this.redis.setex(key, 300, JSON.stringify(codes));
-    //   return new Set(codes);
-    const empty = new Set<string>();
-    return empty;
   }
 }

@@ -10,6 +10,13 @@
  *   - Complex RBAC: scope-per-role-per-module, permission UNION (never promote)
  *   - Multi-tenancy: shared schema with school_id discriminator + RLS
  *
+ * Wave 2.1 additions:
+ *   - CQRS: CommandBus + QueryBus + 4 command handlers + 3 query handlers
+ *   - Domain Events: wired EventBus + IdentityEventTranslator
+ *   - Integration Events: outbox table + PrismaOutboxRepository + OutboxPublisher
+ *   - Unit of Work: transaction boundary + outbox atomicity
+ *   - Permission Cache: PermissionResolver (Redis-backed, BTD §16.4)
+ *
  * This module owns:
  *   - School (tenant) CRUD + lifecycle (PROSPECT → TRIAL → ACTIVE → SUSPENDED → CANCELLED)
  *   - Branch CRUD (within a school)
@@ -19,7 +26,12 @@
  *   - Authentication (login, OTP, refresh)
  *   - Session management
  */
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import { CommandBus, QueryBus } from '@shared/cqrs';
+import { EventBusService } from '@infra/event-bus/event-bus.service';
+import { PrismaService } from '@infra/prisma/prisma.service';
 
 import { AuthService } from './application/services/auth.service';
 import { BranchService } from './application/services/branch.service';
@@ -29,21 +41,54 @@ import { PermissionService } from './application/services/permission.service';
 import { RoleService } from './application/services/role.service';
 import { SchoolService } from './application/services/school.service';
 import { UserService } from './application/services/user.service';
+import {
+  PermissionResolver,
+} from './application/services/permission-resolver.service';
+import {
+  IdentityEventTranslator,
+} from './application/services/event-translator.service';
+import { UnitOfWork } from './application/unit-of-work';
+
+import {
+  ChangeUserRolesCommandHandler, CreateSchoolCommandHandler,
+  CreateUserCommandHandler, LoginCommandHandler,
+} from './application/handlers/identity-command-handlers';
+import {
+  GetSchoolQueryHandler, GetUserQueryHandler, ListUsersQueryHandler,
+} from './application/handlers/identity-query-handlers';
+
 import { AuthController } from './controllers/auth.controller';
 import { PermissionsController } from './controllers/permissions.controller';
 import { RolesController } from './controllers/roles.controller';
 import { SchoolsController } from './controllers/schools.controller';
 import { UsersController } from './controllers/users.controller';
 import { BranchesController } from './controllers/branches.controller';
+
 import {
   SCHOOL_REPOSITORY, BRANCH_REPOSITORY, USER_REPOSITORY, ROLE_REPOSITORY,
   PERMISSION_REPOSITORY,
 } from './domain/repositories/tokens';
-import { PrismaBranchRepository } from './infrastructure/repositories/prisma-branch.repository';
-import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
-import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
-import { PrismaSchoolRepository } from './infrastructure/repositories/prisma-school.repository';
-import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
+import {
+  PrismaBranchRepository,
+} from './infrastructure/repositories/prisma-branch.repository';
+import {
+  PrismaPermissionRepository,
+} from './infrastructure/repositories/prisma-permission.repository';
+import {
+  PrismaRoleRepository,
+} from './infrastructure/repositories/prisma-role.repository';
+import {
+  PrismaSchoolRepository,
+} from './infrastructure/repositories/prisma-school.repository';
+import {
+  PrismaUserRepository,
+} from './infrastructure/repositories/prisma-user.repository';
+import {
+  PrismaOutboxRepository,
+} from './infrastructure/repositories/prisma-outbox.repository';
+import {
+  OutboxPublisher,
+} from './infrastructure/jobs/outbox-publisher';
 
 @Module({
   controllers: [
@@ -55,7 +100,11 @@ import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.
     BranchesController,
   ],
   providers: [
-    // Application services
+    // ─── CQRS buses ───
+    CommandBus,
+    QueryBus,
+
+    // ─── Application services ───
     AuthService,
     SchoolService,
     UserService,
@@ -64,8 +113,24 @@ import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.
     PermissionService,
     JwtService,
     OtpService,
+    PermissionResolver,
+    IdentityEventTranslator,
+    UnitOfWork,
 
-    // Repository ports → concrete implementations
+    // ─── CQRS handlers ───
+    LoginCommandHandler,
+    CreateUserCommandHandler,
+    ChangeUserRolesCommandHandler,
+    CreateSchoolCommandHandler,
+    GetUserQueryHandler,
+    ListUsersQueryHandler,
+    GetSchoolQueryHandler,
+
+    // ─── Infrastructure ───
+    OutboxPublisher,
+    { provide: PrismaOutboxRepository, useFactory: (prisma: PrismaService) => new PrismaOutboxRepository(prisma), inject: [PrismaService] },
+
+    // ─── Repository ports → concrete implementations ───
     { provide: SCHOOL_REPOSITORY, useClass: PrismaSchoolRepository },
     { provide: BRANCH_REPOSITORY, useClass: PrismaBranchRepository },
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
@@ -75,8 +140,27 @@ import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.
   exports: [
     AuthService, JwtService, SchoolService, UserService, RoleService,
     BranchService, PermissionService, OtpService,
+    PermissionResolver, UnitOfWork,
+    CommandBus, QueryBus,
     SCHOOL_REPOSITORY, USER_REPOSITORY, ROLE_REPOSITORY,
     BRANCH_REPOSITORY, PERMISSION_REPOSITORY,
   ],
 })
-export class IdentityModule {}
+export class IdentityModule implements OnModuleInit {
+  constructor(
+    private readonly translator: IdentityEventTranslator,
+    private readonly config: ConfigService,
+  ) {}
+
+  onModuleInit(): void {
+    // Register domain-event → integration-event translations.
+    // Actor/tenant are not known at module init — the translator uses a
+    // sentinel context that subscribers can override via headers at runtime.
+    // For Wave 2.1 the translator captures the event payload itself which
+    // already includes tenantId + createdBy — the ctx is only the fallback.
+    this.translator.register({
+      actorId: 'system',
+      tenantId: 'platform',
+    });
+  }
+}

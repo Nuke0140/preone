@@ -1,0 +1,239 @@
+
+=== Table 3 (Summary) ===
+ 2 ===
+Rule ID | Title | Trigger | Action | Owner
+R-ELG-001 | Playgroup Age Eligibility | Application Form submission for Playgroup class | Block application; show age-appropriate class suggestion (Nursery if >2.5) | Admission Counsellor
+R-ELG-002 | Nursery Age Eligibility | Application Form submission for Nursery class | Block application; suggest Playgroup (if <2.5) or Jr.KG (if >3.5) | Admission Counsellor
+R-ELG-003 | Jr.KG Age Eligibility | Application Form submission for Jr.KG class | Block application; suggest Nursery (if <3.5) or Sr.KG (if >4.5) | Admission Counsellor
+R-ELG-004 | Sr.KG Age Eligibility | Application Form submission for Sr.KG class | Block application; suggest Jr.KG (if <4.5) or Grade 1 (if >5.5) | Admission Counsellor
+R-ELG-005 | Age Proof Document Mandatory | Application Form submission | Block submission; request acceptable age proof document | Admission Counsellor
+R-ELG-006 | Birth Certificate Mandatory | Application Form submission | Mark application 'Pending Documents'; send automated reminder to parent (D+3, D+7, D+14) | Admission Counsellor
+R-ELG-007 | Medical Fitness Declaration | Application Form submission (post-document upload) | Mark 'Pending Medical'; require signed medical declaration by parent + pediatrician certificate | Admission Counsellor
+R-ELG-008 | Photograph Mandatory | Application Form submission | Send automated reminder; allow admission approval conditional on photo within 7 days | Admission Counsellor
+R-ELG-009 | Parent/Guardian Identity Proof | Application Form submission | Require acceptable parent ID proof upload | Admission Counsellor
+R-ELG-010 | Primary Contact Mandatory | Application Form submission | Require valid Indian mobile number (+91 format) for primary contact | Admission Counsellor
+R-ELG-011 | Sibling Admission Priority | Application Form submission with sibling_already_enrolled = TRUE | Auto-flag application as 'Sibling Priority'; fast-track counselling slot within 48 hours | Admission Counsellor
+R-ELG-012 | Staff Ward Admission Quota | Application Form submission with staff_ward = TRUE | Apply staff ward discount; route to HR validation for staff tenure confirmation | HR + Admission Counsellor
+R-ELG-013 | Transfer Student Eligibility | Mid-year application from student transferring from another school | Allow admission; carry forward previous attendance records | Admission Counsellor + Principal
+R-ELG-014 | RTE Section 12 (25% EWS Reservation) | Annual admission cycle planning (Jan-March) | Reserve 25% seats for EWS category; integrate with state RTE portal for reimbursement claims | Principal + Management
+R-ELG-015 | Special Needs Child Admission | Application Form with special_needs_flag = TRUE | Admission conditional on assessment; if severity > moderate, recommend shadow teacher requirement | Principal + Special Educator
+
+---
+
+=== Table 19 (Summary) ===
+ 18 ===
+Rule ID | Title | Trigger | Action | Owner
+R-FIN-001 | Fee Due Date Enforcement | Invoice generated with due_date | Mark invoice overdue; trigger R-FIN-002 (late fee calculation); trigger R-NOT-001 (reminder) | Accounts Team
+R-FIN-002 | Late Fee Calculation | Invoice overdue (post R-FIN-001) | Add late fee line item to invoice; send notification; if >60 days, block attendance marking + ID card | Accounts Team
+R-FIN-003 | Refund Policy — Withdrawal Before Term Start | Parent submits withdrawal request before term start date | Process refund within 14 working days to original payment method | Accounts Team + Branch Head
+R-FIN-004 | Refund — Mid-Term Withdrawal | Parent submits withdrawal request after term start | Generate refund invoice; route to Branch Head approval; process within 14 days | Accounts Team + Branch Head
+R-FIN-005 | Sibling Discount | Second+ child admission in same school | Auto-apply discount on invoice generation; visible as separate line item | Accounts Team
+R-FIN-006 | Early Bird Discount | Admission confirmed before April 30th for next academic year | Auto-apply discount at invoice generation | Accounts Team
+R-FIN-007 | GST on Educational Services | Invoice generation | Apply correct GST rate; generate GST-compliant invoice with HSN code, GSTIN, place of supply | Accounts Team + Finance Head
+R-FIN-008 | Invoice Number Generation | New invoice created | Generate sequential invoice number; GST invoice series registered with GST portal | Accounts Team
+R-FIN-009 | Payment Receipt Generation | Payment confirmed (post-payment-success webhook) | Auto-generate PDF receipt; email to parent; sync to parent app; archive in document store | Accounts Team
+R-FIN-010 | Digital Payment Mandate | Fee payment attempt | Disable cash payment option above ₹50,000; show digital payment methods only | Accounts Team
+R-FIN-011 | Cheque Bounce Handling (NSF) | Bank webhook: cheque_returned NSF | Reverse receipt; mark invoice unpaid; send demand notice (legal format) within 3 days; block future cheque payments for parent | Accounts Team + Finance Head
+R-FIN-012 | Installment Plan Approval | Parent requests installment plan for annual fee | Create installment schedule; generate separate invoices per installment with respective due dates | Accounts Team + Branch Head
+R-FIN-013 | Merit Scholarship Eligibility | Annual scholarship cycle (April) | Auto-flag eligible students; route to scholarship committee for final selection | Principal + Scholarship Committee
+R-FIN-014 | Bad Debt Write-off | Invoice overdue > 365 days | Route to Finance Head + Director approval; if approved, write-off in books; retain recovery rights for 3 years | Finance Head + Director
+R-FIN-015 | Expense Approval Matrix | Expense claim submitted | Route to appropriate approver based on amount; multi-level approval workflow | Accounts Team + Multi-level Approvers
+R-FIN-016 | Vendor Payment Terms | Vendor invoice received + GRN verified | Schedule payment; auto-pay on due date via NEFT/RTGS | Accounts Team + Branch Head
+R-FIN-017 | TDS Deduction on Vendor Payments | Vendor payment > ₹30,000 (single) or > ₹1,00,000 (annual aggregate) | Deduct TDS; generate Form 16A quarterly; file TDS return; issue TDS certificate to vendor | Accounts Team + Finance Head
+R-FIN-018 | Financial Hardship Waiver | Parent submits fee waiver request with documentation | Route to Branch Head + Director joint approval; waiver valid for current term only (renewal required) | Branch Head + Directo
+---
+
+=== Table 40 (Summary) ===
+ 39 ===
+Rule ID | Title | Trigger | Action | Owner
+R-OPS-001 | Authorized Pickup Person List | Child enrollment / Parent app onboarding | Enforce max 4 authorized pickups per child; store photos + ID proof in encrypted form | Branch Admin + Parent
+R-OPS-002 | Unauthorized Pickup Block | Person arrives for child pickup not in authorized list | Hold child in supervision area; call parent for authorization; if confirmed via parent app OTP, allow pickup with photo capture | Teacher + Branch Admin
+R-OPS-003 | Late Pickup Fee | Child picked up after school closing time | Auto-generate late pickup invoice; notify parent; recurring late (>3 times/quarter) triggers meeting with Branch Head | Branch Admin
+R-OPS-004 | Arrival Cutoff Time | Child arrival at school gate | Allow entry with late pass; log reason (parent input); recurring late (>3/week) triggers parent meeting | Branch Admin + Teacher
+R-OPS-005 | Attendance Threshold for Promotion | Annual promotion cycle (March-April) | Flag for review; require parent meeting + remedial plan; conditional promotion with attendance improvement plan | Principal + Teacher
+R-OPS-006 | Attendance Marking Window | Daily school session start | Send reminder to teacher; after 60 min, escalate to Branch Admin to mark attendance | Teacher + Branch Admin
+R-OPS-007 | Mid-Day Exit Gate Pass | Parent requests mid-day child pickup | Generate digital gate pass; teacher releases child; security logs exit time | Branch Admin + Security
+R-OPS-008 | Visitor Logging | Visitor arrives at school gate | Capture visitor details; issue visitor badge; host notified via app; badge returned on exit | Security + Reception
+R-OPS-009 | Bus Route Assignment | Transport opt-in during admission / annual renewal | Assign child to nearest pickup point; notify parent + driver; generate route card | Transport In-charge
+R-OPS-010 | Bus Tracking — Real-time GPS | Bus trip start (morning pickup / evening drop) | Auto-notify parents of expected delay; Transport In-charge calls driver; if unreachable >15 min, escalate to Branch Head | Transport In-charge
+R-OPS-011 | Bus Missing Child Alert | Bus arrives at school / drop point | Trigger P0 alert: Branch Head + Transport In-charge + Parent + Driver; halt bus; conduct physical search | Transport In-charge + Branch Head
+R-OPS-012 | Morning Health Check | Child arrival at classroom | Move child to health room; notify parent within 5 min; record observation in health log | Teacher + Health Attendant
+R-OPS-013 | Meal Allergy Check | Daily meal preparation / serving | Generate allergen-safe meal list per class; kitchen gets allergy-aware menu; serve alternative | Kitchen In-charge + Teacher
+R-OPS-014 | Nap Time Supervision | Daily nap time slot (post-lunch) | Assign supervisor; conduct visual check every 10 min; record nap quality in daily sheet | Teacher + Nap Supervisor
+R-OPS-015 | Incident Escalation Matrix | Any incident reported (injury, illness, behavioral, safety) | Auto-route to appropriate escalation level; incident report generated; mandatory follow-up within 24 hours | Teacher + Branch Head
+R-OPS-016 | Photo Consent for Marketing | Child photo captured for marketing/social media | Flag photos with consent status; AI face-blur applied for non-consenting children in batch photos | Teacher + Marketing Team
+R-OPS-017 | Daily Timeline Push to Parent | Each major daily activity completion (arrival, meal, activity, nap, pickup) | Auto-push timeline entry to parent app with timestamp, photo (if conse
+---
+
+=== Table 61 (Summary) ===
+ 60 ===
+Rule ID | Title | Trigger | Action | Owner
+R-ACD-001 | Curriculum Theme Rotation | Academic year planning (April) | Auto-create theme calendar; each theme duration 3-4 weeks; activities linked to theme | Academic Coordinator + Principal
+R-ACD-002 | Weekly Lesson Plan Submission | Friday end-of-day | Send reminder Friday 5 PM; escalate to Coordinator Saturday 10 AM; Coordinator prepares default plan if not received by Saturday 5 PM | Teacher + Coordinator
+R-ACD-003 | Daily Activity Slots | Daily school day start | Enforce minimum activities per day; system warns if teacher marks fewer activities | Teacher + Coordinator
+R-ACD-004 | Observation Recording Frequency | Daily observation window | Friday summary: list of children with missing observations; teacher must complete by Saturday EOD | Teacher + Coordinator
+R-ACD-005 | Observation Quality Check | Observation saved by teacher | Prompt teacher to expand observation; weekly review by Coordinator; recurring low-quality triggers coaching | Teacher + Coordinator
+R-ACD-006 | Milestone Assessment Frequency | Quarterly milestone cycle | Generate assessment templates per age group; teachers complete within 2 weeks; parents get milestone report | Teacher + Coordinator
+R-ACD-007 | Milestone Delay Alert | Milestone assessment completion | Auto-flag; parent-teacher meeting scheduled within 14 days; if developmental concern, recommend specialist assessment | Teacher + Principal + Parent
+R-ACD-008 | Portfolio Update Cadence | Monthly portfolio cycle | Auto-compile portfolio entries (observations, photos, artwork, milestone progress); share with parent via app | Teacher + System (Automated)
+R-ACD-009 | Report Card Generation Cycle | Term end (October + April) | AI-assisted draft (combines observations, milestones, activities); teacher review + edit; parent notification + app push | Teacher + Principal
+R-ACD-010 | Report Card Approval Workflow | Teacher submits report card | Multi-level approval workflow; locked once approved; parent release after final approval | Teacher + Coordinator + Principal
+R-ACD-011 | Promotion Criteria | Annual promotion cycle (March-April) | Auto-promote; update student record; notify parent; assign to next class section | Principal + Teacher
+R-ACD-012 | Age-Based Class Cap | Promotion cycle | Flag for Principal review; parent meeting; may recommend transition to mainstream school (Sr.KG → Grade 1) | Principal + Parent
+R-ACD-013 | PTM Frequency | Quarterly PTM cycle | Auto-schedule PTM; parent invites via app + SMS; teacher prepares child progress summary; PTM attendance logged | Teacher + Coordinator
+R-ACD-014 | Remedial Program Trigger | Milestone assessment OR teacher observation | Auto-enroll in 4-week remedial track; weekly progress monitoring; specialist consultation if no improvement | Teacher + Special Educator + Parent
+R-ACD-015 | Outdoor Play Duration | Daily schedule | Enforce minimum outdoor time in daily schedule; if weather prevents, indoor gross-motor activities substitute | Teacher + Coordinator
+R-ACD-016 | Activity Participation Tracking | Each activity completion | Prompt teacher to log reason (mood, health, social); if pattern persists, parent notification | Teacher
+R-ACD-017 | Annual Curriculum Audit | End of academic year (April) | Committee meeting in May; revised curriculum approved by June; new theme calendar published | Principal + Academic Committee
+R-ACD-018 | Field Trip Safety Protocol | Field trip planned | Block trip if any criterion fail
+---
+
+=== Table 80 (Summary) ===
+ 79 ===
+Rule ID | Title | Trigger | Action | Owner
+R-HR-001 | Staff Qualification Minimum | New staff onboarding | Mandatory qualification verification; reject if not met; document reason | HR + Principal
+R-HR-002 | Staff Background Verification | New staff onboarding (post-offer, pre-joining) | Mandatory: police verification (within 30 days), 2 reference checks, previous employer verification, address proof | HR + Branch Head
+R-HR-003 | Leave Entitlement Annual | Annual leave cycle (April-March) | Auto-credit leave balance on April 1; carry forward max 5 earned leaves | HR + Staff
+R-HR-004 | Max Consecutive Leave | Leave application submitted | Route to appropriate approver; ensure substitute teacher arrangement for teaching staff | HR + Branch Head
+R-HR-005 | Substitute Teacher Assignment | Teacher absence (approved leave or unplanned) | Auto-assign from substitute pool; if unavailable, Coordinator covers; parent notification if delay >30 min | Coordinator + HR
+R-HR-006 | Payroll Cutoff Date | Monthly payroll cycle | Lock attendance on 25th EOD; process payroll 26-28; final review 29th; disbursement 30th | HR + Accounts
+R-HR-007 | Performance Review Cycle | Annual performance cycle (March-April) | Self-appraisal (March 1-15); reviewer appraisal (March 16-31); calibration (April 1-7); feedback (April 8-15) | HR + Reporting Manager
+R-HR-008 | Exit Process | Staff submits resignation | Mandatory: notice period (60 days full-time, 30 days part-time); handover document; exit interview; final settlement within 30 days | HR + Branch Head
+R-HR-009 | Internal Complaints Committee (ICC) | Annual ICC constitution (April) | Constitute ICC; publish committee details on notice board + employee handbook; annual training | HR + Director
+R-HR-010 | Annual POSH Training | Annual training cycle (April-May) | Online POSH module; quiz with 80% pass mark; certificate valid 1 year; non-completion blocks payroll | HR + Compliance Officer
+R-HR-011 | Food Handler Medical Certificate | Kitchen staff onboarding + annual renewal | Annual medical checkup; certificate on file; non-completion blocks kitchen duties | HR + Kitchen In-charge
+R-HR-012 | Probation Period | New staff joining | Probation review at end of period; confirmation OR extension (max 6 months) OR termination | HR + Reporting Manager
+
+---
+
+=== Table 93 (Summary) ===
+ 92 ===
+Rule ID | Title | Trigger | Action | Owner
+R-INV-001 | Auto Reorder Trigger | Stock level update (post-issue / post-GRN) | Create PR with vendor suggestion; route to Branch Admin approval; auto-set expected delivery date | Inventory Manager + Branch Admin
+R-INV-002 | Minimum Stock Threshold | Daily stock reconciliation | Send P0 alert to Inventory Manager + Branch Admin; emergency procurement process | Inventory Manager
+R-INV-003 | Perishable Item Expiry Tracking | GRN for perishable item (food, paint, glue) | FIFO issuance: oldest stock issued first; expiring items flagged in kitchen / classroom dashboard | Inventory Manager + Kitchen In-charge
+R-INV-004 | Expired Item Disposal | Item crosses expiry date | Mark item as 'Expired - Dispose'; generate disposal log; Inventory Manager + Branch Head joint approval for write-off | Inventory Manager + Branch Head
+R-INV-005 | Asset Depreciation | Annual financial closure (March) | Auto-calculate depreciation; update asset register; reflect in balance sheet | Accounts + Inventory Manager
+R-INV-006 | Vendor Rating Threshold | Quarterly vendor review | Notify vendor; 90-day improvement period; if no improvement, black-list + remove from preferred list | Inventory Manager + Branch Head
+R-INV-007 | PO Approval Threshold | Purchase Order creation | Multi-level approval workflow; auto-route based on amount; locked after final approval | Inventory Manager + Multi-level Approvers
+R-INV-008 | Issue Slip Mandatory | Inventory item issued to classroom / kitchen / admin | Mandatory digital issue slip with: item, qty, recipient, date, purpose; recipient acknowledges via app | Inventory Manager + Recipient
+R-INV-009 | Stock Audit Frequency | Quarterly audit cycle | Physical count; reconcile with system; variance >5% triggers investigation; Branch Head approval for adjustments | Inventory Manager + Branch Head
+R-INV-010 | Return Window | Item return request | Generate return note; vendor pickup arranged; credit note raised | Inventory Manager
+R-INV-011 | Consumption Tracking | Daily issue / use | Auto-aggregate monthly consumption; variance >20% from average triggers review | Inventory Manager + Coordinator
+R-INV-012 | Asset Disposal Approval | Asset disposal request | Disposal: sale / scrap / donation; document disposal method; remove from asset register; adjust books | Inventory Manager + Director
+
+---
+
+=== Table 106 (Summary) ===
+ 105 ===
+Rule ID | Title | Trigger | Action | Owner
+R-COM-001 | Parent Message Response Time | Parent sends message via app | Auto-acknowledge receipt; assign to class teacher; escalate to Coordinator if no response within SLA | Teacher + Coordinator
+R-COM-002 | Unacknowledged Message Escalation | Message unacknowledged beyond SLA | Auto-escalate; notify next-level via app + SMS; log escalation chain | System (Automated) + Coordinator
+R-COM-003 | Non-Academic Hour Messaging Restriction | Teacher attempts to send parent message outside school hours | Show warning; teacher confirms urgent OR defers to next working day | Teacher + System (Automated)
+R-COM-004 | Broadcast Restriction | User attempts broadcast message | Block broadcast; route to authorized role for approval; pre-approved templates only | Branch Head + IT
+R-COM-005 | Language Preference | Parent onboarding / message send | AI translation applied; teacher reviews before send; parent reads in preferred language | Teacher + System (AI)
+R-COM-006 | Marketing Communication Opt-in | Marketing message send | Filter marketing audience; send only to opted-in parents; honor opt-out within 24 hours | Marketing + Compliance
+R-COM-007 | Communication Channel Opt-out | Parent updates communication preferences | Update preferences within 24 hours; route via remaining channels; confirmation to parent | System (Automated) + Parent
+R-COM-008 | Announcement Approval Workflow | Branch-wide announcement creation | Route to approver; preview + edit; scheduled send after approval | Branch Head + Coordinator
+R-COM-009 | Photo Caption Mandatory | Photo uploaded to parent app | Require caption (min 5 chars) describing context; AI suggests auto-caption; teacher edits | Teacher + System (AI)
+R-COM-010 | Two-way Chat History Retention | Chat message sent / received | Auto-archive; encrypted storage; parent can access own chat history; audit access for staff | System (Automated) + Compliance
+R-COM-011 | WhatsApp Business API Rate Limit | WhatsApp message send | Enforce rate limit; queue non-urgent messages for next day; urgent overrides allowed | System (Automated)
+R-COM-012 | Emergency Notification Cascade | Emergency declared (fire, medical, security) | Trigger cascade within 60 seconds; confirm receipt per parent; escalate non-acknowledged to phone call | Branch Head + System (Automated)
+
+---
+
+=== Table 119 (Summary) ===
+ 118 ===
+Rule ID | Title | Trigger | Action | Owner
+R-CMP-001 | Parent Consent for Child Data | Admission confirmation | Capture digital consent with timestamp + IP + device; store in immutable consent ledger; parent can view consents in app | Admission Counsellor + Compliance Officer
+R-CMP-002 | Consent Withdrawal | Parent withdraws consent via app | Honor withdrawal within 24 hours; stop data collection for withdrawn purpose; retain data already collected per retention policy; notify child of withdrawal (if age-appropriate) | Compliance Officer + System (Automated)
+R-CMP-003 | Child Data Retention Policy | Student exits school (graduation/withdrawal) | Auto-archive student record; apply retention schedule; auto-delete past retention period; parent notified pre-deletion | Compliance Officer + IT
+R-CMP-004 | Child Photo Storage Encryption | Photo captured / uploaded | Encrypt on upload; CDN delivery with signed URLs; auto-expire access URLs; log all access | IT + Compliance
+R-CMP-005 | CCTV Retention Period | CCTV recording in progress | Continuous loop recording; motion-detected incidents flagged; flagged footage moved to long-term encrypted archive | IT + Branch Admin
+R-CMP-006 | Quarterly PII Audit | Quarterly audit cycle | Generate PII access logs; compliance officer reviews anomalies; report to management; corrective actions | Compliance Officer + IT
+R-CMP-007 | Fire NOC Renewal | Annual fire NOC expiry (November) | Apply to local fire department; schedule inspection; receive renewed NOC; upload to compliance store | Branch Admin + Compliance
+R-CMP-008 | Data Breach Notification | Data breach detected (anomaly / unauthorized access) | Trigger breach response plan; forensic investigation; notification template; remediation tracking | Compliance Officer + IT + Director
+R-CMP-009 | POSH Complaint Filing | Staff files POSH complaint (via app / email / in-person) | Confidential intake; ICC constituted; inquiry process; written report; action within 60 days of report | ICC + HR
+R-CMP-010 | POSH Confidentiality | POSH complaint in process | Access control list enforced; audit log of all access; breach of confidentiality = separate offense | ICC + IT
+R-CMP-011 | POSH Training for All Staff | Annual POSH training cycle (April-May) | Online module; quiz; certificate; non-completion blocks payroll (R-HR-010) | HR + Compliance
+R-CMP-012 | POSH Complaint Timeline | POSH complaint filed | Auto-track timeline; alerts at 60 days (inquiry half-way), 80 days (inquiry near-due), 90 days (final) | ICC
+R-CMP-013 | Quarterly Fire Drill | Quarterly fire drill cycle | Schedule drill; conduct with timing; document attendance; report to local fire dept (annual submission) | Branch Admin + Compliance
+R-CMP-014 | Fire Extinguisher Inspection | Monthly fire safety inspection | Monthly visual inspection; annual third-party inspection; refill/replacement tracking | Branch Admin + Inventory
+R-CMP-015 | Evacuation Plan Display | Annual evacuation plan update | Display floor-wise evacuation plan; multi-language (English + local language); Braille if special needs students | Branch Admin
+R-CMP-016 | RTE Non-Discrimination | EWS student enrolled under RTE §12 | System flags EWS students for non-discrimination monitoring; anonymous audit quarterly | Principal + Compliance
+R-CMP-017 | FSSAI Kitchen License | Annual FSSAI license renewal | Renew license before expiry; display license in kitchen; monthly self-audit per FSSAI checklist | Kitchen In-charge + Compliance
+R-C
+---
+
+=== Table 138 (Summary) ===
+ 137 ===
+Rule ID | Title | Trigger | Action | Owner
+R-APR-001 | Discount Approval by Amount | Discount applied to invoice | Auto-route to approver; multi-level workflow if escalation; locked after approval | Accounts Team + Multi-level Approvers
+R-APR-002 | Refund Approval Matrix | Refund request submitted | Multi-level workflow; finance verification; bank account validation; payment within 14 days | Accounts Team + Multi-level Approvers
+R-APR-003 | Leave Approval Matrix | Leave application submitted | Auto-route; ensure substitute arrangement for teachers; lock on approval | Reporting Manager + Multi-level Approvers
+R-APR-004 | Expense Approval by Amount | Expense claim submitted | Multi-level workflow; receipt verification; GST compliance check; payment scheduling | Accounts Team + Multi-level Approvers
+R-APR-005 | Vendor Onboarding Approval | New vendor registration | Verify GSTIN, PAN, bank account, references; signed contract; system access grant | Inventory Manager + Multi-level Approvers
+R-APR-006 | Admission Final Approval | Application Form + Documents + Fee submitted | Auto-approve if all criteria met; Branch Head approval if any exception applied; student record created | Admission Counsellor + Branch Head
+R-APR-007 | Fee Waiver Approval | Fee waiver request submitted with documentation | Multi-level approval; documentation review; valid for current term only | Multi-level Approvers
+R-APR-008 | Asset Disposal Approval | Asset disposal request | Disposal method (sale/scrap/donation); valuation; book adjustment; NOC for hazardous items | Inventory Manager + Multi-level Approvers
+R-APR-009 | Action-Based Role Escalation | User attempts action outside role permissions | Auto-route to higher role; original requester notified; audit logged | System (Automated) + Higher Role
+R-APR-010 | New Position Approval | New position requisition | Job description finalization; HR sourcing; interview panel; offer approval | Branch Head + Director + HR
+R-APR-011 | Salary Revision Approval | Annual performance review outcome | Multi-level workflow; budget verification; HR record update; payroll adjustment next cycle | Multi-level Approvers + HR
+R-APR-012 | School Policy Change Approval | Policy revision proposed | Impact analysis; stakeholder consultation; version control; parent communication if parent-facing | Multi-level Approvers + Compliance
+R-APR-013 | Bulk Data Export Approval | User requests bulk data export (>50 records) | Approval workflow; purpose documentation; data encryption in transit; audit logged | Compliance Officer + Director
+R-APR-014 | Vendor Payment Approval | Vendor invoice + GRN verified | Multi-level workflow; TDS deduction (R-FIN-017); GST input credit verification; NEFT/RTGS payment | Accounts Team + Multi-level Approvers
+R-APR-015 | Curriculum Change Approval | Curriculum revision proposed | Review committee; pilot if needed; parent communication; phased rollout | Principal + Academic Committee
+
+---
+
+=== Table 154 (Summary) ===
+ 153 ===
+Rule ID | Title | Trigger | Action | Owner
+R-NOT-001 | Fee Due Reminder Cadence | Invoice due date approaching / overdue | Multi-channel cascade; parent app + SMS + email + WhatsApp; auto-stop after parent acknowledges | System (Automated) + Accounts Team
+R-NOT-002 | Child Absence Alert | Child marked absent in attendance | Push + SMS to primary parent; if no ack within 30 min, call primary parent; if unreachable, secondary contact | System (Automated) + Teacher
+R-NOT-003 | Daily Report Push Time | Daily school end (pickup) | Auto-compile daily sheet (activities, meals, nap, observations, photos); push to parent app + email | System (Automated)
+R-NOT-004 | Birthday Greeting | Child birthday | Customizable template; school logo; photo if consented; small in-app celebration | System (Automated)
+R-NOT-005 | Festival Greeting | Public festival day | Multi-language greeting; cultural context; school closure reminder if applicable | System (Automated) + Branch Admin
+R-NOT-006 | Incident Notification | Incident reported (R-OPS-015) | Auto-notify based on severity; Branch Head involvement for HIGH; documentation shared via app | Teacher + Branch Head
+R-NOT-007 | Photo Share Alert | Teacher shares photo with parent | Push with thumbnail; parent taps to view full; like/comment options; teacher notified of parent engagement | System (Automated)
+R-NOT-008 | Event Schedule Announcement | School event scheduled (PTM, sports day, annual day) | Multi-channel: app push + email + SMS for major events; app-only for routine | Coordinator + System (Automated)
+R-NOT-009 | Holiday Alert | Public holiday / school-declared holiday | Push + SMS + email; update calendar; reschedule affected activities | Branch Admin + System (Automated)
+R-NOT-010 | Transport Delay Alert | Bus delayed > 10 minutes from scheduled time | Push notification with new ETA; live tracking link; auto-update every 5 min | System (Automated) + Transport In-charge
+R-NOT-011 | Salary Credit Notification | Payroll disbursement complete | Notification with salary slip attached; bank credit confirmation; tax breakdown | System (Automated) + HR + Accounts
+R-NOT-012 | System Maintenance Notification | Scheduled system downtime | Email + app banner; affected features list; expected restoration time; alternate contact (phone) for emergencies | IT + System (Automated)
+
+---
+
+=== Table 167 (Summary) ===
+ 166 ===
+Rule ID | Title | Trigger | Action | Owner
+R-DAT-001 | PII Encryption at Rest | PII data stored in database | Field-level encryption; encryption keys in HSM (Hardware Security Module); key rotation quarterly | IT + Compliance
+R-DAT-002 | Data in Transit Encryption | Data transmission over network | All API calls over HTTPS; certificate pinning for mobile apps; HSTS enabled; mixed-content blocked | IT
+R-DAT-003 | PII Field Masking in UI | PII field displayed in user interface | Auto-mask in lists, exports, logs; full view only with explicit permission + audit log | IT + System (Automated)
+R-DAT-004 | Role-Based Field Visibility | User requests data access | Enforce at API layer; deny by default; allow only explicitly granted; audit logged | IT + Compliance
+R-DAT-005 | Audit Log Retention | User action on PII data | Immutable audit log; WORM (Write Once Read Many) storage; quarterly compliance review | IT + Compliance
+R-DAT-006 | Data Residency — India Only | Cloud infrastructure setup / data storage | All primary data in India regions; backups in India; DR site in different India region | IT + Compliance
+R-DAT-007 | Data Subject Access Request (DSAR) | Parent / staff requests their data via app / email | Compile data package; provide in machine-readable format (JSON/CSV); explain processing purposes | Compliance Officer + IT
+R-DAT-008 | Data Erasure Request | Parent requests erasure of child data post-exit | Soft-delete from primary store; hard-delete from backups within 90 days; erase from analytics; certificate of erasure | Compliance Officer + IT
+R-DAT-009 | Backup Retention Policy | Daily backup cycle | Automated backups; encrypted; geographically separated (India region); quarterly restore drills | IT
+R-DAT-010 | Breach Detection & Response | Anomaly detection / unauthorized access alert | Incident response team activation; forensic capture; containment; eradication; recovery; post-mortem | IT + Compliance + Director
+R-DAT-011 | Soft Delete Policy | User requests data deletion | Soft-delete immediate; data not visible in UI; restorable within 90 days; auto hard-delete after | System (Automated) + Compliance
+R-DAT-012 | Anonymized Analytics Data | Data aggregated for analytics / ML training | Anonymization pipeline; statistical disclosure control; re-identification risk assessment | IT + Data Science + Compliance
+
+---
+
+=== Table 180 (Summary) ===
+ 179 ===
+Rule ID | Title | Trigger | Action | Owner
+R-PLT-001 | Tenant Data Isolation | Every data access query | Enforce at ORM layer (Prisma row-level security); audit log all cross-tenant denial attempts | IT + Platform Admin
+R-PLT-002 | Subscription Grace Period | Subscription renewal overdue | Notify Director + Branch Head + Accounts; restrict features progressively; data archived (read-only) for 90 days post-suspension | Platform Admin + Accounts
+R-PLT-003 | Tenant Suspension Process | Subscription breach / compliance violation / abuse | Notify tenant admin; provide export link; remediation plan; reactivation process documented | Platform Admin + Director + Legal
+R-PLT-004 | Feature Flag per Tier | Tenant onboarding / plan upgrade | Auto-enable features per tier; hide restricted features in UI; upgrade triggers feature unlock | Platform Admin + Product
+R-PLT-005 | License Seat Allocation | User added to tenant | Notify tenant admin; offer seat upgrade; pending user request queued | Platform Admin + System (Automated)
+R-PLT-006 | Branch-Level Data Partition | Multi-branch tenant data access | Enforce branch_id in queries; cross-branch data only for Director role; audit logged | IT + Compliance
+R-PLT-007 | Platform Admin Role Restrictions | Platform admin action | Approval workflow; access request with justification; auto-expire; quarterly compliance review of all admin accesses | Platform Admin + Director + Compliance
+R-PLT-008 | Cross-Tenant Data Block | Any cross-tenant data reference in code | Code-level enforcement (Prisma middleware); deny by default; explicit allowlist for legitimate cross-tenant operations (platform-wide analytics with anonymization) | IT + Platform Admin
+R-PLT-009 | Tenant Onboarding Validation | New tenant registration | KYC verification; GSTIN validation; authorized signatory OTP; initial subscription payment | Platform Admin + Sales
+R-PLT-010 | Tenant Offboarding Process | Tenant cancellation request | Final invoice settlement; data export link (30-day validity); tenant deactivation; data archived 90 days; permanent deletion after | Platform Admin + Accounts + Compliance
+
+---

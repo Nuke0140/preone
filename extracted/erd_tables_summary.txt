@@ -1,0 +1,2724 @@
+--- Table #0 ---
+Rows: 1  Cols: 1
+Header: ['P  R  E  O  N  E    E  N  T  E  R  P  R  I  S  E | PreOne Enterprise ERD | Database Schema & Physical Design v3.0 — Enterprise Preschool Operating System | Document Version: 3.0 | Status: Schema Freeze | Date: 2026-07-12 | Product: PreOne — Enterprise Preschool Operating System | Predecessor: Enterprise DDD v1.0 + ADR Catalog v1.0 | Successor: API Contract Catalog v1.0 + Prisma Schema v3 | Scope: 14 domains • 288 tables • 84 enums • 412 FKs | Classification: Internal Engineering Reference | Prepared by: PreOne Data Platform & Architecture Team |  | PreOne Platform                                        ERD v3.0']
+
+--- Table #1 ---
+Rows: 9  Cols: 4
+Header: ['Document', 'Version', 'Status', 'Relationship to ERD']
+
+--- Table #2 ---
+Rows: 4  Cols: 4
+Header: ['Version', 'Date', 'Author', 'Changes']
+
+--- Table #3 ---
+Rows: 7  Cols: 4
+Header: ['Scenario', 'RPO', 'RTO', 'Strategy']
+
+--- Table #4 ---
+Rows: 13  Cols: 3
+Header: ['Element', 'Convention', 'Rationale']
+
+--- Table #5 ---
+Rows: 16  Cols: 3
+Header: ['Type', 'Use Case', 'Notes']
+
+--- Table #6 ---
+Rows: 10  Cols: 3
+Header: ['Type', 'When to Use', 'Example']
+
+--- Table #7 ---
+Rows: 8  Cols: 3
+Header: ['Constraint', 'Purpose', 'Example']
+
+--- Table #8 ---
+Rows: 5  Cols: 3
+Header: ['Classification', 'Examples', 'Handling']
+
+--- Table #9 ---
+Rows: 9  Cols: 3
+Header: ['DPDP Section', 'Requirement', 'Database Implementation']
+
+--- Table #10 ---
+Rows: 6  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #11 ---
+Rows: 9  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #12 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #13 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #14 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #15 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #16 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #17 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #18 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #19 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #20 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #21 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #22 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #23 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #24 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #25 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #26 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #27 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #28 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #29 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #30 ---
+Rows: 13  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #31 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #32 ---
+Rows: 23  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #33 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #34 ---
+Rows: 16  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #35 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #36 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #37 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #38 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #39 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #40 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #41 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #42 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #43 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #44 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #45 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #46 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #47 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #48 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #49 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #50 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #51 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #52 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #53 ---
+Rows: 5  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #54 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #55 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #56 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #57 ---
+Rows: 15  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #58 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #59 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #60 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #61 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #62 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #63 ---
+Rows: 20  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #64 ---
+Rows: 5  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #65 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #66 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #67 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #68 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #69 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #70 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #71 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #72 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #73 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #74 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #75 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #76 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #77 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #78 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #79 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #80 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #81 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #82 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #83 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #84 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #85 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #86 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #87 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #88 ---
+Rows: 16  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #89 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #90 ---
+Rows: 21  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #91 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #92 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #93 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #94 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #95 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #96 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #97 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #98 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #99 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #100 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #101 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #102 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #103 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #104 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #105 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #106 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #107 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #108 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #109 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #110 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #111 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #112 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #113 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #114 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #115 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #116 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #117 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #118 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #119 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #120 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #121 ---
+Rows: 23  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #122 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #123 ---
+Rows: 23  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #124 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #125 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #126 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #127 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #128 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #129 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #130 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #131 ---
+Rows: 17  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #132 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #133 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #134 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #135 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #136 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #137 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #138 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #139 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #140 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #141 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #142 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #143 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #144 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #145 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #146 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #147 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #148 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #149 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #150 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #151 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #152 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #153 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #154 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #155 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #156 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #157 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #158 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #159 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #160 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #161 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #162 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #163 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #164 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #165 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #166 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #167 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #168 ---
+Rows: 28  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #169 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #170 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #171 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #172 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #173 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #174 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #175 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #176 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #177 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #178 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #179 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #180 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #181 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #182 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #183 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #184 ---
+Rows: 4  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #185 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #186 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #187 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #188 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #189 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #190 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #191 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #192 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #193 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #194 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #195 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #196 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #197 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #198 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #199 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #200 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #201 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #202 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #203 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #204 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #205 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #206 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #207 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #208 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #209 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #210 ---
+Rows: 4  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #211 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #212 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #213 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #214 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #215 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #216 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #217 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #218 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #219 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #220 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #221 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #222 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #223 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #224 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #225 ---
+Rows: 33  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #226 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #227 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #228 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #229 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #230 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #231 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #232 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #233 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #234 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #235 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #236 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #237 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #238 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #239 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #240 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #241 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #242 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #243 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #244 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #245 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #246 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #247 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #248 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #249 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #250 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #251 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #252 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #253 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #254 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #255 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #256 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #257 ---
+Rows: 19  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #258 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #259 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #260 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #261 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #262 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #263 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #264 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #265 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #266 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #267 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #268 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #269 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #270 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #271 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #272 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #273 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #274 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #275 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #276 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #277 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #278 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #279 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #280 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #281 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #282 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #283 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #284 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #285 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #286 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #287 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #288 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #289 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #290 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #291 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #292 ---
+Rows: 27  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #293 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #294 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #295 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #296 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #297 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #298 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #299 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #300 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #301 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #302 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #303 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #304 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #305 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #306 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #307 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #308 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #309 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #310 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #311 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #312 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #313 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #314 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #315 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #316 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #317 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #318 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #319 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #320 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #321 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #322 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #323 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #324 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #325 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #326 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #327 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #328 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #329 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #330 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #331 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #332 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #333 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #334 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #335 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #336 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #337 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #338 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #339 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #340 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #341 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #342 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #343 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #344 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #345 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #346 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #347 ---
+Rows: 30  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #348 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #349 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #350 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #351 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #352 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #353 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #354 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #355 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #356 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #357 ---
+Rows: 16  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #358 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #359 ---
+Rows: 17  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #360 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #361 ---
+Rows: 16  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #362 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #363 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #364 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #365 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #366 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #367 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #368 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #369 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #370 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #371 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #372 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #373 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #374 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #375 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #376 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #377 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #378 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #379 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #380 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #381 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #382 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #383 ---
+Rows: 4  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #384 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #385 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #386 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #387 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #388 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #389 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #390 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #391 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #392 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #393 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #394 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #395 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #396 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #397 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #398 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #399 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #400 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #401 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #402 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #403 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #404 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #405 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #406 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #407 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #408 ---
+Rows: 39  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #409 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #410 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #411 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #412 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #413 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #414 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #415 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #416 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #417 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #418 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #419 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #420 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #421 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #422 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #423 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #424 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #425 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #426 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #427 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #428 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #429 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #430 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #431 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #432 ---
+Rows: 22  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #433 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #434 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #435 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #436 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #437 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #438 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #439 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #440 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #441 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #442 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #443 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #444 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #445 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #446 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #447 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #448 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #449 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #450 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #451 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #452 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #453 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #454 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #455 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #456 ---
+Rows: 4  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #457 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #458 ---
+Rows: 18  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #459 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #460 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #461 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #462 ---
+Rows: 4  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #463 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #464 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #465 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #466 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #467 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #468 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #469 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #470 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #471 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #472 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #473 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #474 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #475 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #476 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #477 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #478 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #479 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #480 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #481 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #482 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #483 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #484 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #485 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #486 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #487 ---
+Rows: 32  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #488 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #489 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #490 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #491 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #492 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #493 ---
+Rows: 21  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #494 ---
+Rows: 4  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #495 ---
+Rows: 21  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #496 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #497 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #498 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #499 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #500 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #501 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #502 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #503 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #504 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #505 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #506 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #507 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #508 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #509 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #510 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #511 ---
+Rows: 18  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #512 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #513 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #514 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #515 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #516 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #517 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #518 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #519 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #520 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #521 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #522 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #523 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #524 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #525 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #526 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #527 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #528 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #529 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #530 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #531 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #532 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #533 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #534 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #535 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #536 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #537 ---
+Rows: 16  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #538 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #539 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #540 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #541 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #542 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #543 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #544 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #545 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #546 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #547 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #548 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #549 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #550 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #551 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #552 ---
+Rows: 19  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #553 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #554 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #555 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #556 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #557 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #558 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #559 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #560 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #561 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #562 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #563 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #564 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #565 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #566 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #567 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #568 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #569 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #570 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #571 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #572 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #573 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #574 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #575 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #576 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #577 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #578 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #579 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #580 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #581 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #582 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #583 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #584 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #585 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #586 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #587 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #588 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #589 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #590 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #591 ---
+Rows: 12  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #592 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #593 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #594 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #595 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #596 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #597 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #598 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #599 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #600 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #601 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #602 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #603 ---
+Rows: 16  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #604 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #605 ---
+Rows: 11  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #606 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #607 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #608 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #609 ---
+Rows: 8  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #610 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #611 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #612 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #613 ---
+Rows: 4  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #614 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #615 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #616 ---
+Rows: 13  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #617 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #618 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #619 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #620 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #621 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #622 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #623 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #624 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #625 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #626 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #627 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #628 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #629 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #630 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #631 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #632 ---
+Rows: 10  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #633 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #634 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #635 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #636 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #637 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #638 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #639 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #640 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #641 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #642 ---
+Rows: 5  Cols: 2
+Header: ['KPI', 'Target / Definition']
+
+--- Table #643 ---
+Rows: 13  Cols: 4
+Header: ['Table', 'Prisma Model', 'Aggregate', 'Purpose']
+
+--- Table #644 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #645 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #646 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #647 ---
+Rows: 7  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #648 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #649 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #650 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #651 ---
+Rows: 14  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #652 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #653 ---
+Rows: 15  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #654 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #655 ---
+Rows: 13  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #656 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #657 ---
+Rows: 12  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #658 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #659 ---
+Rows: 9  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #660 ---
+Rows: 3  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #661 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #662 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #663 ---
+Rows: 5  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #664 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #665 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #666 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #667 ---
+Rows: 6  Cols: 5
+Header: ['Column', 'Type', 'Null', 'Key', 'Description']
+
+--- Table #668 ---
+Rows: 2  Cols: 4
+Header: ['Index Name', 'Columns', 'Type', 'Purpose']
+
+--- Table #669 ---
+Rows: 31  Cols: 5
+Header: ['FK Column', 'References', 'Domain Flow', 'ON DELETE', 'Purpose']
+
+--- Table #670 ---
+Rows: 19  Cols: 4
+Header: ['Aggregate', 'Root Table', 'Child Tables', 'Domain']
+
+--- Table #671 ---
+Rows: 16  Cols: 4
+Header: ['Domain', 'Tables', 'Prisma Models', 'Aggregate Roots']
+
+--- Table #672 ---
+Rows: 13  Cols: 4
+Header: ['Wave', 'Scope', 'Duration', 'Risk']
+
+--- Table #673 ---
+Rows: 5  Cols: 5
+Header: ['Backup Type', 'Frequency', 'Retention', 'Storage', 'Purpose']
+
+--- Table #674 ---
+Rows: 5  Cols: 4
+Header: ['Drill Type', 'Frequency', 'Owner', 'Success Criteria']
+
+--- Table #675 ---
+Rows: 16  Cols: 5
+Header: ['Domain', '1k schools', '5k schools', '10k schools', 'Growth/Year']
+
+--- Table #676 ---
+Rows: 21  Cols: 5
+Header: ['Table', 'Rows', 'Avg Row Size', 'Total Size', 'Partitioned?']
+
+--- Table #677 ---
+Rows: 8  Cols: 4
+Header: ['Data Type', 'Hot Retention', 'Cold Retention', 'Action']
+
+--- Table #678 ---
+Rows: 35  Cols: 2
+Header: ['Term', 'Definition']
+
+--- Table #679 ---
+Rows: 4  Cols: 4
+Header: ['Version', 'Date', 'Changes', 'Author']
+
+--- Table #680 ---
+Rows: 7  Cols: 4
+Header: ['Role', 'Name', 'Responsibility', 'Approval Date']
+

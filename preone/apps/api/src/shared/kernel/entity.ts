@@ -11,15 +11,16 @@
  *   - `domainEvents`: queued events to be published after save
  */
 import { randomUUID } from 'node:crypto';
+
 import type { DomainEvent } from './domain-event';
 
-export abstract class Entity<TProps extends Record<string, unknown>> {
+export abstract class Entity<TProps extends object> {
   protected readonly _id: string;
   protected readonly _props: TProps;
   private _domainEvents: DomainEvent[] = [];
   private _version: number;
 
-  constructor(props: TProps, id?: string, version: number = 1) {
+  constructor(props: TProps, id?: string, version = 1) {
     this._id = id ?? randomUUID();
     this._props = props;
     this._version = version;

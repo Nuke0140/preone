@@ -2,22 +2,26 @@
  * AuthController — login, OTP send, refresh, logout.
  *
  * All routes marked @Public() — bypasses JwtAuthGuard.
- * Rate-limited via @Throttler('auth') — 5 req/min per IP.
+ * Rate-limited via ThrottlerGuard — 5 req/min per IP for auth routes.
+ *
+ * Per API Catalog §16.2:
+ *   POST /v1/auth/login        — Email + password login
+ *   POST /v1/auth/otp/send     — Send OTP to phone
+ *   POST /v1/auth/otp/verify   — Verify OTP and login
+ *   POST /v1/auth/refresh      — Refresh access token
+ *   POST /v1/auth/logout       — Logout (revoke session)
  */
-import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Get, Req } from '@nestjs/common';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+
 import { Public } from '@app/decorators/auth.decorators';
 import { ResponseDto } from '@common/types/response-dto';
-import { AuthService } from '../application/services/auth.service';
+
 import {
-  LoginDto,
-  SendOtpDto,
-  VerifyOtpDto,
-  RefreshTokenDto,
-  LogoutDto,
-  AuthResponseDto,
+  LoginDto, SendOtpDto, VerifyOtpDto, RefreshTokenDto, LogoutDto, AuthResponseDto,
 } from '../application/dto/auth.dto';
+import { AuthService } from '../application/services/auth.service';
 
 @ApiTags('identity')
 @Controller('auth')
@@ -33,8 +37,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Email + password login' })
   async login(
     @Body() dto: LoginDto,
+    @Req() req: any,
   ): Promise<ResponseDto<AuthResponseDto>> {
-    const result = await this.auth.loginWithPassword(dto);
+    const ip = req.ip ?? req.socket?.remoteAddress;
+    const result = await this.auth.loginWithPassword(dto, ip);
     return ResponseDto.success(result);
   }
 
@@ -59,8 +65,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify OTP and login' })
   async verifyOtp(
     @Body() dto: VerifyOtpDto,
+    @Req() req: any,
   ): Promise<ResponseDto<AuthResponseDto>> {
-    const r = await this.auth.verifyOtp(dto);
+    const ip = req.ip ?? req.socket?.remoteAddress;
+    const r = await this.auth.verifyOtp(dto, ip);
     return ResponseDto.success(r);
   }
 

@@ -15,7 +15,7 @@
  *   - Parent engagement metrics (login frequency, message response time)
  *   - Staff productivity metrics (observation count, lesson plan adherence)
  *
- * Read-optimized: Uses Prisma read replica via `/* replica */` comment hint
+ * Read-optimized: Uses Prisma read replica via replica comment hint
  * (per BTD §25.1 — read replica routing for reports).
  *
  * BullMQ: Long-running reports (PDF generation) pushed to 'report-pdf' queue

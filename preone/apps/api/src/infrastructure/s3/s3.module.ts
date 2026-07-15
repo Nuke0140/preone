@@ -5,6 +5,7 @@
  * Pre-signed URLs for direct browser upload → reduces API load.
  */
 import { Global, Module } from '@nestjs/common';
+
 import { S3Service } from './s3.service';
 
 @Global()

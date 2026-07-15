@@ -14,44 +14,58 @@
  *
  * Per BTD §26.1: "No Date — use ISO-8601 string or custom DateTime VO"
  */
-import { Inject, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { argon2Verify, argon2id } from 'hash-wasm';
-import { SignJWT, jwtVerify, importPKCS8, importSPKI } from 'jose';
 import { randomInt } from 'node:crypto';
+
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as argon2 from 'argon2';
+
+import {
+  AuthenticationException, NotFoundException as NotFoundErr,
+} from '@common/errors/exceptions';
 import type { AppConfig } from '@config/env/app-config.type';
-import { USER_REPOSITORY } from '../domain/repositories/tokens';
-import type { UserAggregate } from '../domain/aggregates/user.aggregate';
-import { OtpService } from './otp.service';
+
+import { USER_REPOSITORY } from '../../domain/repositories/tokens';
+
 import { JwtService } from './jwt.service';
-import type { LoginDto, SendOtpDto, VerifyOtpDto, RefreshTokenDto, LogoutDto, AuthResponseDto } from '../application/dto/auth.dto';
-import { AuthenticationException, NotFoundException as NotFoundErr } from '@common/errors/exceptions';
+import { OtpService } from './otp.service';
+
+import type { UserAggregate } from '../../domain/aggregates/user.aggregate';
+import type { UserRepository } from '../../domain/repositories/user.repository';
+import type {
+  LoginDto, SendOtpDto, VerifyOtpDto, RefreshTokenDto, LogoutDto, AuthResponseDto,
+} from '../dto/auth.dto';
+
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
-    @Inject(USER_REPOSITORY) private readonly users: UserAggregate['repository'] extends infer R ? any : any,
+    @Inject(USER_REPOSITORY) private readonly users: UserRepository,
     private readonly otp: OtpService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService<AppConfig, true>,
   ) {}
 
-  async loginWithPassword(dto: LoginDto): Promise<AuthResponseDto> {
+  async loginWithPassword(dto: LoginDto, ip?: string): Promise<AuthResponseDto> {
     const user = await this.users.findByEmail(dto.email);
-    if (!user || !user.passwordHash) {
+    if (!user?.passwordHash) {
       throw new AuthenticationException('INVALID_CREDENTIALS', 'Invalid email or password.');
     }
     if (user.status !== 'ACTIVE') {
       throw new AuthenticationException('ACCOUNT_DISABLED', `Account status: ${user.status}`);
     }
 
-    const valid = await argon2Verify({
-      password: dto.password,
-      hash: user.passwordHash,
-      hashType: argon2id,
-    });
+    const valid = await argon2.verify(user.passwordHash, dto.password);
     if (!valid) {
       throw new AuthenticationException('INVALID_CREDENTIALS', 'Invalid email or password.');
+    }
+
+    // Record login info
+    if (ip) {
+      user.recordLogin(ip, randomInt(1, 1_000_000).toString(), new Date().toISOString());
+      await this.users.save(user);
     }
 
     return this.issueTokens(user);
@@ -59,12 +73,14 @@ export class AuthService {
 
   async sendOtp(dto: SendOtpDto): Promise<{ sent: true; expiresInSeconds: number }> {
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
-    await this.otp.store(dto.phone, code, this.config.get('otp.ttlSeconds', { infer: true }));
+    const ttl = this.config.get('otp.ttlSeconds', { infer: true });
+    await this.otp.store(dto.phone, code, ttl);
     // TODO: enqueue SMS job via BullMQ (msg91 queue)
-    return { sent: true, expiresInSeconds: this.config.get('otp.ttlSeconds', { infer: true }) };
+    this.logger.log(`OTP sent to ${dto.phone} (purpose: ${dto.purpose ?? 'login'})`);
+    return { sent: true, expiresInSeconds: ttl };
   }
 
-  async verifyOtp(dto: VerifyOtpDto): Promise<AuthResponseDto> {
+  async verifyOtp(dto: VerifyOtpDto, ip?: string): Promise<AuthResponseDto> {
     const stored = await this.otp.verify(dto.phone, dto.code);
     if (!stored) {
       throw new AuthenticationException('OTP_INVALID', 'Invalid or expired OTP.');
@@ -72,6 +88,13 @@ export class AuthService {
     const user = await this.users.findByPhone(dto.phone);
     if (!user) {
       throw new NotFoundErr('User', `phone ${dto.phone}`);
+    }
+    if (user.status !== 'ACTIVE') {
+      throw new AuthenticationException('ACCOUNT_DISABLED', `Account status: ${user.status}`);
+    }
+    if (ip) {
+      user.recordLogin(ip, randomInt(1, 1_000_000).toString(), new Date().toISOString());
+      await this.users.save(user);
     }
     return this.issueTokens(user);
   }
@@ -82,6 +105,9 @@ export class AuthService {
     });
     const user = await this.users.findById(payload.sub!);
     if (!user) throw new AuthenticationException('USER_NOT_FOUND', 'User no longer exists.');
+    if (user.status !== 'ACTIVE') {
+      throw new AuthenticationException('ACCOUNT_DISABLED', `Account status: ${user.status}`);
+    }
 
     // Rotate: invalidate old refresh token (add to Redis blacklist)
     await this.jwt.revokeRefresh(dto.refreshToken, payload.exp!);
@@ -90,12 +116,14 @@ export class AuthService {
   }
 
   async logout(dto: LogoutDto): Promise<void> {
+    // Revoke refresh token for 30 days (covers max refresh token lifetime)
     await this.jwt.revokeRefresh(dto.refreshToken, Math.floor(Date.now() / 1000) + 30 * 24 * 3600);
   }
 
   // ─────────────────────────────────────────────
 
-  private async issueTokens(user: any): Promise<AuthResponseDto> {
+  private async issueTokens(user: UserAggregate): Promise<AuthResponseDto> {
+    const sessionId = user.sessionId ?? randomInt(1, 1_000_000).toString();
     const access = await this.jwt.signAccess({
       sub: user.id,
       tenant_id: user.tenantId,
@@ -105,7 +133,7 @@ export class AuthService {
       phone: user.phone,
       roles: user.roles,
       perms_version: user.permissionsVersion,
-      session_id: user.sessionId ?? randomInt(1, 1_000_000).toString(),
+      session_id: sessionId,
     });
     const refresh = await this.jwt.signRefresh({ sub: user.id });
 

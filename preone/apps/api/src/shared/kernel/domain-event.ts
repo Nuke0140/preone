@@ -14,11 +14,9 @@
  */
 import { randomUUID } from 'node:crypto';
 
-export interface DomainEventPayload {
-  readonly [key: string]: unknown;
-}
+export type DomainEventPayload = Readonly<Record<string, unknown>>;
 
-export abstract class DomainEvent<P extends DomainEventPayload = DomainEventPayload> {
+export abstract class DomainEvent<P extends object = DomainEventPayload> {
   public readonly eventId: string;
   public readonly occurredAt: string; // ISO-8601 UTC
   public readonly eventType: string;

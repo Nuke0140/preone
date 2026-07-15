@@ -17,6 +17,7 @@
  * For prod: 6 nodes (3 master + 3 replica) with Sentinel HA.
  */
 import { Global, Module, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+
 import { RedisService } from './redis.service';
 
 @Global()

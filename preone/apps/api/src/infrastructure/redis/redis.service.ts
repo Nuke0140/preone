@@ -7,6 +7,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import IORedis, { type RedisOptions } from 'ioredis';
+
 import type { AppConfig } from '@config/env/app-config.type';
 
 export enum RedisDb {

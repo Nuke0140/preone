@@ -2,6 +2,7 @@
  * HealthService — checks DB, Redis, S3 connectivity.
  */
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from '@infra/prisma/prisma.service';
 import { RedisService } from '@infra/redis/redis.service';
 

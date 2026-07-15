@@ -35,7 +35,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@app': '/src',
+      '@app': '/src/app',
       '@common': '/src/common',
       '@config': '/src/config',
       '@infra': '/src/infrastructure',

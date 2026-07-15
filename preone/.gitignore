@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Turbo cache
+.turbo/
+.turbo-cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+!.env.example
+!.env.*.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# Coverage
+coverage/
+*.lcov
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Docker
+infra/docker/data/
+
+# Secrets — never commit
+*.pem
+*.key
+secrets/
+infra/secrets/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Prisma
+prisma/migrations/dev.db*
+prisma/*.db
+
+# Mobile builds
+apps/mobile/ios/
+apps/mobile/android/
+apps/mobile/.expo/
+
+# Testing
+test-results/
+playwright-report/

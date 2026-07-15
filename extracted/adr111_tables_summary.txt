@@ -1,0 +1,92 @@
+--- Table #0 ---
+Rows: 1  Cols: 1
+Header: ['P  R  E  O  N  E    E  N  T  E  R  P  R  I  S  E | PreOne ADR-111 | DevOps & Infrastructure | Architecture Decision Record — DevOps & Infrastructure Architecture | ADR ID: ADR-111 | Status: LOCKED | Document Version: 1.0 | Date: 2026-07-14 | Product: PreOne — Enterprise Preschool Operating System | Predecessor: ADR Catalog v1.0, Backend TD v1.0, Frontend Architecture v1.0 | Successor: DevOps Runbook, Kubernetes Manifests, Terraform Modules, Production Release | Scope: Docker, Kubernetes, CI/CD, NGINX, PostgreSQL HA, Redis, Monitoring, Logging, DR | Classification: Internal Engineering Reference | Prepared by: PreOne Architecture & DevOps Team |  | PreOne Platform                                        ADR-111 v1.0']
+
+--- Table #1 ---
+Rows: 11  Cols: 3
+Header: ['Document', 'Version', 'Relationship to ADR-111']
+
+--- Table #2 ---
+Rows: 14  Cols: 3
+Header: ['Layer', 'Technology', 'Rationale']
+
+--- Table #3 ---
+Rows: 6  Cols: 4
+Header: ['Image Name', 'Service', 'Size + Notes', 'Scaling']
+
+--- Table #4 ---
+Rows: 11  Cols: 3
+Header: ['Namespace', 'Workloads', 'Notes']
+
+--- Table #5 ---
+Rows: 12  Cols: 4
+Header: ['Stage', 'Action', 'Description', 'Duration']
+
+--- Table #6 ---
+Rows: 11  Cols: 3
+Header: ['Responsibility', 'Configuration', 'Notes']
+
+--- Table #7 ---
+Rows: 11  Cols: 3
+Header: ['Feature', 'Implementation', 'Notes']
+
+--- Table #8 ---
+Rows: 11  Cols: 3
+Header: ['Use Case', 'Description', 'TTL / Notes']
+
+--- Table #9 ---
+Rows: 13  Cols: 4
+Header: ['Metric', 'Scope', 'Source', 'Alert Threshold']
+
+--- Table #10 ---
+Rows: 11  Cols: 4
+Header: ['Log Type', 'Content', 'When Emitted', 'Format']
+
+--- Table #11 ---
+Rows: 11  Cols: 4
+Header: ['Component', 'Frequency', 'Retention', 'Storage / Notes']
+
+--- Table #12 ---
+Rows: 11  Cols: 3
+Header: ['Metric', 'Target', 'Implementation']
+
+--- Table #13 ---
+Rows: 7  Cols: 4
+Header: ['Environment', 'Cluster / Location', 'Deployment Trigger', 'Purpose']
+
+--- Table #14 ---
+Rows: 14  Cols: 3
+Header: ['Control', 'Implementation', 'Notes']
+
+--- Table #15 ---
+Rows: 13  Cols: 3
+Header: ['Tactic', 'Description', 'Scope']
+
+--- Table #16 ---
+Rows: 18  Cols: 3
+Header: ['Layer', 'Technology', 'Role']
+
+--- Table #17 ---
+Rows: 11  Cols: 3
+Header: ['Decision', 'Choice', 'Rationale']
+
+--- Table #18 ---
+Rows: 9  Cols: 3
+Header: ['Driver', 'Specifics', 'Weight']
+
+--- Table #19 ---
+Rows: 26  Cols: 2
+Header: ['Term', 'Definition']
+
+--- Table #20 ---
+Rows: 11  Cols: 2
+Header: ['Document Title', 'PreOne ADR-111 DevOps & Infrastructure Architecture']
+
+--- Table #21 ---
+Rows: 5  Cols: 4
+Header: ['Version', 'Date', 'Author', 'Changes']
+
+--- Table #22 ---
+Rows: 6  Cols: 4
+Header: ['Role', 'Name', 'Responsibility', 'Status']
+

@@ -1,0 +1,2697 @@
+[
+  {
+    "index": 0,
+    "rows": [
+      [
+        "P  R  E  O  N  E    E  N  T  E  R  P  R  I  S  E | PreOne Enterprise | Backend Technical Design | Backend Architecture — Enterprise Preschool Operating System | Document Version: 1.0 | Status: Backend Architecture Freeze | Date: 2026-07-14 | Product: PreOne — Enterprise Preschool Operating System | Predecessor: Vision v1.0, BRC v1.0, Master PRD v1.0, DDD v1.0, ADR Catalog, ERD v3.0, Prisma Schema v3.0, API Contract Catalog | Successor: Backend Implementation, Unit Tests, Integration Tests, Deployment, Production Release | Classification: Internal Engineering Reference | Prepared by: PreOne Architecture & Engineering Team |  | PreOne Platform                                        Backend TD v1.0"
+      ]
+    ]
+  },
+  {
+    "index": 1,
+    "rows": [
+      [
+        "Document",
+        "Version",
+        "Status",
+        "Relationship to BTD"
+      ],
+      [
+        "Vision Document",
+        "v1.0",
+        "Vision Freeze",
+        "Strategic intent — BTD च्या non-functional requirements (scale, compliance) Vision शी align"
+      ],
+      [
+        "BRC",
+        "v1.0",
+        "Business Freeze",
+        "176 rules — BTD च्या Domain Events + Specifications BRC चे implementation"
+      ],
+      [
+        "Master PRD",
+        "v1.0",
+        "Product Freeze",
+        "Functional requirements — BTD चे API endpoints PRD च्या FRs चे direct mapping"
+      ],
+      [
+        "DDD",
+        "v1.0",
+        "Architecture Freeze",
+        "Domain model — BTD च्या NestJS modules DDD च्या bounded contexts चे implementation"
+      ],
+      [
+        "ADR Catalog",
+        "v1.0",
+        "Architecture Freeze",
+        "Decisions — BTD प्रत्येक architectural choice ला ADR reference करतो"
+      ],
+      [
+        "ERD v3.0",
+        "v3.0",
+        "Schema Freeze",
+        "Physical schema — BTD च्या Prisma models ERD चे direct translation"
+      ],
+      [
+        "Prisma Schema v3.0",
+        "v3.0",
+        "Schema Freeze",
+        "Code-first schema — BTD च्या repositories चे data access layer"
+      ],
+      [
+        "API Contract Catalog",
+        "v1.0",
+        "API Freeze",
+        "Endpoint contracts — BTD च्या controllers चे spec"
+      ]
+    ]
+  },
+  {
+    "index": 2,
+    "rows": [
+      [
+        "Component",
+        "Version",
+        "Role",
+        "Highlights",
+        "Why Chosen"
+      ],
+      [
+        "NestJS",
+        "v11.x",
+        "Application Framework",
+        "Modular DI, decorators, microservices, WebSocket gateway, scheduling, OpenAPI via @nestjs/swagger",
+        "Production-grade Angular-style DI; ecosystem mature; squad familiarity"
+      ],
+      [
+        "TypeScript",
+        "v5.4+",
+        "Language",
+        "Strict mode, path aliases, decorators, const assertions, satisfies operator",
+        "Type safety at compile time; DDD-friendly with branded types & value objects"
+      ],
+      [
+        "Prisma ORM",
+        "v6.x",
+        "ORM / Data Access",
+        "Schema-first, type-safe client, migrations, multi-schema, read-replica routing (client extensions)",
+        "Type safety end-to-end; migration history; excellent Postgres support"
+      ],
+      [
+        "PostgreSQL",
+        "v16",
+        "Primary Database",
+        "RLS, partial indexes, JSONB, generated columns, pgcrypto, pgvector (for AI), logical replication",
+        "ACID compliance; RLS for tenant isolation; pgvector for embeddings"
+      ],
+      [
+        "Redis",
+        "v7.2",
+        "Cache + Queue Backend",
+        "Permission cache, menu cache, BullMQ backend, rate-limit store, pub/sub",
+        "Sub-ms reads; supports BullMQ persistence; Redis Streams for events"
+      ],
+      [
+        "BullMQ",
+        "v5.x",
+        "Background Job Queue",
+        "Repeatable jobs, delayed jobs, priorities, rate-limited queues, DLQ, flow producer",
+        "Battle-tested on Redis; observability via Bull Board; sandboxed processors"
+      ],
+      [
+        "JWT (jose)",
+        "v5.x",
+        "Authentication Tokens",
+        "Access tokens (15 min) + refresh tokens (30 d, rotated), RS256 signed",
+        "Stateless verification; horizontal scaling friendly"
+      ],
+      [
+        "WebSocket (Socket.IO)",
+        "v4.x",
+        "Real-Time Layer",
+        "Adaptive transport, rooms per tenant+branch, sticky-session via Redis adapter",
+        "Bi-directional push for chat, attendance live, dashboards"
+      ],
+      [
+        "AWS S3",
+        "—",
+        "Object Storage",
+        "Pre-signed uploads, server-side encryption (SSE-KMS), lifecycle to Glacier, versioning",
+        "Durable file storage; lifecycle to Glacier for archives; KMS encryption"
+      ],
+      [
+        "Zod / class-validator",
+        "—",
+        "Validation",
+        "DTO validation pipeline; schema composition; custom decorators",
+        "Pipe integration; fail-fast on invalid input"
+      ],
+      [
+        "Pino",
+        "v9.x",
+        "Logging",
+        "JSON structured logs, child loggers, redact PII, async transport",
+        "Low overhead; structured for Loki/ELK; correlation by traceId"
+      ],
+      [
+        "OpenTelemetry",
+        "v1.x",
+        "Tracing / Metrics",
+        "Auto-instrumentation for HTTP/PG/Redis, custom spans, OTLP exporter",
+        "Vendor-neutral; spans correlated to logs"
+      ],
+      [
+        "Vitest",
+        "v1.x",
+        "Unit Test Runner",
+        "Native ESM, snapshot, in-source testing, coverage via v8",
+        "Fast startup; Jest-compatible API; TS native"
+      ],
+      [
+        "Testcontainers",
+        "v10.x",
+        "Integration Tests",
+        "Real Postgres + Redis containers per test run",
+        "Real DB semantics; no mocked Prisma drift"
+      ],
+      [
+        "ESLint + Prettier",
+        "v9.x",
+        "Linting & Format",
+        "Import boundaries (eslint-plugin-import), functional patterns, no-magic-numbers",
+        "Enforce dependency rules; format consistency"
+      ],
+      [
+        "Husky + lint-staged",
+        "—",
+        "Pre-commit Hooks",
+        "Lint, format, type-check on staged files",
+        "Catch issues before push; block broken commits"
+      ],
+      [
+        "Compodoc",
+        "—",
+        "Module Documentation",
+        "Auto-generated module diagrams from NestJS sources",
+        "Living architecture docs"
+      ],
+      [
+        "Helmet + compression",
+        "—",
+        "HTTP Hardening",
+        "CSP, HSTS, no-sniff, gzip/brotli",
+        "Standard OWASP headers; payload size reduction"
+      ]
+    ]
+  },
+  {
+    "index": 3,
+    "rows": [
+      [
+        "Directory",
+        "Responsibility",
+        "Notes"
+      ],
+      [
+        "app/",
+        "Application bootstrap, global modules, filters, pipes, interceptors, guards",
+        "Crown of the process; one-time wiring"
+      ],
+      [
+        "common/",
+        "Shared kernel — base classes, error codes, result types, decorators, utilities, types",
+        "Cross-cutting, dependency-free"
+      ],
+      [
+        "config/",
+        "Typed config loaders (env, secrets, tenant config, feature flags)",
+        "Loaded once at bootstrap"
+      ],
+      [
+        "infrastructure/",
+        "Cross-module infra — Prisma client, Redis client, S3 client, EventBus, Mailer, BullMQ registrars",
+        "Concrete adapters; domain sees only interfaces"
+      ],
+      [
+        "shared/",
+        "Shared domain primitives — UoW base, base entity, base aggregate, value object base, specification base",
+        "DDD kernel reused by all modules"
+      ],
+      [
+        "modules/",
+        "Business modules (one folder per bounded context)",
+        "Where the actual product lives"
+      ]
+    ]
+  },
+  {
+    "index": 4,
+    "rows": [
+      [
+        "#",
+        "Module",
+        "Primary Domain",
+        "Approximate API Count"
+      ],
+      [
+        "1",
+        "identity",
+        "Users, Roles, Permissions, Tenants, Branches",
+        "~70"
+      ],
+      [
+        "2",
+        "crm",
+        "Leads, Campaigns, Conversions",
+        "~40"
+      ],
+      [
+        "3",
+        "admissions",
+        "Applications, Counselling, Approvals",
+        "~50"
+      ],
+      [
+        "4",
+        "student",
+        "Student Lifecycle, Profiles, Guardians",
+        "~55"
+      ],
+      [
+        "5",
+        "academics",
+        "Curriculum, Observations, Report Cards",
+        "~60"
+      ],
+      [
+        "6",
+        "attendance",
+        "Daily Attendance, Arrival, Pickup",
+        "~35"
+      ],
+      [
+        "7",
+        "communication",
+        "Announcements, Chat, Notifications",
+        "~50"
+      ],
+      [
+        "8",
+        "finance",
+        "Fees, Invoices, Payments, Ledger, GST",
+        "~80"
+      ],
+      [
+        "9",
+        "inventory",
+        "Items, Stock, PR, PO, GRN",
+        "~45"
+      ],
+      [
+        "10",
+        "hr",
+        "Staff, Payroll, Leave, Attendance",
+        "~45"
+      ],
+      [
+        "11",
+        "administration",
+        "Assets, Maintenance, Visitors",
+        "~25"
+      ],
+      [
+        "12",
+        "reports",
+        "Cross-domain Reports, Analytics",
+        "~30"
+      ],
+      [
+        "13",
+        "settings",
+        "Academic Years, Calendars, Configs",
+        "~20"
+      ],
+      [
+        "14",
+        "platform",
+        "Subscriptions, Billing, Feature Flags",
+        "~25"
+      ]
+    ]
+  },
+  {
+    "index": 5,
+    "rows": [
+      [
+        "Directory",
+        "Responsibility",
+        "Critical Rule"
+      ],
+      [
+        "controllers/",
+        "HTTP controllers — versioned, route mapped, Swagger tagged",
+        "Controllers MUST NOT contain business logic; only DTO validation + dispatch"
+      ],
+      [
+        "application/commands/",
+        "CQRS command objects (immutable, validated)",
+        "e.g., CreateStudentCommand, PromoteStudentCommand"
+      ],
+      [
+        "application/queries/",
+        "CQRS query objects for read side",
+        "e.g., GetStudentByIdQuery, SearchStudentsQuery"
+      ],
+      [
+        "application/handlers/",
+        "Command & query handlers — orchestrate aggregate + UoW + events",
+        "Single handler per command/query; Idempotent via idempotency-key"
+      ],
+      [
+        "application/dto/",
+        "Request/Response DTOs + mappers",
+        "Zod schemas + class-validator decorators + Swagger metadata"
+      ],
+      [
+        "application/mappers/",
+        "DTO ↔ Domain ↔ Persistence mappers",
+        "Three-way mapping; never leak Prisma types to controllers"
+      ],
+      [
+        "application/services/",
+        "Application services — multi-aggregate orchestration, transactional",
+        "Coordinate repositories; publish integration events"
+      ],
+      [
+        "domain/aggregates/",
+        "Aggregate roots + child entities",
+        "Pure TS; zero infra deps; enforce invariants"
+      ],
+      [
+        "domain/entities/",
+        "Entities inside aggregates (identity within parent)",
+        "Only mutate via aggregate root"
+      ],
+      [
+        "domain/value-objects/",
+        "Immutable value objects (Address, Money, Age, TimeWindow)",
+        "Equals by value; throw on invalid construction"
+      ],
+      [
+        "domain/repositories/",
+        "Repository interfaces (port)",
+        "Implemented in infrastructure/; mockable in tests"
+      ],
+      [
+        "domain/services/",
+        "Domain services — pure business rules involving multiple aggregates",
+        "No state; no IO"
+      ],
+      [
+        "domain/events/",
+        "Domain event classes",
+        "Past-tense; serialisable; versioned schema"
+      ],
+      [
+        "domain/policies/",
+        "Business policies (e.g., RefundPolicy, LateFeePolicy)",
+        "Decision tables; pure functions"
+      ],
+      [
+        "domain/specifications/",
+        "Specification pattern for complex predicate logic",
+        "Composable with .and(), .or(), .not()"
+      ],
+      [
+        "infrastructure/prisma/",
+        "Prisma schema slice + client wiring",
+        "Per-module Prisma schema fragment"
+      ],
+      [
+        "infrastructure/repositories/",
+        "Concrete Prisma-backed repository implementations",
+        "Map Prisma rows ↔ domain aggregates"
+      ],
+      [
+        "infrastructure/cache/",
+        "Redis cache wrappers (read-through, write-through)",
+        "TTL + invalidation versioned by cache key prefix"
+      ],
+      [
+        "infrastructure/events/",
+        "Event bus adapters — in-memory (sync) + Redis Streams (async)",
+        "Outbox pattern for cross-aggregate reliability"
+      ],
+      [
+        "infrastructure/jobs/",
+        "BullMQ job producers + processors for this module",
+        "Worker isolation; sandboxed processors"
+      ],
+      [
+        "presentation/",
+        "Presenters — format domain responses for HTTP/WebSocket views",
+        "View-model layer; keeps DTOs clean"
+      ],
+      [
+        "student.module.ts",
+        "NestJS module wiring — providers, controllers, imports, exports",
+        "Single source of DI graph"
+      ]
+    ]
+  },
+  {
+    "index": 6,
+    "rows": [
+      [
+        "From → To",
+        "Status",
+        "Notes"
+      ],
+      [
+        "Presentation → Application",
+        "Allowed",
+        "Controllers call application services / command handlers"
+      ],
+      [
+        "Presentation → Domain",
+        "Forbidden",
+        "Controllers must never touch aggregates/entities directly"
+      ],
+      [
+        "Presentation → Infrastructure",
+        "Forbidden",
+        "Controllers must never import Prisma/Redis/S3"
+      ],
+      [
+        "Application → Domain",
+        "Allowed",
+        "Handlers orchestrate aggregates via repository ports"
+      ],
+      [
+        "Application → Infrastructure",
+        "Allowed (via interfaces)",
+        "Repositories injected as abstractions; never concrete class"
+      ],
+      [
+        "Application → Presentation",
+        "Forbidden",
+        "No back-flow into DTOs/controllers"
+      ],
+      [
+        "Domain → Application",
+        "Forbidden",
+        "Domain knows nothing about use cases"
+      ],
+      [
+        "Domain → Infrastructure",
+        "Forbidden",
+        "Domain is pure TypeScript; zero NestJS/Prisma imports"
+      ],
+      [
+        "Domain → Domain",
+        "Allowed (same module)",
+        "Cross-module imports forbidden — use integration events"
+      ],
+      [
+        "Infrastructure → Domain",
+        "Allowed (implements interfaces)",
+        "Repos implement domain-side ports"
+      ],
+      [
+        "Infrastructure → Application",
+        "Forbidden",
+        "Infra must not know about handlers"
+      ],
+      [
+        "Cross-module direct imports",
+        "Forbidden",
+        "Modules talk via ACL (Anti-Corruption Layer) or events"
+      ]
+    ]
+  },
+  {
+    "index": 7,
+    "rows": [
+      [
+        "Responsibility",
+        "Mechanism",
+        "Notes"
+      ],
+      [
+        "Route Mapping",
+        "@Controller('v1/students'), @Get(':id'), @Post() — versioned URLs",
+        "Path includes /v1/ for forward compatibility"
+      ],
+      [
+        "Authentication",
+        "@UseGuards(JwtAuthGuard) — verifies JWT, populates req.user",
+        "Global guard; opt-out via @Public() for login/health"
+      ],
+      [
+        "Authorization",
+        "@Permissions('students:read') — RBAC data scope check",
+        "Custom decorator backed by Casbin policies"
+      ],
+      [
+        "DTO Validation",
+        "@Body() dto: CreateStudentDto — class-validator + Zod pipe",
+        "Fail fast on schema violation; 422 response"
+      ],
+      [
+        "Response Formatting",
+        "Returns ResponseDto<T> envelope",
+        "Consistent { success, data, traceId } shape"
+      ],
+      [
+        "OpenAPI Metadata",
+        "@ApiOperation, @ApiResponse, @ApiTags",
+        "Swagger UI auto-generated"
+      ],
+      [
+        "Idempotency",
+        "@Idempotent() decorator for POST/PUT",
+        "Key from header or body hash; 24h TTL in Redis"
+      ],
+      [
+        "Rate Limiting",
+        "@Throttle(20, 60) per route",
+        "Bullhorn or per-IP + per-user"
+      ]
+    ]
+  },
+  {
+    "index": 8,
+    "rows": [
+      [
+        "DTO Class",
+        "Type",
+        "Endpoint",
+        "Purpose"
+      ],
+      [
+        "CreateStudentDto",
+        "Request",
+        "POST /v1/students",
+        "All required + optional fields, validation decorators, Swagger metadata"
+      ],
+      [
+        "UpdateStudentDto",
+        "Request",
+        "PATCH /v1/students/:id",
+        "PartialType(CreateStudentDto) — all fields optional"
+      ],
+      [
+        "StudentResponseDto",
+        "Response",
+        "GET /v1/students/:id",
+        "Sanitised output; never includes PII like Aadhaar"
+      ],
+      [
+        "StudentListItemDto",
+        "Response",
+        "GET /v1/students",
+        "Lightweight fields for list view; pagination metadata"
+      ],
+      [
+        "StudentFilterDto",
+        "Query",
+        "GET /v1/students?filter[...]",
+        "Filterable fields, sort spec, pagination params"
+      ],
+      [
+        "StudentSearchDto",
+        "Query",
+        "GET /v1/students/search",
+        "Full-text search query, fuzzy match, suggestions"
+      ],
+      [
+        "BulkCreateStudentDto",
+        "Request",
+        "POST /v1/students/bulk",
+        "Array of CreateStudentDto + idempotency key per item"
+      ],
+      [
+        "StudentExportDto",
+        "Query",
+        "GET /v1/students/export",
+        "Filter + format (xlsx/csv/pdf) + columns spec"
+      ]
+    ]
+  },
+  {
+    "index": 9,
+    "rows": [
+      [
+        "Responsibility",
+        "Mechanism",
+        "Example"
+      ],
+      [
+        "Workflow Orchestration",
+        "Coordinate multiple aggregates in a single transaction",
+        "EnrollStudentService → Student + Enrollment + Invoice + FeePlan"
+      ],
+      [
+        "Transaction Boundary",
+        "Define UoW scope, commit/rollback",
+        "Single aggregate = single transaction; multi-aggregate via saga"
+      ],
+      [
+        "Event Publishing",
+        "Dispatch domain events after commit",
+        "Outbox pattern — events written to DB, then published async"
+      ],
+      [
+        "Cross-Domain Coordination",
+        "Call ACL of another bounded context",
+        "Finance → Identity ACL for user lookup"
+      ],
+      [
+        "Authorization Decision",
+        "Check permissions before invoking domain",
+        "@PreAuthorize decorator or explicit check"
+      ],
+      [
+        "Caching Decision",
+        "Read-through cache for read-heavy paths",
+        "Idempotent reads only; cache key = method signature + args"
+      ],
+      [
+        "Idempotency Enforcement",
+        "Check idempotency-key in Redis",
+        "Return cached response if key exists; else compute + cache"
+      ],
+      [
+        "Audit Trail",
+        "Persist who did what when",
+        "Audit log entry per command, immutable"
+      ]
+    ]
+  },
+  {
+    "index": 10,
+    "rows": [
+      [
+        "Responsibility",
+        "Description",
+        "Example"
+      ],
+      [
+        "Pure Business Rules",
+        "Encapsulate logic that doesn't fit a single aggregate",
+        "FeeCalculationService — combines FeePlan + Concession + LateFee"
+      ],
+      [
+        "Aggregate Coordination",
+        "Coordinate multiple aggregates without persistence",
+        "TransferStudentService moves student between sections"
+      ],
+      [
+        "Policy Execution",
+        "Apply business policies",
+        "RefundPolicy decides refund amount given cancellation date"
+      ],
+      [
+        "Specification Composition",
+        "Chain specifications for complex predicates",
+        "EligibilitySpec = AgeSpec.and(DocumentSpec).and(PaymentSpec)"
+      ],
+      [
+        "Invariant Enforcement",
+        "Validate cross-entity invariants",
+        "No two students same roll number in same section"
+      ],
+      [
+        "State Transitions",
+        "Aggregate state machine decisions",
+        "AdmissionAggregate.advanceState() checks allowed transitions"
+      ]
+    ]
+  },
+  {
+    "index": 11,
+    "rows": [
+      [
+        "Method",
+        "Returns",
+        "Notes"
+      ],
+      [
+        "findById(id)",
+        "Student | null",
+        "Single aggregate by id; returns null if not found or soft-deleted"
+      ],
+      [
+        "findByIdOrThrow(id)",
+        "Student",
+        "Throws NotFoundException if missing — fail-fast path"
+      ],
+      [
+        "findBySpecification(spec, opts)",
+        "Student[]",
+        "Specification pattern query; opts = pagination/sort"
+      ],
+      [
+        "findOneBySpecification(spec)",
+        "Student | null",
+        "Convenience for unique matches"
+      ],
+      [
+        "countBySpecification(spec)",
+        "number",
+        "For pagination totals; cheaper than full fetch"
+      ],
+      [
+        "save(aggregate)",
+        "void",
+        "Insert or update (decides by presence of id); writes within UoW"
+      ],
+      [
+        "delete(id)",
+        "void",
+        "Soft-delete (sets deletedAt); hard delete only via admin tooling"
+      ],
+      [
+        "lock(id, mode)",
+        "Student",
+        "Pessimistic lock for concurrent writes (SELECT FOR UPDATE)"
+      ],
+      [
+        "versionedSave(aggregate, expectedVersion)",
+        "void",
+        "Optimistic locking — fails on version mismatch"
+      ],
+      [
+        "beginTransaction()",
+        "UoW",
+        "Returns unit-of-work handle for explicit control"
+      ]
+    ]
+  },
+  {
+    "index": 12,
+    "rows": [
+      [
+        "Command",
+        "Module",
+        "Purpose",
+        "Event Published"
+      ],
+      [
+        "CreateStudentCommand",
+        "Identity",
+        "Create new student record + initial profile",
+        "StudentCreatedEvent"
+      ],
+      [
+        "EnrollStudentCommand",
+        "Academics",
+        "Enroll student in section for academic year",
+        "StudentEnrolledEvent, InvoiceGeneratedEvent"
+      ],
+      [
+        "MarkAttendanceCommand",
+        "Attendance",
+        "Mark daily attendance for student",
+        "AttendanceMarkedEvent"
+      ],
+      [
+        "GenerateInvoiceCommand",
+        "Finance",
+        "Generate fee invoice for student",
+        "InvoiceGeneratedEvent"
+      ],
+      [
+        "ReceivePaymentCommand",
+        "Finance",
+        "Record payment against invoice",
+        "PaymentReceivedEvent, ReceiptIssuedEvent"
+      ],
+      [
+        "ApproveAdmissionCommand",
+        "Admissions",
+        "Approve pending admission application",
+        "AdmissionApprovedEvent, StudentCreatedEvent"
+      ],
+      [
+        "PublishReportCardCommand",
+        "Academics",
+        "Publish term report card to parents",
+        "ReportCardPublishedEvent"
+      ],
+      [
+        "ScheduleInterviewCommand",
+        "HR",
+        "Schedule interview with candidate",
+        "InterviewScheduledEvent"
+      ],
+      [
+        "RaisePurchaseRequestCommand",
+        "Inventory",
+        "Create PR for procurement",
+        "PurchaseRequestRaisedEvent"
+      ],
+      [
+        "IssueGoodsCommand",
+        "Inventory",
+        "Issue goods from store to department",
+        "GoodsIssuedEvent, StockReducedEvent"
+      ]
+    ]
+  },
+  {
+    "index": 13,
+    "rows": [
+      [
+        "Query",
+        "Module",
+        "Purpose",
+        "Returns"
+      ],
+      [
+        "GetStudentByIdQuery",
+        "Identity",
+        "Fetch full student profile",
+        "StudentResponseDto"
+      ],
+      [
+        "SearchStudentsQuery",
+        "Identity",
+        "Full-text + filter search",
+        "Paginated<StudentListItemDto>"
+      ],
+      [
+        "GetAttendanceReportQuery",
+        "Attendance",
+        "Date-range attendance summary",
+        "AttendanceReportDto"
+      ],
+      [
+        "GetFeeOutstandingQuery",
+        "Finance",
+        "Outstanding fees per student/class",
+        "FeeOutstandingDto[]"
+      ],
+      [
+        "GetDashboardKpiQuery",
+        "Reports",
+        "Dashboard KPIs by role/branch",
+        "DashboardKpiDto"
+      ],
+      [
+        "GetStaffOnLeaveQuery",
+        "HR",
+        "Staff on leave today/this week",
+        "StaffLeaveDto[]"
+      ],
+      [
+        "GetLowStockItemsQuery",
+        "Inventory",
+        "Items below reorder level",
+        "LowStockDto[]"
+      ],
+      [
+        "GetAdmissionPipelineQuery",
+        "Admissions",
+        "Admission funnel metrics",
+        "AdmissionPipelineDto"
+      ],
+      [
+        "GetLedgerQuery",
+        "Finance",
+        "GL ledger entries by period",
+        "Paginated<LedgerEntryDto>"
+      ],
+      [
+        "GetAuditTrailQuery",
+        "Platform",
+        "Audit trail by entity/user/date",
+        "Paginated<AuditLogDto>"
+      ]
+    ]
+  },
+  {
+    "index": 14,
+    "rows": [
+      [
+        "Event",
+        "Module",
+        "Trigger",
+        "Payload",
+        "Subscribers"
+      ],
+      [
+        "StudentCreated",
+        "identity",
+        "New student created",
+        "Student id, name, branch, section, createdBy",
+        "Sync: parent welcome email; Async: CRM lead conversion"
+      ],
+      [
+        "StudentUpdated",
+        "identity",
+        "Student profile updated",
+        "Diff of changed fields, updatedBy",
+        "Sync: cache invalidation; Async: audit log"
+      ],
+      [
+        "StudentPromoted",
+        "academics",
+        "Student promoted to next class",
+        "From class, to class, academic year",
+        "Async: new fee plan, new section assignment"
+      ],
+      [
+        "StudentTransferred",
+        "identity",
+        "Student transferred to another branch",
+        "From branch, to branch, reason",
+        "Async: archival at old branch, new record at new branch"
+      ],
+      [
+        "AdmissionApplicationSubmitted",
+        "admissions",
+        "New admission enquiry",
+        "Application id, student name, parent contact",
+        "Sync: confirmation SMS; Async: counsellor assignment"
+      ],
+      [
+        "AdmissionApproved",
+        "admissions",
+        "Admission application approved",
+        "Application id, student id, branch",
+        "Async: StudentCreated, InvoiceGenerated, welcome email"
+      ],
+      [
+        "AdmissionRejected",
+        "admissions",
+        "Admission application rejected",
+        "Application id, reason",
+        "Async: rejection email, CRM status update"
+      ],
+      [
+        "AttendanceMarked",
+        "attendance",
+        "Daily attendance marked",
+        "Student, date, status, markedBy",
+        "Sync: parent SMS; Async: monthly summary"
+      ],
+      [
+        "InvoiceGenerated",
+        "finance",
+        "Fee invoice raised",
+        "Invoice id, student, amount, due date",
+        "Async: email + WhatsApp, reminder schedule"
+      ],
+      [
+        "PaymentReceived",
+        "finance",
+        "Payment recorded against invoice",
+        "Invoice id, amount, method, receiptNo",
+        "Sync: receipt SMS; Async: ledger entry, GST return prep"
+      ],
+      [
+        "PaymentFailed",
+        "finance",
+        "Payment attempt failed",
+        "Invoice id, amount, failure reason",
+        "Async: failure notification, retry schedule"
+      ],
+      [
+        "ReportCardPublished",
+        "academics",
+        "Term report card published",
+        "Student, term, sections, grades",
+        "Async: parent email + push notification"
+      ],
+      [
+        "ObservationApproved",
+        "academics",
+        "Teacher observation approved",
+        "Observation id, student, milestone",
+        "Async: parent notification, milestone tracking"
+      ],
+      [
+        "StaffOnboarded",
+        "hr",
+        "New staff onboarded",
+        "Staff id, name, role, branch",
+        "Sync: credentials setup; Async: asset assignment"
+      ],
+      [
+        "StaffOffboarded",
+        "hr",
+        "Staff offboarded",
+        "Staff id, exitDate, reason",
+        "Async: asset recovery, access revoke, final settlement"
+      ],
+      [
+        "LeaveApplied",
+        "hr",
+        "Leave request submitted",
+        "Staff id, leave type, dates",
+        "Sync: manager notification; Async: calendar block"
+      ],
+      [
+        "LeaveApproved",
+        "hr",
+        "Leave request approved",
+        "Staff id, leave type, dates, approver",
+        "Async: substitute assignment"
+      ],
+      [
+        "PurchaseRequestRaised",
+        "inventory",
+        "PR created",
+        "PR id, items, department",
+        "Async: manager approval workflow"
+      ],
+      [
+        "GoodsIssued",
+        "inventory",
+        "Goods issued from store",
+        "Items, qty, to department",
+        "Async: stock recalc, ledger impact"
+      ],
+      [
+        "StockLow",
+        "inventory",
+        "Item below reorder level",
+        "Item, current qty, reorder level",
+        "Async: PR auto-creation if rule exists"
+      ],
+      [
+        "AnnouncementPublished",
+        "communication",
+        "Announcement broadcast",
+        "Audience, channels, content",
+        "Async: SMS/WhatsApp/Email/Push fan-out"
+      ],
+      [
+        "MessageSent",
+        "communication",
+        "Chat message sent",
+        "Room, sender, message",
+        "Sync: WebSocket push; Async: push for offline users"
+      ],
+      [
+        "BackupCompleted",
+        "platform",
+        "Daily backup finished",
+        "Database size, duration, location",
+        "Async: integrity check, alert on failure"
+      ],
+      [
+        "FeatureFlagToggled",
+        "platform",
+        "Feature flag changed",
+        "Flag key, old value, new value, changedBy",
+        "Sync: cache bust; Async: audit log"
+      ]
+    ]
+  },
+  {
+    "index": 15,
+    "rows": [
+      [
+        "Event",
+        "Producer → Consumer",
+        "Purpose",
+        "Delivery"
+      ],
+      [
+        "StudentEnrolled.v1",
+        "Identity → Finance",
+        "Trigger fee plan creation",
+        "Sync (HTTP) — finance needs immediate response"
+      ],
+      [
+        "InvoiceGenerated.v1",
+        "Finance → Identity",
+        "Notify student record of pending invoice",
+        "Async (Redis Stream) — eventual consistency"
+      ],
+      [
+        "PaymentReceived.v1",
+        "Finance → Communication",
+        "Trigger receipt notification",
+        "Async (Redis Stream)"
+      ],
+      [
+        "AdmissionApproved.v1",
+        "Admissions → Identity",
+        "Create student record",
+        "Sync (HTTP) — admissions waits for student id"
+      ],
+      [
+        "AttendanceMarked.v1",
+        "Attendance → Communication",
+        "Trigger parent SMS",
+        "Async (Redis Stream)"
+      ],
+      [
+        "StaffOnboarded.v1",
+        "HR → Identity",
+        "Create user account",
+        "Sync (HTTP) — HR waits for credentials"
+      ],
+      [
+        "StockLow.v1",
+        "Inventory → Procurement",
+        "Auto-create PR if rule active",
+        "Async (Redis Stream)"
+      ],
+      [
+        "ReportCardPublished.v1",
+        "Academics → Communication",
+        "Notify parents via email + push",
+        "Async (Redis Stream)"
+      ],
+      [
+        "AnnouncementPublished.v1",
+        "Communication → Platform",
+        "Record in audit log",
+        "Async (Redis Stream)"
+      ],
+      [
+        "FeatureFlagChanged.v1",
+        "Platform → All",
+        "Cache bust notification",
+        "Pub/Sub (Redis) — all subscribers invalidate"
+      ]
+    ]
+  },
+  {
+    "index": 16,
+    "rows": [
+      [
+        "Queue",
+        "Purpose",
+        "Priority",
+        "Rate Limit",
+        "Notes"
+      ],
+      [
+        "notification",
+        "Parent SMS / push notifications",
+        "High",
+        "1000/min",
+        "Burst during attendance mark, fee due, report publish"
+      ],
+      [
+        "email",
+        "Transactional + marketing emails",
+        "Medium",
+        "500/min",
+        "Bulk admissions email uses separate child queue"
+      ],
+      [
+        "whatsapp",
+        "WhatsApp Business API messages",
+        "Medium",
+        "100/min",
+        "WhatsApp rate limits are stricter than SMS"
+      ],
+      [
+        "sms",
+        "Transactional SMS via DLT-approved senders",
+        "High",
+        "2000/min",
+        "DLT template validation before send"
+      ],
+      [
+        "report",
+        "PDF/Excel report generation",
+        "Low",
+        "50/min",
+        "Long-running (30s-5min) — sandboxed"
+      ],
+      [
+        "ai",
+        "AI/LLM inference jobs (chatbot, summaries)",
+        "Medium",
+        "100/min",
+        "Token-bucket per tenant to control cost"
+      ],
+      [
+        "image-processing",
+        "Image resize, watermark, thumbnail",
+        "Medium",
+        "200/min",
+        "Sharp library; CPU-bound"
+      ],
+      [
+        "backup",
+        "Daily DB + S3 backup",
+        "Low",
+        "1/day (off-peak)",
+        "03:00 IST; full backup + incremental"
+      ],
+      [
+        "audit-cleanup",
+        "Audit log archival to S3 Glacier",
+        "Low",
+        "1/week",
+        "Move logs older than 1 year"
+      ],
+      [
+        "invoice-reminder",
+        "Fee due reminders",
+        "Medium",
+        "1000/hr burst",
+        "Cron at 09:00 IST daily"
+      ],
+      [
+        "report-card-publish",
+        "Bulk report card publishing",
+        "Medium",
+        "500/hr",
+        "Term-end spike; pre-generated PDFs"
+      ],
+      [
+        "data-export",
+        "User-requested data exports",
+        "Low",
+        "50/min",
+        "Async upload to S3 + email link"
+      ]
+    ]
+  },
+  {
+    "index": 17,
+    "rows": [
+      [
+        "Aspect",
+        "Value",
+        "Notes"
+      ],
+      [
+        "Max Attempts",
+        "3 retries after initial attempt",
+        "Total 4 attempts before DLQ"
+      ],
+      [
+        "Backoff Strategy",
+        "Exponential — delay = 2^attempt × 1s, capped at 60s",
+        "1s, 2s, 4s, 8s, 16s, 32s, 60s, 60s, ..."
+      ],
+      [
+        "Jitter",
+        "±20% random jitter on backoff",
+        "Avoids thundering herd on retry"
+      ],
+      [
+        "Dead Letter Queue",
+        "{queueName}:dead",
+        "Manual inspection; alert via PagerDuty"
+      ],
+      [
+        "Failure Alert",
+        "Slack webhook after 3 consecutive failures in same queue",
+        "Auto-page on-call engineer for critical queues (notification, sms, backup)"
+      ],
+      [
+        "Idempotency",
+        "Job ID = hash(payload + tenantId)",
+        "Duplicate job detection; safe retry"
+      ],
+      [
+        "Sandboxed Processors",
+        "BullMQ sandbox mode for report/ai queues",
+        "Crash isolation; parent process survives"
+      ],
+      [
+        "Cron Jobs",
+        "Defined via @nestjs/schedule + BullMQ repeatable",
+        "Single-instance enforced via Redis lock"
+      ]
+    ]
+  },
+  {
+    "index": 18,
+    "rows": [
+      [
+        "Layer",
+        "Key Pattern",
+        "TTL",
+        "Invalidation",
+        "Notes"
+      ],
+      [
+        "Permission Cache",
+        "user_id → [permissions]",
+        "300s TTL",
+        "Invalidated on role change, permission grant/revoke",
+        "Hot path on every request"
+      ],
+      [
+        "Menu Cache",
+        "role_id → menu tree",
+        "1h TTL",
+        "Invalidated on menu config change",
+        "Avoids DB hit on every page load"
+      ],
+      [
+        "User Session",
+        "session_id → user context",
+        "24h TTL sliding",
+        "Deleted on logout",
+        "Stored as Redis hash"
+      ],
+      [
+        "Dashboard KPIs",
+        "tenant+branch+role → KPI bundle",
+        "60s TTL",
+        "Auto-expire; manual bust via admin tool",
+        "Refreshed by background job"
+      ],
+      [
+        "Settings",
+        "tenant+branch → settings object",
+        "1h TTL",
+        "Versioned by settings_version counter",
+        "Bump version on update"
+      ],
+      [
+        "Feature Flags",
+        "tenant → flag map",
+        "300s TTL",
+        "Invalidated on flag change event",
+        "Pub/Sub broadcast to all instances"
+      ],
+      [
+        "DTO Validation Schema",
+        "schema name → compiled Zod schema",
+        "Process lifetime",
+        "Recompile on deploy",
+        "In-process Map; not Redis"
+      ],
+      [
+        "Compiled Casbin Model",
+        "tenant → enforcer",
+        "1h TTL",
+        "Invalidated on policy change",
+        "Hot path on auth check"
+      ],
+      [
+        "Pre-signed S3 URLs",
+        "object key → URL",
+        "55 min TTL (URL valid 1h)",
+        "Auto-regenerate",
+        "Avoids S3 API calls"
+      ],
+      [
+        "Rate Limit Counters",
+        "ip+route → counter",
+        "60s window",
+        "Auto-expire",
+        "Sliding window via Redis sorted set"
+      ]
+    ]
+  },
+  {
+    "index": 19,
+    "rows": [
+      [
+        "Pattern",
+        "Flow",
+        "Use Case"
+      ],
+      [
+        "Read-Through",
+        "App → cache → DB → cache → app",
+        "Hot reads; transparent to caller"
+      ],
+      [
+        "Write-Through",
+        "App → cache + DB (sync) → app",
+        "Strong consistency; slightly higher write latency"
+      ],
+      [
+        "Write-Behind",
+        "App → cache → ack; async DB write",
+        "High write throughput; risk of data loss on crash"
+      ],
+      [
+        "Cache-Aside",
+        "App checks cache; on miss loads from DB",
+        "Most common; explicit cache management"
+      ],
+      [
+        "Refresh-Ahead",
+        "Background job refreshes before expiry",
+        "Prevents cache stampede on hot keys"
+      ]
+    ]
+  },
+  {
+    "index": 20,
+    "rows": [
+      [
+        "Pattern",
+        "Mechanism",
+        "Use Case",
+        "Flow"
+      ],
+      [
+        "Single-Aggregate Transaction",
+        "ACID via Prisma $transaction",
+        "Default — 95% of writes",
+        "Begin → save aggregate → commit"
+      ],
+      [
+        "Multi-Aggregate Saga",
+        "Orchestration via state machine + compensating actions",
+        "Cross-bounded-context flows",
+        "Each step = own transaction; rollback via compensation"
+      ],
+      [
+        "Outbox Pattern",
+        "DB transaction writes events to outbox table; publisher drains to stream",
+        "Reliable event publishing",
+        "Same transaction as aggregate write"
+      ],
+      [
+        "Optimistic Locking",
+        "version column checked on save",
+        "Low-contention aggregates",
+        "WHERE version = expected; throw on 0 rows affected"
+      ],
+      [
+        "Pessimistic Locking",
+        "SELECT ... FOR UPDATE",
+        "High-contention (concurrent fee edits)",
+        "Hold lock for shortest possible duration"
+      ],
+      [
+        "Idempotency",
+        "idempotency_key table; unique constraint",
+        "All POST/PUT",
+        "Reject duplicate; return cached response"
+      ],
+      [
+        "Read-Only Transaction",
+        "Prisma read without write",
+        "All GET",
+        "No lock acquired; replica routing possible"
+      ]
+    ]
+  },
+  {
+    "index": 21,
+    "rows": [
+      [
+        "Layer",
+        "Tool",
+        "Where",
+        "Error Code",
+        "What It Catches"
+      ],
+      [
+        "DTO Validation",
+        "class-validator + Zod",
+        "Request pipe",
+        "422 Unprocessable Entity",
+        "Schema shape, required fields, type coercion"
+      ],
+      [
+        "Domain Validation",
+        "Value object constructors",
+        "Domain layer",
+        "DomainException",
+        "Business invariants (e.g., valid phone, age range)"
+      ],
+      [
+        "Business Rule Validation",
+        "Specifications + Policies",
+        "Application layer",
+        "BusinessException",
+        "Cross-entity rules (e.g., unique roll number in section)"
+      ],
+      [
+        "Database Constraints",
+        "NOT NULL, UNIQUE, FK, CHECK",
+        "Database layer",
+        "ConflictException",
+        "Last line of defense — should never trigger if above layers work"
+      ],
+      [
+        "Authorization Validation",
+        "Guards + decorators",
+        "Request pipe (after DTO)",
+        "AuthorizationException",
+        "Permission + data scope check"
+      ],
+      [
+        "Rate Limit Validation",
+        "Throttler guard",
+        "Request pipe (first)",
+        "429 Too Many Requests",
+        "Per-IP + per-user counters"
+      ]
+    ]
+  },
+  {
+    "index": 22,
+    "rows": [
+      [
+        "Exception",
+        "HTTP Status",
+        "When",
+        "Example Codes",
+        "Recovery"
+      ],
+      [
+        "ValidationException",
+        "422",
+        "DTO schema violation",
+        "FIELD_REQUIRED, INVALID_EMAIL, OUT_OF_RANGE",
+        "Client error — retry with corrected input"
+      ],
+      [
+        "BusinessException",
+        "409",
+        "Business rule violation",
+        "ROLL_NUMBER_TAKEN, INVOICE_ALREADY_PAID, ADMISSION_CLOSED",
+        "Client must change request — retry with different data"
+      ],
+      [
+        "AuthorizationException",
+        "403",
+        "Insufficient permissions",
+        "PERMISSION_DENIED, SCOPE_VIOLATION",
+        "Client must request elevated access"
+      ],
+      [
+        "AuthenticationException",
+        "401",
+        "Invalid or expired token",
+        "TOKEN_EXPIRED, TOKEN_INVALID, SESSION_REVOKED",
+        "Client must re-authenticate"
+      ],
+      [
+        "NotFoundException",
+        "404",
+        "Resource does not exist",
+        "STUDENT_NOT_FOUND, INVOICE_NOT_FOUND",
+        "Client must verify ID"
+      ],
+      [
+        "ConflictException",
+        "409",
+        "Concurrent modification",
+        "VERSION_MISMATCH, DUPLICATE_KEY",
+        "Client may retry with fresh fetch"
+      ],
+      [
+        "RateLimitException",
+        "429",
+        "Rate limit exceeded",
+        "RATE_LIMIT_EXCEEDED",
+        "Client must back off (Retry-After header)"
+      ],
+      [
+        "ExternalServiceException",
+        "502",
+        "Downstream service failure",
+        "S3_UNAVAILABLE, SMS_GATEWAY_DOWN",
+        "Server retries via BullMQ"
+      ],
+      [
+        "InfrastructureException",
+        "500",
+        "DB/Redis failure",
+        "DB_CONNECTION_LOST, REDIS_TIMEOUT",
+        "Server alert — on-call paged"
+      ],
+      [
+        "DomainException",
+        "400",
+        "Invalid value object construction",
+        "INVALID_PHONE, INVALID_MONEY",
+        "Client must provide valid value"
+      ]
+    ]
+  },
+  {
+    "index": 23,
+    "rows": [
+      [
+        "Field",
+        "Type",
+        "Purpose"
+      ],
+      [
+        "success",
+        "boolean",
+        "Always false for errors"
+      ],
+      [
+        "errorCode",
+        "string",
+        "Stable machine code — never localize"
+      ],
+      [
+        "message",
+        "string",
+        "Human-readable, localized per Accept-Language"
+      ],
+      [
+        "traceId",
+        "UUID",
+        "Correlates to logs — quote in support tickets"
+      ],
+      [
+        "details",
+        "object[]",
+        "Field-level errors (for ValidationException only) — { field, code, message }"
+      ],
+      [
+        "timestamp",
+        "ISO-8601",
+        "When the error occurred"
+      ],
+      [
+        "path",
+        "string",
+        "Request path that triggered the error"
+      ]
+    ]
+  },
+  {
+    "index": 24,
+    "rows": [
+      [
+        "Control",
+        "Implementation",
+        "Purpose"
+      ],
+      [
+        "JWT Authentication",
+        "Access token 15 min (RS256 signed); refresh token 30 d (rotated, HttpOnly cookie)",
+        "Stateless; horizontal scaling friendly"
+      ],
+      [
+        "Refresh Token Rotation",
+        "Each refresh issues new token; old one blacklisted",
+        "Detects token theft — both tokens used = revoke all"
+      ],
+      [
+        "RBAC",
+        "Casbin policies; role → permissions matrix",
+        "Fine-grained; per-route enforcement via @Permissions decorator"
+      ],
+      [
+        "Data Scope Validation",
+        "Every query scoped by tenantId + branchId from JWT",
+        "Tenant isolation at ORM layer (Prisma middleware)"
+      ],
+      [
+        "Tenant Isolation",
+        "PostgreSQL Row-Level Security (RLS) policies",
+        "Defense in depth — even buggy query returns only tenant data"
+      ],
+      [
+        "Branch Isolation",
+        "Branch ID in JWT; query filter enforced",
+        "Cross-branch access requires explicit permission"
+      ],
+      [
+        "Academic Year Isolation",
+        "Academic year ID in context; filter on every academic query",
+        "Prevents mixing current + archived data"
+      ],
+      [
+        "Rate Limiting",
+        "Per-IP (anonymity) + per-user (authenticated) limits",
+        "Default 100 req/min; stricter on auth routes (5/min)"
+      ],
+      [
+        "Input Sanitisation",
+        "DOMPurify on rich text; parameterised queries (Prisma)",
+        "XSS + SQL injection prevention"
+      ],
+      [
+        "PII Protection",
+        "PII fields encrypted at rest (pgcrypto); masked in logs",
+        "DPDP Act compliance"
+      ],
+      [
+        "Audit Logging",
+        "Every state-changing action logged with user + diff",
+        "Compliance + forensic analysis"
+      ],
+      [
+        "Secrets Management",
+        "AWS Secrets Manager; rotated quarterly",
+        "No secrets in env files or code"
+      ],
+      [
+        "CSP / Helmet",
+        "Content-Security-Policy + OWASP headers",
+        "XSS mitigation in browser"
+      ],
+      [
+        "CORS",
+        "Allowlist of origins per environment",
+        "Production: only preone.app + subdomains"
+      ],
+      [
+        "HSTS",
+        "Force HTTPS; 1-year max-age; includeSubDomains",
+        "Prevents protocol downgrade"
+      ],
+      [
+        "Dependency Scanning",
+        "Snyk + npm audit in CI; fail on high+ vulns",
+        "Supply chain security"
+      ],
+      [
+        "SAST",
+        "SonarCloud on every PR",
+        "Static analysis — bugs + vulnerabilities"
+      ],
+      [
+        "DAST",
+        "OWASP ZAP scan on staging weekly",
+        "Runtime vulnerabilities"
+      ]
+    ]
+  },
+  {
+    "index": 25,
+    "rows": [
+      [
+        "Layer",
+        "Mechanism",
+        "Notes"
+      ],
+      [
+        "Tenant Discriminator",
+        "tenant_id column on every table",
+        "Index on (tenant_id, ...); partitioning-ready"
+      ],
+      [
+        "JWT Claim",
+        "tenantId in JWT payload",
+        "Populated on login; verified on every request"
+      ],
+      [
+        "Prisma Middleware",
+        "Auto-inject tenantId WHERE clause",
+        "Catches missing filters; logs violation"
+      ],
+      [
+        "PostgreSQL RLS",
+        "Row-Level Security policy per tenant",
+        "Last line of defense; failsafe if Prisma bypassed"
+      ],
+      [
+        "Tenant Config",
+        "Per-tenant settings (logo, colors, modules enabled)",
+        "Cached in Redis; hot reload on change"
+      ],
+      [
+        "Tenant Onboarding",
+        "New tenant = new schema? No — shared schema with discriminator",
+        "Cost-efficient; migration simplicity"
+      ],
+      [
+        "Cross-Tenant Admin",
+        "Platform admin role bypasses RLS (BYPASSRLS)",
+        "Only platform team has this — audited"
+      ],
+      [
+        "Tenant Backup/Restore",
+        "Per-tenant logical backup (pg_dump with WHERE)",
+        "Customer data portability"
+      ],
+      [
+        "Tenant Deletion",
+        "Soft delete + 90-day retention + then hard purge",
+        "DPDP Act right to erasure compliance"
+      ]
+    ]
+  },
+  {
+    "index": 26,
+    "rows": [
+      [
+        "Scope",
+        "Mandatory?",
+        "Applies To",
+        "Source"
+      ],
+      [
+        "Tenant",
+        "Mandatory",
+        "Every query, every table",
+        "tenantId from JWT"
+      ],
+      [
+        "Branch",
+        "Optional (multi-branch schools)",
+        "Branch-specific tables",
+        "branchId from JWT or query param"
+      ],
+      [
+        "Academic Year",
+        "Optional (academic-year-aware queries)",
+        "Academic tables",
+        "academicYearId from context"
+      ]
+    ]
+  },
+  {
+    "index": 27,
+    "rows": [
+      [
+        "Field",
+        "Type",
+        "Purpose"
+      ],
+      [
+        "timestamp",
+        "ISO-8601 with ms",
+        "When the log was generated"
+      ],
+      [
+        "level",
+        "info | warn | error | debug | trace",
+        "Severity"
+      ],
+      [
+        "traceId",
+        "UUID",
+        "Distributed trace correlation"
+      ],
+      [
+        "spanId",
+        "UUID",
+        "Sub-span within trace"
+      ],
+      [
+        "userId",
+        "UUID",
+        "Authenticated user (or null for anon)"
+      ],
+      [
+        "tenantId",
+        "UUID",
+        "Tenant context"
+      ],
+      [
+        "branchId",
+        "UUID",
+        "Branch context (optional)"
+      ],
+      [
+        "module",
+        "string",
+        "Module name (identity, finance, etc.)"
+      ],
+      [
+        "method",
+        "string",
+        "Method/class generating the log"
+      ],
+      [
+        "message",
+        "string",
+        "Human-readable message"
+      ],
+      [
+        "payload",
+        "object",
+        "Structured data (never PII)"
+      ],
+      [
+        "error",
+        "object",
+        "Stack trace + code (only on error level)"
+      ],
+      [
+        "duration",
+        "number",
+        "Operation duration in ms (for performance logs)"
+      ],
+      [
+        "requestId",
+        "UUID",
+        "Per-request correlation (set by middleware)"
+      ]
+    ]
+  },
+  {
+    "index": 28,
+    "rows": [
+      [
+        "Level",
+        "When",
+        "Production Default"
+      ],
+      [
+        "trace",
+        "Very detailed — SQL queries, cache hits/misses",
+        "Disabled in production"
+      ],
+      [
+        "debug",
+        "Detailed diagnostic info",
+        "Enabled on staging; per-route enable on prod via feature flag"
+      ],
+      [
+        "info",
+        "Normal operation — request received, command executed, event published",
+        "Always enabled"
+      ],
+      [
+        "warn",
+        "Unexpected but recoverable — rate limit hit, retry scheduled, fallback used",
+        "Always enabled; alert on >10/min"
+      ],
+      [
+        "error",
+        "Failures requiring attention — external service down, DB error, unhandled exception",
+        "Always enabled; alert on >0 in critical paths"
+      ],
+      [
+        "fatal",
+        "Process must exit — config invalid, port in use",
+        "Always enabled; immediate PagerDuty"
+      ]
+    ]
+  },
+  {
+    "index": 29,
+    "rows": [
+      [
+        "Pillar",
+        "Tool",
+        "What It Captures",
+        "Retention"
+      ],
+      [
+        "Metrics",
+        "Prometheus + Grafana",
+        "RED (Rate, Errors, Duration) per endpoint; Saturation (DB pool, Redis memory); Utilisation (CPU, RAM, disk)",
+        "10s scrape interval"
+      ],
+      [
+        "Logs",
+        "Pino JSON → Loki",
+        "Structured; traceId correlation; 30-day hot retention + 1-year cold (S3)",
+        "Indexed by traceId, userId, tenantId"
+      ],
+      [
+        "Traces",
+        "OpenTelemetry → Tempo",
+        "Distributed traces across services; span per DB/Redis/HTTP call",
+        "1% sampling in prod; 100% on errors"
+      ],
+      [
+        "Alerts",
+        "Prometheus AlertManager → PagerDuty/Slack",
+        "Error rate, latency p95, saturation thresholds",
+        "Severity-based routing"
+      ],
+      [
+        "Dashboards",
+        "Grafana",
+        "Per-module dashboard + system overview + tenant health",
+        "10s refresh"
+      ],
+      [
+        "Synthetic Monitoring",
+        "Checkly / custom prober",
+        "Login, mark attendance, generate invoice every 5 min",
+        "Multi-region probes"
+      ]
+    ]
+  },
+  {
+    "index": 30,
+    "rows": [
+      [
+        "Endpoint",
+        "What It Checks",
+        "Response",
+        "Used By"
+      ],
+      [
+        "/health/live",
+        "Process is running",
+        "200 OK",
+        "Used by k8s liveness probe"
+      ],
+      [
+        "/health/ready",
+        "Process can serve traffic (DB, Redis connected)",
+        "200 OK or 503",
+        "Used by k8s readiness probe"
+      ],
+      [
+        "/health/startup",
+        "Process has finished booting",
+        "200 OK",
+        "Used by k8s startup probe"
+      ],
+      [
+        "/health/deep",
+        "All downstream services reachable",
+        "200 OK with details",
+        "Manual + synthetic monitoring"
+      ]
+    ]
+  },
+  {
+    "index": 31,
+    "rows": [
+      [
+        "Layer",
+        "Tool",
+        "Scope",
+        "Coverage Target",
+        "Speed"
+      ],
+      [
+        "Unit Tests (Domain)",
+        "Vitest",
+        "Pure TS — aggregate, entity, VO, spec, policy, domain service",
+        "100% coverage target",
+        "ms"
+      ],
+      [
+        "Unit Tests (Application)",
+        "Vitest + mocked repos",
+        "Handler logic with mocked repositories + event bus",
+        "90% coverage target",
+        "ms"
+      ],
+      [
+        "Repository Tests",
+        "Vitest + Testcontainers (Postgres)",
+        "Real DB — verify Prisma mapping + migrations",
+        "80% coverage target",
+        "seconds"
+      ],
+      [
+        "Controller Tests",
+        "Vitest + supertest",
+        "HTTP layer — DTO validation, auth guards, response shape",
+        "70% coverage target",
+        "ms"
+      ],
+      [
+        "Integration Tests",
+        "Vitest + Testcontainers (full stack)",
+        "End-to-end within module — controller → handler → repo → DB",
+        "Critical paths only",
+        "seconds"
+      ],
+      [
+        "Contract Tests",
+        "Pact",
+        "Consumer-driven contracts between bounded contexts",
+        "Per integration point",
+        "seconds"
+      ],
+      [
+        "E2E Tests",
+        "Playwright + real backend",
+        "Full user journeys across modules",
+        "Smoke tests per release",
+        "minutes"
+      ],
+      [
+        "Load Tests",
+        "k6",
+        "Performance benchmarks; capacity planning",
+        "Quarterly + pre-release",
+        "minutes"
+      ],
+      [
+        "Chaos Tests",
+        "Litmus / Gremlin",
+        "Failure injection — DB kill, Redis flush, network partition",
+        "Quarterly",
+        "minutes"
+      ]
+    ]
+  },
+  {
+    "index": 32,
+    "rows": [
+      [
+        "Tactic",
+        "Mechanism",
+        "Benefit",
+        "When"
+      ],
+      [
+        "Connection Pooling",
+        "Prisma connection pool (default = num_cpus × 2 + 1)",
+        "Tune per instance size",
+        "Avoid pool exhaustion under load"
+      ],
+      [
+        "Read Replica Routing",
+        "Prisma client extension routes reads to replica",
+        "eventual consistency acceptable for reports",
+        "Writes always to primary"
+      ],
+      [
+        "Batch Operations",
+        "Bulk insert/update via Prisma createMany / updateMany",
+        "Single round-trip",
+        "Limit to 500 rows per batch"
+      ],
+      [
+        "Pagination",
+        "Cursor-based for large tables; offset for small",
+        "Cursor = stable sort key",
+        "Avoid OFFSET 10000+ — slow"
+      ],
+      [
+        "Redis Cache",
+        "Hot reads (permissions, menus, KPIs)",
+        "≥ 90% hit ratio target",
+        "Invalidation via version bump"
+      ],
+      [
+        "Async Jobs",
+        "Long-running work via BullMQ",
+        "5s+ operations offloaded",
+        "Prevents request timeout"
+      ],
+      [
+        "Query Optimisation",
+        "EXPLAIN ANALYZE in CI on slow queries",
+        "Alert on > 100ms p95",
+        "Index review quarterly"
+      ],
+      [
+        "N+1 Prevention",
+        "Prisma includes / DataLoader for nested reads",
+        "Lint rule: no nested find in loop",
+        "Auto-detect via Prisma logging"
+      ],
+      [
+        "Field Selection",
+        "Prisma select() to fetch only needed columns",
+        "Reduces payload + memory",
+        "Especially for list endpoints"
+      ],
+      [
+        "HTTP/2 + Brotli",
+        "Compression + multiplexing",
+        "30% smaller payloads vs gzip",
+        "Enabled at reverse proxy"
+      ],
+      [
+        "CDN for Static",
+        "CloudFront for S3-hosted assets",
+        "1ms TTFB globally",
+        "Pre-signed URLs still valid through CDN"
+      ],
+      [
+        "Database Indexing",
+        "Composite indexes for hot queries",
+        "Audit quarterly",
+        "Index-only scans where possible"
+      ]
+    ]
+  },
+  {
+    "index": 33,
+    "rows": [
+      [
+        "Metric",
+        "Target",
+        "Scope"
+      ],
+      [
+        "API p50 latency",
+        "< 200 ms",
+        "99% of endpoints"
+      ],
+      [
+        "API p95 latency",
+        "< 500 ms",
+        "99% of endpoints"
+      ],
+      [
+        "API p99 latency",
+        "< 2000 ms",
+        "99% of endpoints"
+      ],
+      [
+        "WebSocket message delivery",
+        "< 100 ms",
+        "99% of messages"
+      ],
+      [
+        "Background job pickup",
+        "< 30 s",
+        "99% of jobs"
+      ],
+      [
+        "Report generation (small)",
+        "< 30 s",
+        "Single branch, single term"
+      ],
+      [
+        "Report generation (large)",
+        "< 5 min",
+        "Multi-branch, full year"
+      ],
+      [
+        "Database query p95",
+        "< 100 ms",
+        "Alert if exceeded"
+      ],
+      [
+        "Cache hit ratio (permissions)",
+        "≥ 90%",
+        "Critical for auth path"
+      ],
+      [
+        "Uptime",
+        "≥ 99.9%",
+        "Monthly — ~43 min downtime allowed"
+      ]
+    ]
+  },
+  {
+    "index": 34,
+    "rows": [
+      [
+        "Aspect",
+        "Item",
+        "Tool"
+      ],
+      [
+        "Code",
+        "All PRs merged to main; no unmerged feature branches",
+        "Git"
+      ],
+      [
+        "Migrations",
+        "Prisma migrations applied to staging; verified",
+        "prisma migrate deploy"
+      ],
+      [
+        "Tests",
+        "All tests green in CI; coverage ≥ 80%",
+        "Vitest + Codecov"
+      ],
+      [
+        "Lint",
+        "ESLint + Prettier clean; 0 warnings",
+        "ESLint"
+      ],
+      [
+        "Env Vars",
+        "All required env vars set in production secrets store",
+        "AWS Secrets Manager"
+      ],
+      [
+        "Feature Flags",
+        "New features behind flags; default off",
+        "Flagsmith / custom"
+      ],
+      [
+        "Database Backup",
+        "Pre-deployment backup taken + verified restorable",
+        "pg_dump + S3"
+      ],
+      [
+        "Rollback Plan",
+        "Documented rollback steps; tested in staging",
+        "Runbook"
+      ],
+      [
+        "Monitoring",
+        "Dashboards + alerts configured for new metrics",
+        "Grafana + AlertManager"
+      ],
+      [
+        "Logs",
+        "New log fields indexed in Loki",
+        "Loki"
+      ],
+      [
+        "Traces",
+        "New spans visible in Tempo",
+        "Tempo"
+      ],
+      [
+        "Load Test",
+        "k6 load test on critical new endpoints; meets SLO",
+        "k6"
+      ],
+      [
+        "Security Scan",
+        "Snyk + SonarCloud clean; no new vulnerabilities",
+        "Snyk + Sonar"
+      ],
+      [
+        "Documentation",
+        "README + API docs updated; Swagger regenerated",
+        "Compodoc + Swagger"
+      ],
+      [
+        "Runbook",
+        "Operational runbook for new module updated",
+        "Confluence"
+      ],
+      [
+        "On-call",
+        "On-call rotation updated; new alerts mapped to team",
+        "PagerDuty"
+      ],
+      [
+        "Stakeholder Comms",
+        "Release notes circulated; stakeholders notified",
+        "Email"
+      ],
+      [
+        "Window",
+        "Deployment window scheduled (low-traffic: 11 PM IST)",
+        "Calendar"
+      ]
+    ]
+  },
+  {
+    "index": 35,
+    "rows": [
+      [
+        "Component",
+        "Service",
+        "Notes"
+      ],
+      [
+        "Reverse Proxy",
+        "Nginx / AWS ALB",
+        "TLS termination, HTTP/2, brotli compression"
+      ],
+      [
+        "App Tier",
+        "Kubernetes (EKS) — min 3 replicas",
+        "HPA on CPU + custom metrics"
+      ],
+      [
+        "Database",
+        "Amazon RDS PostgreSQL 16 Multi-AZ",
+        "Primary + 1 read replica"
+      ],
+      [
+        "Cache",
+        "Amazon ElastiCache Redis 7.2 (cluster mode off)",
+        "Multi-AZ, automatic failover"
+      ],
+      [
+        "Queue",
+        "Same ElastiCache Redis (logical DB separation)",
+        "BullMQ uses DB 0; cache uses DB 1"
+      ],
+      [
+        "Object Storage",
+        "Amazon S3",
+        "Server-side encryption (SSE-KMS)"
+      ],
+      [
+        "CDN",
+        "CloudFront",
+        "For static assets + pre-signed S3 URLs"
+      ],
+      [
+        "Secrets",
+        "AWS Secrets Manager",
+        "Auto-rotation for DB credentials"
+      ],
+      [
+        "CI/CD",
+        "GitHub Actions → ECR → EKS",
+        "Blue-green for zero downtime"
+      ],
+      [
+        "Observability",
+        "Grafana Cloud (Prometheus + Loki + Tempo)",
+        "Or self-hosted on dedicated node"
+      ]
+    ]
+  },
+  {
+    "index": 36,
+    "rows": [
+      [
+        "Term",
+        "Meaning"
+      ],
+      [
+        "ACID",
+        "Atomicity, Consistency, Isolation, Durability — properties of reliable database transactions"
+      ],
+      [
+        "ACL",
+        "Anti-Corruption Layer — translation layer between bounded contexts to prevent model pollution"
+      ],
+      [
+        "ADR",
+        "Architecture Decision Record — short document capturing a single architectural decision"
+      ],
+      [
+        "Aggregate",
+        "Cluster of domain objects treated as a single unit for data consistency; has one root"
+      ],
+      [
+        "Bounded Context",
+        "Explicit boundary within which a domain model makes sense and terms have one meaning"
+      ],
+      [
+        "BullMQ",
+        "Redis-backed queue library for Node.js; used for background jobs in PreOne"
+      ],
+      [
+        "Casbin",
+        "Authorization library supporting RBAC, ABAC, ACL; used for PreOne permission checks"
+      ],
+      [
+        "CQRS",
+        "Command Query Responsibility Segregation — separate models for reads vs writes"
+      ],
+      [
+        "DLQ",
+        "Dead Letter Queue — queue for messages that failed processing after retries"
+      ],
+      [
+        "DTO",
+        "Data Transfer Object — serialisable object for crossing process/network boundaries"
+      ],
+      [
+        "DDD",
+        "Domain-Driven Design — software approach that mirrors business domain in code"
+      ],
+      [
+        "HPA",
+        "Horizontal Pod Autoscaler — Kubernetes controller that scales pods based on metrics"
+      ],
+      [
+        "Idempotency",
+        "Property where repeated operations produce same result — critical for safe retries"
+      ],
+      [
+        "JWT",
+        "JSON Web Token — compact, signed token for stateless authentication"
+      ],
+      [
+        "OTLP",
+        "OpenTelemetry Protocol — wire format for exporting traces, metrics, logs"
+      ]
+    ]
+  },
+  {
+    "index": 37,
+    "rows": [
+      [
+        "Term",
+        "Meaning"
+      ],
+      [
+        "Outbox Pattern",
+        "Writing events to DB table in same transaction as data; async publisher drains table"
+      ],
+      [
+        "PII",
+        "Personally Identifiable Information — data that can identify an individual"
+      ],
+      [
+        "Prisma",
+        "Type-safe ORM for Node.js / TypeScript — schema-first, generates client"
+      ],
+      [
+        "RAG",
+        "Reduction in Force — but in PreOne context: Retrieval-Augmented Generation for AI features"
+      ],
+      [
+        "RBAC",
+        "Role-Based Access Control — permissions assigned to roles; users inherit via role"
+      ],
+      [
+        "Redis",
+        "In-memory key-value store — used for cache, pub/sub, queues, rate limiting"
+      ],
+      [
+        "RLS",
+        "Row-Level Security — PostgreSQL feature that filters rows by user/tenant context"
+      ],
+      [
+        "SAGA",
+        "Pattern for managing multi-step transactions with compensating actions on failure"
+      ],
+      [
+        "SLO",
+        "Service Level Objective — target metric for service quality (e.g., 99.9% uptime)"
+      ],
+      [
+        "Specification",
+        "Pattern encapsulating business rule as composable predicate (e.g., AgeEligibilitySpec)"
+      ],
+      [
+        "Tenant",
+        "Customer organisation in multi-tenant SaaS — in PreOne, a school"
+      ],
+      [
+        "UoW",
+        "Unit of Work — pattern that tracks changes and commits them as a single transaction"
+      ],
+      [
+        "Value Object",
+        "Immutable object identified by its values (e.g., Address, Money) — no identity"
+      ],
+      [
+        "Vitest",
+        "Modern test runner for Vite-powered projects — used for PreOne unit tests"
+      ],
+      [
+        "WebSocket",
+        "Full-duplex communication protocol over TCP — used for real-time features in PreOne"
+      ]
+    ]
+  },
+  {
+    "index": 38,
+    "rows": [
+      [
+        "Version",
+        "Date",
+        "Author",
+        "Changes"
+      ],
+      [
+        "1.0",
+        "2026-07-14",
+        "PreOne Architecture Team",
+        "Initial version — Backend Architecture Freeze"
+      ]
+    ]
+  },
+  {
+    "index": 39,
+    "rows": [
+      [
+        "Role",
+        "Name",
+        "Responsibility",
+        "Status"
+      ],
+      [
+        "Chief Architect",
+        "[TBD]",
+        "Architecture review + sign-off",
+        "Pending"
+      ],
+      [
+        "VP Engineering",
+        "[TBD]",
+        "Engineering approval",
+        "Pending"
+      ],
+      [
+        "Tech Lead - Identity",
+        "[TBD]",
+        "Identity module review",
+        "Pending"
+      ],
+      [
+        "Tech Lead - Finance",
+        "[TBD]",
+        "Finance module review",
+        "Pending"
+      ],
+      [
+        "DevOps Lead",
+        "[TBD]",
+        "Deployment + observability review",
+        "Pending"
+      ],
+      [
+        "Security Officer",
+        "[TBD]",
+        "Security + compliance review",
+        "Pending"
+      ]
+    ]
+  },
+  {
+    "index": 40,
+    "rows": [
+      [
+        "Document",
+        "Version",
+        "Relationship"
+      ],
+      [
+        "Vision Document",
+        "v1.0",
+        "Strategic intent + non-functional requirements"
+      ],
+      [
+        "BRC",
+        "v1.0",
+        "176 business rules — backend implementation reference"
+      ],
+      [
+        "Master PRD",
+        "v1.0",
+        "Functional requirements — API endpoint mapping"
+      ],
+      [
+        "DDD",
+        "v1.0",
+        "Domain model — backend module structure"
+      ],
+      [
+        "ADR Catalog",
+        "v1.0",
+        "Architecture decisions — backend choices rationale"
+      ],
+      [
+        "ERD v3.0",
+        "v3.0",
+        "Physical schema — repository data access layer"
+      ],
+      [
+        "Prisma Schema v3.0",
+        "v3.0",
+        "Code-first schema — Prisma client generation"
+      ],
+      [
+        "API Contract Catalog",
+        "v1.0",
+        "Endpoint contracts — controller implementation spec"
+      ]
+    ]
+  }
+]

@@ -1,0 +1,943 @@
+     1→     1→[0001] () Table of Contents
+     2→     2→[0002] () Note: This Table of Contents is generated via field codes. To ensure page number accuracy after editing, please right-click the TOC and select "Update Field."
+     3→     3→[0004] (Heading 1) 1. Introduction
+     4→     4→[0005] (Heading 2) 1.1 Purpose
+     5→     5→[0006] () हा ADR-111 PreOne च्या DevOps आणि Infrastructure Architecture ची complete blueprint प्रदान करतो. PreOne हे Enterprise Preschool Operating System आहे जे 14 business domains, 530+ REST APIs, real-time WebSocket channels, आणि background job processing साठी robust, scalable, आणि highly available infrastructure आवश्यक आहे. या ADR चा primary goal म्हणजे DevOps practices, infrastructure components, deployment strategy, आणि operational runbooks ची एकच source of truth स्थापित करणे.
+     6→     6→[0007] () हा ADR Backend TD v1.0 आणि Frontend Architecture v1.0 च्या वर build होतो — त्यांच्या application architecture ला concrete infrastructure architecture मध्ये translate करतो. Backend TD मध्ये define केलेले NestJS modules, BullMQ jobs, Prisma schemas, आणि Redis cache layers या सर्वांना appropriate infrastructure support आवश्यक आहे. Frontend Architecture मध्ये defined Next.js SSR + React Native mobile apps देखील containerized, deployed, आणि monitored होणे आवश्यक आहे.
+     7→     7→[0008] () या ADR वरून पुढील production artifacts तयार होतील: Docker images (5 services), Kubernetes manifests (Helm charts), GitHub Actions workflows (CI/CD), Terraform modules (infrastructure-as-code), NGINX Ingress configurations, PostgreSQL HA setup (Patroni + PgBouncer), Redis Sentinel setup, Prometheus + Grafana dashboards, Loki log queries, Jaeger tracing dashboards, Velero backup schedules, आणि Production Runbook.
+     8→     8→[0009] (Heading 2) 1.2 Scope
+     9→     9→[0010] () हा ADR PreOne च्या complete infrastructure stack cover करतो — local development पासून production deployment पर्यंत. खालील explicitly in scope आहेत:
+    10→    10→[0011] () •  Containerization strategy (Docker multi-stage builds)
+    11→    11→[0012] () •  Kubernetes orchestration (namespaces, workloads, services, ingress)
+    12→    12→[0013] () •  CI/CD pipeline (GitHub Actions workflows + deployment strategy)
+    13→    13→[0014] () •  Reverse proxy + load balancing (NGINX Ingress)
+    14→    14→[0015] () •  Database high availability (PostgreSQL HA via Patroni)
+    15→    15→[0016] () •  Cache + queue backend (Redis HA via Sentinel)
+    16→    16→[0017] () •  Observability stack (Prometheus + Grafana + Loki + Jaeger)
+    17→    17→[0018] () •  Backup strategy + disaster recovery
+    18→    18→[0019] () •  Environment strategy (Local → Dev → QA → UAT → Staging → Production)
+    19→    19→[0020] () •  Security controls (TLS, secrets, RBAC, network policies)
+    20→    20→[0021] () •  Scalability tactics (HPA, cluster autoscaler, CDN)
+    21→    21→[0022] () खालील explicitly out of scope आहेत:
+    22→    22→[0023] () •  Application architecture (covered in Backend TD + Frontend Architecture)
+    23→    23→[0024] () •  Domain model + database schema (covered in DDD + ERD + Prisma Schema)
+    24→    24→[0025] () •  API contracts (covered in API Contract Catalog + OpenAPI Spec)
+    25→    25→[0026] () •  Third-party SDK integration details (per-provider spec sheets)
+    26→    26→[0027] () •  Cost analysis + billing (separate cost-optimization doc)
+    27→    27→[0028] (Heading 2) 1.3 Audience
+    28→    28→[0029] () हा ADR खालील audiences साठी लिखित आहे:
+    29→    29→[0030] () •  DevOps Engineers: Primary reference — infrastructure provisioning, K8s management, deployment automation.
+    30→    30→[0031] () •  SRE / On-Call Engineers: Operational runbook — monitoring, alerting, incident response, DR drills.
+    31→    31→[0032] () •  Backend / Frontend Engineers: Deployment awareness — Dockerization, health checks, graceful shutdown.
+    32→    32→[0033] () •  Security Engineers: Security review — TLS, RBAC, network policies, secrets management.
+    33→    33→[0034] () •  QA / Test Engineers: Test environments — QA + UAT + staging setup, smoke tests in CI/CD.
+    34→    34→[0035] () •  Tech Leads / Architects: Architecture enforcement — decision rationale, alternatives, trade-offs.
+    35→    35→[0036] () •  Compliance Officers: Audit reference — DR metrics, backup strategy, access controls.
+    36→    36→[0037] () •  New Hires: Onboarding reference — infrastructure mental model in first 2 weeks.
+    37→    37→[0038] (Heading 2) 1.4 ADR Status
+    38→    38→[0039] () हा ADR 'LOCKED' status मध्ये आहे. LOCKED म्हणजे architecture decision frozen झाला आहे आणि v1.0 release साठी implementation सुरू आहे. LOCKED status नंतर changes require new ADR (e.g., ADR-112 for changes) + Architecture Review Board approval. हे ensure करते की infrastructure stability maintained राहील आणि ad-hoc changes prevent होतील.
+    39→    39→[0040] () LOCKED status चा meaning: Docker + Kubernetes + GitHub Actions + NGINX + PostgreSQL HA + Redis + Prometheus + Loki हे core stack निवडले गेले आहे आणि यावर implementation चालू आहे. Future ADRs हे specific aspects extend करू शकतात — उदा. ADR-112 (Service Mesh — Linkerd), ADR-113 (Secrets — Vault migration), ADR-114 (Multi-region — Active-Active).
+    40→    40→[0041] (Heading 2) 1.5 Related Documents
+    41→    41→[0042] () PreOne document series मध्ये या ADR चे specific position आहे. खालील documents predecessors आहेत:
+    42→    42→[0044] (Heading 1) 2. Infrastructure Overview
+    43→    43→[0045] (Heading 2) 2.1 High-Level Architecture
+    44→    44→[0046] () PreOne ची infrastructure completely containerized आहे आणि Kubernetes द्वारे orchestrated. ही architecture खालील principles follow करते: infrastructure-as-code (Terraform + Helm), GitOps (GitHub as source of truth), immutable infrastructure (containers + declarative K8s manifests), defense-in-depth (multiple security layers), आणि observability-first (metrics + logs + traces from day one). पूर्ण pipeline — code commit पासून production deployment पर्यंत — automated आहे आणि minimal manual intervention required आहे.
+    45→    45→[0047] () Pipeline चा flow समजून घेणे critical आहे. Developer code push करतो → GitHub repository मध्ये change detect होतो → GitHub Actions CI/CD pipeline triggered होतो → code lint, test, build, security scan होतो → Docker image build होतो → GitHub Container Registry (GHCR) मध्ये push होतो → Kubernetes cluster मध्ये deploy होतो → health checks pass होतात → smoke tests run होतात → traffic new deployment वर route होतो. हे सर्व ~20 minutes मध्ये complete होते.
+    46→    46→[0048] (Heading 2) 2.2 Pipeline Diagram
+    47→    47→[0049] () Developers
+    48→    48→[0050] () |
+    49→    49→[0051] () GitHub Repository
+    50→    50→[0052] () |
+    51→    51→[0053] () GitHub Actions CI/CD
+    52→    52→[0054] () |
+    53→    53→[0055] () Build - Test - Security Scan
+    54→    54→[0056] () |
+    55→    55→[0057] () Docker Image Build
+    56→    56→[0058] () |
+    57→    57→[0059] () GitHub Container Registry
+    58→    58→[0060] () |
+    59→    59→[0061] () Kubernetes (Production)
+    60→    60→[0062] () +----------------+----------------+
+    61→    61→[0063] () |                |                |
+    62→    62→[0064] () API Pods         Web Pods       Worker Pods
+    63→    63→[0065] () (NestJS)        (Next.js)        (BullMQ)
+    64→    64→[0066] () |                |                |
+    65→    65→[0067] () +----------------+----------------+
+    66→    66→[0068] () |
+    67→    67→[0069] () NGINX Ingress
+    68→    68→[0070] () |
+    69→    69→[0071] () +----------------+----------------+
+    70→    70→[0072] () |                |                |
+    71→    71→[0073] () PostgreSQL HA      Redis        Object Storage
+    72→    72→[0074] () Primary       Cache/Queue       (S3/MinIO)
+    73→    73→[0075] () |
+    74→    74→[0076] () Backup & Disaster Recovery
+    75→    75→[0077] (Heading 2) 2.3 Technology Stack
+    76→    76→[0078] () PreOne च्या infrastructure stack मध्ये प्रत्येक layer साठी carefully chosen technology आहे. Selection rationale: open-source first (avoid vendor lock-in), production-proven (no bleeding-edge), cloud-portable (K8s abstraction), आणि operational simplicity (team familiarity). हे stack v1.0 release साठी frozen आहे; future migrations (e.g., Vault, Linkerd, Redis Cluster) separate ADRs द्वारे evaluated होतील.
+    77→    77→[0079] (Heading 2) 2.4 Design Principles
+    78→    78→[0080] () PreOne infrastructure खालील design principles follow करते:
+    79→    79→[0081] () •  Infrastructure-as-Code (IaC) — Terraform + Helm; no manual cluster changes
+    80→    80→[0082] () •  GitOps — GitHub source of truth; ArgoCD for declarative deployment
+    81→    81→[0083] () •  Immutable Infrastructure — containers are immutable; changes via new image
+    82→    82→[0084] () •  Defense-in-Depth — multiple security layers (WAF + NGINX + Network Policies + RBAC)
+    83→    83→[0085] () •  Observability-First — metrics + logs + traces from day one
+    84→    84→[0086] () •  12-Factor App — stateless services, externalized config, disposability
+    85→    85→[0087] () •  Cattle not Pets — pods are replaceable; no manual SSH into pods
+    86→    86→[0088] () •  Progressive Delivery — rolling updates; canary via Argo Rollouts (v1.2 roadmap)
+    87→    87→[0089] () •  Cost-Awareness — spot instances for non-critical; auto-scaling for efficiency
+    88→    88→[0090] () •  Documentation as Code — runbooks + dashboards-as-code in Git
+    89→    89→[0092] (Heading 1) 3. Docker Architecture
+    90→    90→[0093] (Heading 2) 3.1 Containerization Strategy
+    91→    91→[0094] () Docker हे PreOne चे containerization standard आहे. प्रत्येक service (API, Web, Worker, Mobile Build, NGINX) ची स्वतंत्र Docker image असते ज्यामुळे services independently build, version, deploy, आणि scale होऊ शकतात. Docker images multi-stage builds द्वारे optimized आहेत — builder stage मध्ये dev dependencies + build tools वापरून production artifact तयार केला जातो, runtime stage मध्ये फक्त production artifact + minimal runtime copied होतो. हे approach final image size कमी करते आणि attack surface कमी करते.
+    92→    92→[0095] () Docker images के सर्व aspects standardized आहेत: base image (node:20-alpine for runtime, node:20 for build), non-root user (uid 1000) for security, HEALTHCHECK instruction embedded, OCI standard labels (org.opencontainers.image.{version,revision,source}), reproducible builds via .dockerignore + lock files, layer caching for faster rebuilds, आणि image signing via cosign (Sigstore) for supply chain security.
+    93→    93→[0096] (Heading 2) 3.2 Docker Images
+    94→    94→[0097] (Heading 2) 3.3 Docker Principles
+    95→    95→[0098] () Docker architecture खालील principles follow करते:
+    96→    96→[0099] () •  Each service has its own Dockerfile in its repo subfolder
+    97→    97→[0100] () •  All images built via multi-stage builds (builder + runtime)
+    98→    98→[0101] () •  Base image: node:20-alpine for runtime; node:20 for build
+    99→    99→[0102] () •  Non-root user (uid 1000) in runtime image for security
+   100→   100→[0103] () •  Health checks (HEALTHCHECK instruction) embedded in image
+   101→   101→[0104] () •  Image labels: org.opencontainers.image.{version,revision,source}
+   102→   102→[0105] () •  Reproducible builds via .dockerignore + lock files (bun.lock / package-lock.json)
+   103→   103→[0106] () •  Layer caching: install deps before copying source code
+   104→   104→[0107] () •  Distroless variant explored for v1.2 (further attack surface reduction)
+   105→   105→[0108] () •  All images signed via cosign (Sigstore) — verified at deploy time
+   106→   106→[0109] (Heading 2) 3.4 Sample Dockerfile (preone-api)
+   107→   107→[0110] () # syntax=docker/dockerfile:1.6
+   108→   108→[0112] () # ============ Builder Stage ============
+   109→   109→[0113] () FROM node:20 AS builder
+   110→   110→[0114] () WORKDIR /app
+   111→   111→[0116] () # Install bun for faster installs
+   112→   112→[0117] () RUN npm install -g bun
+   113→   113→[0119] () # Copy lock files first for layer caching
+   114→   114→[0120] () COPY package.json bun.lock ./
+   115→   115→[0121] () COPY prisma ./prisma/
+   116→   116→[0123] () # Install dependencies (including devDeps for build)
+   117→   117→[0124] () RUN bun install --frozen-lockfile
+   118→   118→[0125] () RUN bunx prisma generate
+   119→   119→[0127] () # Copy source code
+   120→   120→[0128] () COPY . .
+   121→   121→[0130] () # Build NestJS app
+   122→   122→[0131] () RUN bun run build
+   123→   123→[0133] () # Prune dev dependencies for production
+   124→   124→[0134] () RUN bun install --production --frozen-lockfile
+   125→   125→[0136] () # ============ Runtime Stage ============
+   126→   126→[0137] () FROM node:20-alpine AS runtime
+   127→   127→[0138] () WORKDIR /app
+   128→   128→[0140] () # Install dumb-init for proper signal handling
+   129→   129→[0141] () RUN apk add --no-cache dumb-init
+   130→   130→[0143] () # Create non-root user
+   131→   131→[0144] () RUN addgroup -g 1001 -S nodejs && \
+   132→   132→[0145] () adduser -S nestjs -u 1001
+   133→   133→[0147] () # Copy built artifacts + production deps from builder
+   134→   134→[0148] () COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+   135→   135→[0149] () COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+   136→   136→[0150] () COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
+   137→   137→[0151] () COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
+   138→   138→[0153] () # Switch to non-root user
+   139→   139→[0154] () USER nestjs
+   140→   140→[0156] () # Expose port
+   141→   141→[0157] () EXPOSE 3000
+   142→   142→[0159] () # Health check
+   143→   143→[0160] () HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+   144→   144→[0161] () CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+   145→   145→[0163] () # OCI labels
+   146→   146→[0164] () LABEL org.opencontainers.image.title="preone-api" \
+   147→   147→[0165] () org.opencontainers.image.description="PreOne Enterprise API" \
+   148→   148→[0166] () org.opencontainers.image.source="https://github.com/preone/api" \
+   149→   149→[0167] () org.opencontainers.image.version="${VERSION}" \
+   150→   150→[0168] () org.opencontainers.image.revision="${GIT_SHA}"
+   151→   151→[0170] () # Start with dumb-init for proper signal propagation
+   152→   152→[0171] () ENTRYPOINT ["dumb-init", "--"]
+   153→   153→[0172] () CMD ["node", "dist/main.js"]
+   154→   154→[0174] (Heading 1) 4. Kubernetes Architecture
+   155→   155→[0175] (Heading 2) 4.1 Cluster Topology
+   156→   156→[0176] () PreOne चे Kubernetes cluster multi-AZ (across 3 availability zones) deployed आहे ज्यामुळे single AZ failure साठी resilience मिळते. Cluster मध्ये multiple node groups आहेत: system node group (CoreDNS, CNI, Ingress Controller), application node group (API, Web, Worker pods), data node group (PostgreSQL, Redis — stateful, larger instances), आणि monitoring node group (Prometheus, Loki — storage-heavy). हे separation ensure करते की heavy data workloads application workloads ला impact करणार नाहीत.
+   157→   157→[0177] () Cluster version: Kubernetes v1.29 (latest stable). Managed via EKS (AWS Elastic Kubernetes Service). Worker nodes: AWS Graviton (ARM64) for cost optimization; spot instances for non-critical workloads (workers, monitoring); on-demand for critical workloads (API, Web, DB). Cluster autoscaler automatically adds/removes nodes based on pending pods.
+   158→   158→[0178] (Heading 2) 4.2 Namespace Architecture
+   159→   159→[0179] () Cluster मध्ये namespaces द्वारे logical isolation आहे. प्रत्येक namespace चे specific purpose आहे आणि NetworkPolicies enforce करतात की फक्त allowed namespaces एकमेकांशी communicate करू शकतात. Default deny policy द्वारे defense-in-depth सुनिश्चित होते.
+   160→   160→[0180] (Heading 2) 4.3 Cluster Diagram
+   161→   161→[0181] () Cluster
+   162→   162→[0182] () |
+   163→   163→[0183] () +-- ingress        (NGINX Ingress Controller)
+   164→   164→[0184] () +-- api             (preone-api Deployment)
+   165→   165→[0185] () +-- web             (preone-web Deployment)
+   166→   166→[0186] () +-- worker          (preone-worker Deployment)
+   167→   167→[0187] () +-- redis           (Redis StatefulSet HA)
+   168→   168→[0188] () +-- postgres        (PostgreSQL StatefulSet HA via Patroni)
+   169→   169→[0189] () +-- monitoring      (Prometheus + Grafana + AlertManager)
+   170→   170→[0190] () +-- logging         (Loki + Promtail)
+   171→   171→[0191] () +-- backup          (Velero + cron jobs)
+   172→   172→[0192] () +-- kube-system     (managed by EKS)
+   173→   173→[0194] () Node Groups:
+   174→   174→[0195] () +-- system (m5.large, on-demand, 2 nodes min)
+   175→   175→[0196] () +-- app (m5.xlarge, mixed, 3-20 nodes)
+   176→   176→[0197] () +-- data (r5.xlarge, on-demand, 3 nodes min)
+   177→   177→[0198] () +-- monitoring (r5.large, spot, 2 nodes min)
+   178→   178→[0199] (Heading 2) 4.4 Workload Types
+   179→   179→[0200] () PreOne च्या cluster मध्ये विविध workload types वापरले जातात based on workload characteristics:
+   180→   180→[0201] () •  Deployment — stateless workloads (API, Web, NGINX). Rolling updates + HPA scaling.
+   181→   181→[0202] () •  StatefulSet — stateful workloads (PostgreSQL, Redis). Stable network identity + persistent volumes.
+   182→   182→[0203] () •  DaemonSet — per-node agents (Promtail, node-exporter, Filebeat). One pod per node.
+   183→   183→[0204] () •  CronJob — scheduled tasks (backups, cleanup, reports). Time-based execution.
+   184→   184→[0205] () •  Job — one-off batch tasks (database migrations, seed data). Run-to-completion.
+   185→   185→[0206] (Heading 2) 4.5 Sample Deployment Manifest (preone-api)
+   186→   186→[0207] () apiVersion: apps/v1
+   187→   187→[0208] () kind: Deployment
+   188→   188→[0209] () metadata:
+   189→   189→[0210] () name: preone-api
+   190→   190→[0211] () namespace: api
+   191→   191→[0212] () labels:
+   192→   192→[0213] () app: preone-api
+   193→   193→[0214] () tier: backend
+   194→   194→[0215] () spec:
+   195→   195→[0216] () replicas: 3
+   196→   196→[0217] () selector:
+   197→   197→[0218] () matchLabels:
+   198→   198→[0219] () app: preone-api
+   199→   199→[0220] () strategy:
+   200→   200→[0221] () type: RollingUpdate
+   201→   201→[0222] () rollingUpdate:
+   202→   202→[0223] () maxSurge: 1
+   203→   203→[0224] () maxUnavailable: 0
+   204→   204→[0225] () template:
+   205→   205→[0226] () metadata:
+   206→   206→[0227] () labels:
+   207→   207→[0228] () app: preone-api
+   208→   208→[0229] () tier: backend
+   209→   209→[0230] () spec:
+   210→   210→[0231] () serviceAccountName: preone-api
+   211→   211→[0232] () containers:
+   212→   212→[0233] () - name: api
+   213→   213→[0234] () image: ghcr.io/preone/api:1.0.0
+   214→   214→[0235] () ports:
+   215→   215→[0236] () - containerPort: 3000
+   216→   216→[0237] () name: http
+   217→   217→[0238] () envFrom:
+   218→   218→[0239] () - configMapRef:
+   219→   219→[0240] () name: preone-api-config
+   220→   220→[0241] () - secretRef:
+   221→   221→[0242] () name: preone-api-secrets
+   222→   222→[0243] () resources:
+   223→   223→[0244] () requests:
+   224→   224→[0245] () cpu: 250m
+   225→   225→[0246] () memory: 512Mi
+   226→   226→[0247] () limits:
+   227→   227→[0248] () cpu: 1000m
+   228→   228→[0249] () memory: 1Gi
+   229→   229→[0250] () livenessProbe:
+   230→   230→[0251] () httpGet:
+   231→   231→[0252] () path: /health
+   232→   232→[0253] () port: 3000
+   233→   233→[0254] () initialDelaySeconds: 30
+   234→   234→[0255] () periodSeconds: 10
+   235→   235→[0256] () readinessProbe:
+   236→   236→[0257] () httpGet:
+   237→   237→[0258] () path: /ready
+   238→   238→[0259] () port: 3000
+   239→   239→[0260] () initialDelaySeconds: 5
+   240→   240→[0261] () periodSeconds: 5
+   241→   241→[0262] () lifecycle:
+   242→   242→[0263] () preStop:
+   243→   243→[0264] () exec:
+   244→   244→[0265] () command: ["sh", "-c", "sleep 10"]
+   245→   245→[0266] () terminationGracePeriodSeconds: 60
+   246→   246→[0267] () ---
+   247→   247→[0268] () apiVersion: autoscaling/v2
+   248→   248→[0269] () kind: HorizontalPodAutoscaler
+   249→   249→[0270] () metadata:
+   250→   250→[0271] () name: preone-api-hpa
+   251→   251→[0272] () namespace: api
+   252→   252→[0273] () spec:
+   253→   253→[0274] () scaleTargetRef:
+   254→   254→[0275] () apiVersion: apps/v1
+   255→   255→[0276] () kind: Deployment
+   256→   256→[0277] () name: preone-api
+   257→   257→[0278] () minReplicas: 3
+   258→   258→[0279] () maxReplicas: 30
+   259→   259→[0280] () metrics:
+   260→   260→[0281] () - type: Resource
+   261→   261→[0282] () resource:
+   262→   262→[0283] () name: cpu
+   263→   263→[0284] () target:
+   264→   264→[0285] () type: Utilization
+   265→   265→[0286] () averageUtilization: 70
+   266→   266→[0287] () - type: Resource
+   267→   267→[0288] () resource:
+   268→   268→[0289] () name: memory
+   269→   269→[0290] () target:
+   270→   270→[0291] () type: Utilization
+   271→   271→[0292] () averageUtilization: 80
+   272→   272→[0294] (Heading 1) 5. CI/CD Pipeline (GitHub Actions)
+   273→   273→[0295] (Heading 2) 5.1 Pipeline Overview
+   274→   274→[0296] () PreOne ची CI/CD pipeline GitHub Actions द्वारे powered आहे. Pipeline completely automated आहे — developer code push केल्यापासून production deployment पर्यंत कोणताही manual step नाही (except production approval gate). Pipeline stages द्वारे quality gates enforce होतात — एकही stage fail झाल्यास pipeline stop होतो आणि deployment blocked होतो. हे approach production quality सुनिश्चित करतो आणि broken code production मध्ये reach होणार नाही याची ग्यारंटी देतो.
+   275→   275→[0297] () Pipeline design principles: fast feedback (lint + unit tests < 5 min), fail-fast (stop on first failure), reproducible (lock files + pinned action versions), observable (status checks visible in PR), recoverable (auto-rollback on health check failure). Pipeline runs on every push (feature branch) + every PR (against main). Production deploy फक्त main branch merge नंतर + manual approval.
+   276→   276→[0298] (Heading 2) 5.2 Pipeline Stages
+   277→   277→[0299] (Heading 2) 5.3 Pipeline Diagram
+   278→   278→[0300] () Developer Push
+   279→   279→[0301] () |
+   280→   280→[0302] () v
+   281→   281→[0303] () GitHub
+   282→   282→[0304] () |
+   283→   283→[0305] () v
+   284→   284→[0306] () Lint
+   285→   285→[0307] () |
+   286→   286→[0308] () v
+   287→   287→[0309] () Unit Tests
+   288→   288→[0310] () |
+   289→   289→[0311] () v
+   290→   290→[0312] () Build
+   291→   291→[0313] () |
+   292→   292→[0314] () v
+   293→   293→[0315] () Security Scan
+   294→   294→[0316] () |
+   295→   295→[0317] () v
+   296→   296→[0318] () Docker Build
+   297→   297→[0319] () |
+   298→   298→[0320] () v
+   299→   299→[0321] () Push to Registry
+   300→   300→[0322] () |
+   301→   301→[0323] () v
+   302→   302→[0324] () Deploy to K8s
+   303→   303→[0325] () |
+   304→   304→[0326] () v
+   305→   305→[0327] () Health Check
+   306→   306→[0328] () |
+   307→   307→[0329] () v
+   308→   308→[0330] () Smoke Tests
+   309→   309→[0331] () |
+   310→   310→[0332] () v
+   311→   311→[0333] () Production
+   312→   312→[0334] (Heading 2) 5.4 Sample GitHub Actions Workflow
+   313→   313→[0335] () name: CI/CD Pipeline
+   314→   314→[0337] () on:
+   315→   315→[0338] () push:
+   316→   316→[0339] () branches: [main, develop]
+   317→   317→[0340] () pull_request:
+   318→   318→[0341] () branches: [main, develop]
+   319→   319→[0343] () env:
+   320→   320→[0344] () REGISTRY: ghcr.io
+   321→   321→[0345] () IMAGE_NAME: ${{ github.repository }}
+   322→   322→[0347] () jobs:
+   323→   323→[0348] () lint:
+   324→   324→[0349] () runs-on: ubuntu-latest
+   325→   325→[0350] () steps:
+   326→   326→[0351] () - uses: actions/checkout@v4
+   327→   327→[0352] () - uses: actions/setup-node@v4
+   328→   328→[0353] () with:
+   329→   329→[0354] () node-version: 20
+   330→   330→[0355] () cache: 'bun'
+   331→   331→[0356] () - run: bun install --frozen-lockfile
+   332→   332→[0357] () - run: bun run lint
+   333→   333→[0358] () - run: bun run typecheck
+   334→   334→[0360] () test:
+   335→   335→[0361] () needs: lint
+   336→   336→[0362] () runs-on: ubuntu-latest
+   337→   337→[0363] () services:
+   338→   338→[0364] () postgres:
+   339→   339→[0365] () image: postgres:16
+   340→   340→[0366] () env:
+   341→   341→[0367] () POSTGRES_PASSWORD: test
+   342→   342→[0368] () ports: ['5432:5432']
+   343→   343→[0369] () redis:
+   344→   344→[0370] () image: redis:7-alpine
+   345→   345→[0371] () ports: ['6379:6379']
+   346→   346→[0372] () steps:
+   347→   347→[0373] () - uses: actions/checkout@v4
+   348→   348→[0374] () - uses: actions/setup-node@v4
+   349→   349→[0375] () with:
+   350→   350→[0376] () node-version: 20
+   351→   351→[0377] () - run: bun install --frozen-lockfile
+   352→   352→[0378] () - run: bunx prisma migrate deploy
+   353→   353→[0379] () env:
+   354→   354→[0380] () DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+   355→   355→[0381] () - run: bun run test:unit -- --coverage
+   356→   356→[0382] () - run: bun run test:integration
+   357→   357→[0383] () - name: Upload coverage
+   358→   358→[0384] () uses: codecov/codecov-action@v4
+   359→   359→[0386] () security-scan:
+   360→   360→[0387] () needs: test
+   361→   361→[0388] () runs-on: ubuntu-latest
+   362→   362→[0389] () steps:
+   363→   363→[0390] () - uses: actions/checkout@v4
+   364→   364→[0391] () - name: Trivy filesystem scan
+   365→   365→[0392] () uses: aquasecurity/trivy-action@master
+   366→   366→[0393] () with:
+   367→   367→[0394] () scan-type: fs
+   368→   368→[0395] () scan-ref: '.'
+   369→   369→[0396] () severity: 'CRITICAL,HIGH'
+   370→   370→[0397] () fail-on-severity: 'CRITICAL'
+   371→   371→[0398] () - name: Snyk dependency scan
+   372→   372→[0399] () uses: snyk/actions/node@master
+   373→   373→[0400] () env:
+   374→   374→[0401] () SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+   375→   375→[0402] () - name: GitLeaks secrets scan
+   376→   376→[0403] () uses: gitleaks/gitleaks-action@v2
+   377→   377→[0405] () docker-build-push:
+   378→   378→[0406] () needs: security-scan
+   379→   379→[0407] () runs-on: ubuntu-latest
+   380→   380→[0408] () permissions:
+   381→   381→[0409] () contents: read
+   382→   382→[0410] () packages: write
+   383→   383→[0411] () steps:
+   384→   384→[0412] () - uses: actions/checkout@v4
+   385→   385→[0413] () - uses: docker/setup-buildx-action@v3
+   386→   386→[0414] () - name: Login to GHCR
+   387→   387→[0415] () uses: docker/login-action@v3
+   388→   388→[0416] () with:
+   389→   389→[0417] () registry: ${{ env.REGISTRY }}
+   390→   390→[0418] () username: ${{ github.actor }}
+   391→   391→[0419] () password: ${{ secrets.GITHUB_TOKEN }}
+   392→   392→[0420] () - name: Build + Push
+   393→   393→[0421] () uses: docker/build-push-action@v5
+   394→   394→[0422] () with:
+   395→   395→[0423] () context: .
+   396→   396→[0424] () push: true
+   397→   397→[0425] () tags: |
+   398→   398→[0426] () ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+   399→   399→[0427] () ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+   400→   400→[0428] () ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+   401→   401→[0429] () cache-from: type=gha
+   402→   402→[0430] () cache-to: type=gha,mode=max
+   403→   403→[0432] () deploy:
+   404→   404→[0433] () needs: docker-build-push
+   405→   405→[0434] () if: github.ref == 'refs/heads/main'
+   406→   406→[0435] () runs-on: ubuntu-latest
+   407→   407→[0436] () environment: production
+   408→   408→[0437] () steps:
+   409→   409→[0438] () - uses: actions/checkout@v4
+   410→   410→[0439] () - uses: azure/setup-kubectl@v4
+   411→   411→[0440] () - name: Configure AWS credentials
+   412→   412→[0441] () uses: aws-actions/configure-aws-credentials@v4
+   413→   413→[0442] () with:
+   414→   414→[0443] () aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+   415→   415→[0444] () aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+   416→   416→[0445] () aws-region: ap-south-1
+   417→   417→[0446] () - name: Update kubeconfig
+   418→   418→[0447] () run: aws eks update-kubeconfig --name preone-prod --region ap-south-1
+   419→   419→[0448] () - name: Deploy via Helm
+   420→   420→[0449] () run: |
+   421→   421→[0450] () helm upgrade --install preone-api ./helm/preone-api \
+   422→   422→[0451] () --namespace api --create-namespace \
+   423→   423→[0452] () --set image.tag=${{ github.sha }} \
+   424→   424→[0453] () --wait --timeout 5m
+   425→   425→[0454] () - name: Wait for rollout
+   426→   426→[0455] () run: kubectl rollout status deployment/preone-api -n api --timeout=5m
+   427→   427→[0456] () - name: Smoke tests
+   428→   428→[0457] () run: bun run test:smoke -- --base-url=https://api.preone.com
+   429→   429→[0459] (Heading 1) 6. NGINX Ingress
+   430→   430→[0460] (Heading 2) 6.1 Role of NGINX
+   431→   431→[0461] () NGINX Ingress Controller हा PreOne चा single entry point आहे सर्व external traffic साठी. NGINX च्या आधी Cloudflare (CDN + WAF + DDoS protection) आहे जो edge security + static asset caching handle करतो. NGINX च्या पाठीशी multiple service namespaces आहेत (api, web) ज्यांना NGINX path-based routing द्वारे traffic route करतो. NGINX Ingress Controller K8s-native implementation आहे जो Ingress resources watch करतो आणि nginx.conf automatically generate करतो.
+   432→   432→[0462] () NGINX च्या core responsibilities: SSL termination (TLS 1.3), reverse proxy (routes /api/* to api service, /* to web service), load balancing (round-robin with health checks), rate limiting (per-IP + per-user), compression (Gzip + Brotli), security headers (OWASP-recommended), WebSocket support (Socket.IO long-polling fallback also supported), आणि access logging (JSON format with traceId). NGINX चे config ConfigMaps द्वारे managed होतो जो GitOps approach follow करतो.
+   433→   433→[0463] (Heading 2) 6.2 Responsibilities
+   434→   434→[0464] (Heading 2) 6.3 Sample Ingress Manifest
+   435→   435→[0465] () apiVersion: networking.k8s.io/v1
+   436→   436→[0466] () kind: Ingress
+   437→   437→[0467] () metadata:
+   438→   438→[0468] () name: preone-ingress
+   439→   439→[0469] () namespace: ingress
+   440→   440→[0470] () annotations:
+   441→   441→[0471] () kubernetes.io/ingress.class: nginx
+   442→   442→[0472] () cert-manager.io/cluster-issuer: letsencrypt-prod
+   443→   443→[0473] () nginx.ingress.kubernetes.io/ssl-protocols: 'TLSv1.3'
+   444→   444→[0474] () nginx.ingress.kubernetes.io/limit-rps: '100'
+   445→   445→[0475] () nginx.ingress.kubernetes.io/limit-burst: '200'
+   446→   446→[0476] () nginx.ingress.kubernetes.io/proxy-body-size: '50m'
+   447→   447→[0477] () nginx.ingress.kubernetes.io/proxy-read-timeout: '300'
+   448→   448→[0478] () nginx.ingress.kubernetes.io/proxy-send-timeout: '300'
+   449→   449→[0479] () nginx.ingress.kubernetes.io/configuration-snippet: |
+   450→   450→[0480] () more_set_headers 'X-Content-Type-Options: nosniff';
+   451→   451→[0481] () more_set_headers 'X-Frame-Options: DENY';
+   452→   452→[0482] () more_set_headers 'X-XSS-Protection: 1; mode=block';
+   453→   453→[0483] () more_set_headers 'Strict-Transport-Security: max-age=31536000; includeSubDomains';
+   454→   454→[0484] () more_set_headers 'Content-Security-Policy: default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: https:; font-src \'self\' data:;';
+   455→   455→[0485] () nginx.ingress.kubernetes.io/server-snippet: |
+   456→   456→[0486] () gzip on;
+   457→   457→[0487] () gzip_comp_level 6;
+   458→   458→[0488] () gzip_min_length 256;
+   459→   459→[0489] () gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+   460→   460→[0490] () brotli on;
+   461→   461→[0491] () brotli_comp_level 6;
+   462→   462→[0492] () brotli_types text/plain text/css application/json application/javascript;
+   463→   463→[0493] () spec:
+   464→   464→[0494] () tls:
+   465→   465→[0495] () - hosts:
+   466→   466→[0496] () - api.preone.com
+   467→   467→[0497] () - app.preone.com
+   468→   468→[0498] () secretName: preone-tls
+   469→   469→[0499] () rules:
+   470→   470→[0500] () - host: api.preone.com
+   471→   471→[0501] () http:
+   472→   472→[0502] () paths:
+   473→   473→[0503] () - path: /
+   474→   474→[0504] () pathType: Prefix
+   475→   475→[0505] () backend:
+   476→   476→[0506] () service:
+   477→   477→[0507] () name: preone-api
+   478→   478→[0508] () port:
+   479→   479→[0509] () number: 80
+   480→   480→[0510] () - host: app.preone.com
+   481→   481→[0511] () http:
+   482→   482→[0512] () paths:
+   483→   483→[0513] () - path: /api
+   484→   484→[0514] () pathType: Prefix
+   485→   485→[0515] () backend:
+   486→   486→[0516] () service:
+   487→   487→[0517] () name: preone-api
+   488→   488→[0518] () port:
+   489→   489→[0519] () number: 80
+   490→   490→[0520] () - path: /
+   491→   491→[0521] () pathType: Prefix
+   492→   492→[0522] () backend:
+   493→   493→[0523] () service:
+   494→   494→[0524] () name: preone-web
+   495→   495→[0525] () port:
+   496→   496→[0526] () number: 80
+   497→   497→[0527] () - path: /socket.io
+   498→   498→[0528] () pathType: Prefix
+   499→   499→[0529] () backend:
+   500→   500→[0530] () service:
+   501→   501→[0531] () name: preone-api
+   502→   502→[0532] () port:
+   503→   503→[0533] () number: 80
+   504→   504→[0535] (Heading 1) 7. PostgreSQL High Availability
+   505→   505→[0536] (Heading 2) 7.1 HA Architecture
+   506→   506→[0537] () PostgreSQL HA PreOne चा critical infrastructure component आहे. Database failure म्हणजे complete platform outage, त्यामुळे database HA design सर्वात जास्त careful आहे. PreOne Patroni-based HA solution वापरतो जो etcd cluster द्वारे leader election handle करतो. Cluster मध्ये 1 primary + 2 replicas आहेत. Primary सर्व writes handle करतो, replicas सर्व reads (via PgBouncer) handle करतात. Automatic failover < 30 seconds मध्ये complete होतो — primary failure detect → new primary election → connection rerouting via PgBouncer.
+   507→   507→[0538] () HA architecture चे key components: Patroni (HA manager), etcd (distributed consensus for leader election), PgBouncer (connection pooling + read/write splitting), pgBackRest (backup + WAL archiving), postgres_exporter (Prometheus metrics). सर्व components containerized आहेत आणि StatefulSet द्वारे managed होतात ज्यामुळे stable network identity + persistent volumes ensure होतात.
+   508→   508→[0539] (Heading 2) 7.2 HA Diagram
+   509→   509→[0540] () PostgreSQL HA
+   510→   510→[0541] () |
+   511→   511→[0542] () Primary Database
+   512→   512→[0543] () |
+   513→   513→[0544] () Streaming Replication
+   514→   514→[0545] () |
+   515→   515→[0546] () Read Replica 1
+   516→   516→[0547] () |
+   517→   517→[0548] () Read Replica 2
+   518→   518→[0550] () +---------------------------------+
+   519→   519→[0551] () |         Patroni + etcd         |
+   520→   520→[0552] () |    (Leader Election + Failover)|
+   521→   521→[0553] () +---------------------------------+
+   522→   522→[0554] () |
+   523→   523→[0555] () PgBouncer Sidecar
+   524→   524→[0556] () (per-pod; 1000 conns)
+   525→   525→[0557] () |
+   526→   526→[0558] () Application Pods
+   527→   527→[0559] (Heading 2) 7.3 HA Features
+   528→   528→[0560] (Heading 2) 7.4 Connection Pooling Strategy
+   529→   529→[0561] () PgBouncer हे PreOne चे connection pooling layer आहे जो PostgreSQL connections च्या exhaustion ला prevent करतो. PgBouncer sidecar pattern मध्ये deploy झालेला आहे — प्रत्येक Postgres pod मध्ये PgBouncer container alongside run होतो. PgBouncer transaction-mode pooling वापरतो ज्यामुळे connection per transaction असते, न की connection per session. हे approach connection count कमी करते (1000 → ~50 actual Postgres connections) आणि performance improve होते.
+   530→   530→[0562] () Read/write splitting द्वारे read replicas चा efficient use होतो. PgBouncer configured आहे ज्यामुळे queries with /* replica */ comment hint read replicas ला route होतात, बाकी सर्व queries primary ला route होतात. Reports dashboard आणि analytics endpoints read replicas वापरतात ज्यामुळे primary वर जोर कमी पडतो. PgBouncer प्रत्येक pool साठी max 1000 client connections + 50 server connections allow करतो.
+   531→   531→[0564] (Heading 1) 8. Redis
+   532→   532→[0565] (Heading 2) 8.1 Role of Redis
+   533→   533→[0566] () Redis हे PreOne चा second most critical infrastructure component आहे Postgres नंतर. Redis multiple roles handle करतो — cache, session store, rate limiter, OTP cache, BullMQ queue backend, distributed locks, real-time pub/sub, feature flags, idempotency store, आणि geo indexing. हे सर्व use cases single Redis cluster द्वारे handled होतात पण separate logical databases (db 0-9) द्वारे isolation आहे. Redis Sentinel द्वारे HA ensured आहे — 3 master + 3 replica nodes + 3 Sentinel monitors.
+   534→   534→[0567] () Redis cluster चे key characteristics: 6 nodes (3 master + 3 replica) across 3 AZs, Sentinel for automatic failover (< 10 seconds), AOF + RDB persistence enabled, maxmemory-policy = allkeys-lru, maxmemory = 8 GB per node, TLS for in-transit encryption, AUTH password for access control. Redis monitoring via redis_exporter → Prometheus → Grafana dashboard with alerts on memory usage, connection count, hit rate, replication lag.
+   535→   535→[0568] (Heading 2) 8.2 Use Cases
+   536→   536→[0569] (Heading 2) 8.3 Redis HA Setup
+   537→   537→[0570] () Redis Cluster Topology:
+   538→   538→[0571] () +-- redis-0 (Master, AZ-a)
+   539→   539→[0572] () +-- redis-1 (Master, AZ-b)
+   540→   540→[0573] () +-- redis-2 (Master, AZ-c)
+   541→   541→[0574] () +-- redis-3 (Replica of redis-0, AZ-b)
+   542→   542→[0575] () +-- redis-4 (Replica of redis-1, AZ-c)
+   543→   543→[0576] () +-- redis-5 (Replica of redis-2, AZ-a)
+   544→   544→[0577] () +-- sentinel-0 (Sentinel, AZ-a)
+   545→   545→[0578] () +-- sentinel-1 (Sentinel, AZ-b)
+   546→   546→[0579] () +-- sentinel-2 (Sentinel, AZ-c)
+   547→   547→[0581] () Failover Behavior:
+   548→   548→[0582] () 1. Sentinel monitors Master nodes every 1s
+   549→   549→[0583] () 2. Master unresponsive for 30s -> mark as down
+   550→   550→[0584] () 3. Sentinels elect new Master via quorum
+   551→   551→[0585] () 4. Replica promoted to Master
+   552→   552→[0586] () 5. Clients re-connect via Sentinel discovery
+   553→   553→[0587] () 6. Total failover time < 10 seconds
+   554→   554→[0589] () Persistence:
+   555→   555→[0590] () - AOF (appendonly.aof) every 1s (fsync)
+   556→   556→[0591] () - RDB snapshot every 6 hours
+   557→   557→[0592] () - Backups to S3 every 6 hours (7-day retention)
+   558→   558→[0593] (Heading 2) 8.4 Logical Database Allocation
+   559→   559→[0594] () Redis मध्ये 16 logical databases (db 0-15) supported आहेत. PreOne च्या convention प्रमाणे each use case चा separate database आहे ज्यामुळे isolation + monitoring clear होते:
+   560→   560→[0595] () •  db 0 — API Cache (hot endpoint responses)
+   561→   561→[0596] () •  db 1 — Session Store (JWT refresh tokens, OTP attempts)
+   562→   562→[0597] () •  db 2 — Rate Limiting (per-IP + per-user counters)
+   563→   563→[0598] () •  db 3 — OTP Cache (mobile → OTP mapping with TTL)
+   564→   564→[0599] () •  db 4 — BullMQ Queues (job queues per domain)
+   565→   565→[0600] () •  db 5 — Distributed Locks (Redlock + scheduled jobs)
+   566→   566→[0601] () •  db 6 — Pub/Sub (WebSocket fan-out via Redis Adapter)
+   567→   567→[0602] () •  db 7 — Feature Flags (per-tenant config cache)
+   568→   568→[0603] () •  db 8 — Idempotency Store (request fingerprint → response)
+   569→   569→[0604] () •  db 9 — Geo Indexing (transport vehicle live location)
+   570→   570→[0605] (Heading 1) 9. Monitoring
+   571→   571→[0606] (Heading 2) 9.1 Monitoring Architecture
+   572→   572→[0607] () PreOne ची monitoring stack Prometheus + Grafana + AlertManager द्वारे powered आहे. Monitoring हे observability चा first pillar आहे — 'what is happening' answer करते. Prometheus pull-based model वापरतो ज्यामुळे applications metrics expose करतात (/metrics endpoint) आणि Prometheus त्यांना periodically scrape करतो. Grafana dashboards metrics visualize करतात आणि AlertManager alerts route करतो (Email, Slack, PagerDuty).
+   573→   573→[0608] () Monitoring stack architecture: Applications expose /metrics endpoint via prom-client (Node.js library) → Prometheus scrapes every 15s → Prometheus stores in time-series DB (15-day retention) → Grafana queries via PromQL → AlertManager evaluates alert rules every 30s → routes to on-call engineer via PagerDuty + Slack #engineering-alerts. SLO burn rate tracking द्वारे error budget consumption monitored होतो — high burn rate trigger करतो incident review.
+   574→   574→[0609] (Heading 2) 9.2 Monitoring Pipeline
+   575→   575→[0610] () Applications
+   576→   576→[0611] () |
+   577→   577→[0612] () v
+   578→   578→[0613] () Prometheus
+   579→   579→[0614] () |
+   580→   580→[0615] () v
+   581→   581→[0616] () Grafana Dashboards
+   582→   582→[0617] () |
+   583→   583→[0618] () v
+   584→   584→[0619] () AlertManager
+   585→   585→[0620] () |
+   586→   586→[0621] () v
+   587→   587→[0622] () Email / Slack / PagerDuty
+   588→   588→[0623] (Heading 2) 9.3 Monitored Metrics
+   589→   589→[0624] (Heading 2) 9.4 Sample Prometheus Alert Rules
+   590→   590→[0625] () # prometheus-rules.yaml
+   591→   591→[0626] () groups:
+   592→   592→[0627] () - name: preone-alerts
+   593→   593→[0628] () rules:
+   594→   594→[0629] () - alert: HighCPUUsage
+   595→   595→[0630] () expr: |
+   596→   596→[0631] () 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+   597→   597→[0632] () for: 5m
+   598→   598→[0633] () labels:
+   599→   599→[0634] () severity: warning
+   600→   600→[0635] () team: devops
+   601→   601→[0636] () annotations:
+   602→   602→[0637] () summary: 'High CPU usage on {{ $labels.instance }}'
+   603→   603→[0638] () description: 'CPU usage > 80% for 5 minutes'
+   604→   604→[0640] () - alert: HighAPIErrorRate
+   605→   605→[0641] () expr: |
+   606→   606→[0642] () sum(rate(http_requests_total{status=~"5.."}[2m])) by(service)
+   607→   607→[0643] () / sum(rate(http_requests_total[2m])) by(service) > 0.01
+   608→   608→[0644] () for: 2m
+   609→   609→[0645] () labels:
+   610→   610→[0646] () severity: critical
+   611→   611→[0647] () team: backend
+   612→   612→[0648] () annotations:
+   613→   613→[0649] () summary: 'High error rate on {{ $labels.service }}'
+   614→   614→[0650] () description: '5xx error rate > 1% for 2 minutes'
+   615→   615→[0652] () - alert: HighAPILatency
+   616→   616→[0653] () expr: |
+   617→   617→[0654] () histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m]))
+   618→   618→[0655] () by(le, service)) > 1
+   619→   619→[0656] () for: 5m
+   620→   620→[0657] () labels:
+   621→   621→[0658] () severity: warning
+   622→   622→[0659] () team: backend
+   623→   623→[0660] () annotations:
+   624→   624→[0661] () summary: 'High p99 latency on {{ $labels.service }}'
+   625→   625→[0662] () description: 'p99 latency > 1s for 5 minutes'
+   626→   626→[0664] () - alert: PostgresReplicationLag
+   627→   627→[0665] () expr: pg_replication_lag_seconds > 5
+   628→   628→[0666] () for: 2m
+   629→   629→[0667] () labels:
+   630→   630→[0668] () severity: critical
+   631→   631→[0669] () team: devops
+   632→   632→[0670] () annotations:
+   633→   633→[0671] () summary: 'PostgreSQL replication lag > 5s'
+   634→   634→[0673] () - alert: RedisMemoryHigh
+   635→   635→[0674] () expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+   636→   636→[0675] () for: 5m
+   637→   637→[0676] () labels:
+   638→   638→[0677] () severity: warning
+   639→   639→[0678] () team: devops
+   640→   640→[0679] () annotations:
+   641→   641→[0680] () summary: 'Redis memory usage > 80%'
+   642→   642→[0682] () - alert: PodRestartLoop
+   643→   643→[0683] () expr: increase(kube_pod_container_status_restarts_total[10m]) > 3
+   644→   644→[0684] () for: 1m
+   645→   645→[0685] () labels:
+   646→   646→[0686] () severity: warning
+   647→   647→[0687] () team: devops
+   648→   648→[0688] () annotations:
+   649→   649→[0689] () summary: 'Pod {{ $labels.pod }} restarting frequently'
+   650→   650→[0691] () - alert: QueueBacklog
+   651→   651→[0692] () expr: bullmq_pending_jobs > 1000
+   652→   652→[0693] () for: 5m
+   653→   653→[0694] () labels:
+   654→   654→[0695] () severity: warning
+   655→   655→[0696] () team: backend
+   656→   656→[0697] () annotations:
+   657→   657→[0698] () summary: 'BullMQ queue {{ $labels.queue }} backlog > 1000'
+   658→   658→[0700] (Heading 1) 10. Logging
+   659→   659→[0701] (Heading 2) 10.1 Logging Architecture
+   660→   660→[0702] () Logging हे observability चा second pillar आहे — 'why is it happening' answer करते. PreOne ची logging stack Loki + Promtail + Grafana द्वारे powered आहे. Loki हे Grafana Labs चे horizontally-scalable log aggregation system आहे जे Elasticsearch/Loki comparison मध्ये cost-effective आहे कारण ते फक्त metadata indexes करतो (न की full-text index). Promtail हे log shipping agent आहे जो DaemonSet म्हणून सर्व nodes वर deploy झालेला आहे आणि container logs scrape करतो.
+   661→   661→[0703] () Application logs Pino (Node.js JSON logger) द्वारे emitted होतात — stdout कडे write होतात. Promtail container logs /var/log/pods/*.log पासून scrape करतो, JSON parse करतो, traceId + tenantId + userId जसे labels extract करतो, आणि Loki कडे push करतो. Grafana Loki queries via LogQL (PromQL-like syntax) द्वारे support करतो. Dashboards pre-built आहेत per service (API, Web, Worker) आणि per log type (requests, audit, errors, jobs).
+   662→   662→[0704] (Heading 2) 10.2 Logging Pipeline
+   663→   663→[0705] () Application Logs
+   664→   664→[0706] () |
+   665→   665→[0707] () v
+   666→   666→[0708] () Promtail
+   667→   667→[0709] () (DaemonSet per node)
+   668→   668→[0710] () |
+   669→   669→[0711] () v
+   670→   670→[0712] () Loki
+   671→   671→[0713] () (Log Storage + Index)
+   672→   672→[0714] () |
+   673→   673→[0715] () v
+   674→   674→[0716] () Grafana
+   675→   675→[0717] () (Log Queries + Views)
+   676→   676→[0718] (Heading 2) 10.3 Log Types
+   677→   677→[0719] (Heading 2) 10.4 Structured Log Example
+   678→   678→[0720] () {
+   679→   679→[0721] () "level": "info",
+   680→   680→[0722] () "time": 1736832000000,
+   681→   681→[0723] () "msg": "Request completed",
+   682→   682→[0724] () "traceId": "550e8400-e29b-41d4-a716-446655440000",
+   683→   683→[0725] () "spanId": "a1b2c3d4e5f6",
+   684→   684→[0726] () "method": "POST",
+   685→   685→[0727] () "path": "/api/v1/students",
+   686→   686→[0728] () "status": 201,
+   687→   687→[0729] () "durationMs": 145,
+   688→   688→[0730] () "userId": "usr_01HXY...",
+   689→   689→[0731] () "tenantId": "ten_01HXY...",
+   690→   690→[0732] () "branchId": "br_01HXY...",
+   691→   691→[0733] () "ip": "192.168.1.100",
+   692→   692→[0734] () "userAgent": "Mozilla/5.0...",
+   693→   693→[0735] () "requestId": "req_01HXY...",
+   694→   694→[0736] () "service": "preone-api",
+   695→   695→[0737] () "version": "1.0.0",
+   696→   696→[0738] () "hostname": "preone-api-7f8b9c6d4-x2y3z"
+   697→   697→[0739] () }
+   698→   698→[0741] () # LogQL query examples:
+   699→   699→[0742] () # 1. All 5xx errors in last hour
+   700→   700→[0743] () {service="preone-api"} | json | level="error" | status >= 500
+   701→   701→[0745] () # 2. Slow requests (>500ms) for specific tenant
+   702→   702→[0746] () {service="preone-api", tenantId="ten_01HXY..."} | json | durationMs > 500
+   703→   703→[0748] () # 3. Count errors per service in last 5 minutes
+   704→   704→[0749] () sum by (service) (count_over_time({level="error"}[5m]))
+   705→   705→[0751] () # 4. Audit logs for specific user
+   706→   706→[0752] () {logType="audit", userId="usr_01HXY..."} | json
+   707→   707→[0754] (Heading 1) 11. Backup Strategy
+   708→   708→[0755] (Heading 2) 11.1 Backup Philosophy
+   709→   709→[0756] () Backups हे PreOne च्या disaster recovery चा foundation आहेत. Backup strategy खालील principles follow करते: 3-2-1 rule (3 copies, 2 different media, 1 offsite), automated (no manual backups), tested (daily restore tests), encrypted (at rest + in transit), versioned (multiple point-in-time restores), आणि documented (runbook for every backup type). PreOne च्या backup stack मध्ये Velero (K8s resources + PVs), pgBackRest (Postgres), Redis BGSAVE (Redis), S3 cross-region replication (object storage), आणि GitHub mirror (source code) included आहेत.
+   710→   710→[0757] () Backup verification critical आहे — untested backup हा no backup च समान आहे. PreOne मध्ये daily automated restore tests run होतात जे QA cluster मध्ये restore करतात आणि smoke tests execute करतात. Restore test failure trigger करतो PagerDuty alert. Quarterly full DR drill execute होतो जिथे complete production cluster restore simulate केला जातो.
+   711→   711→[0758] (Heading 2) 11.2 Backup Schedule
+   712→   712→[0759] (Heading 2) 11.3 Backup Architecture
+   713→   713→[0760] () Backup Sources:
+   714→   714→[0761] () +-- PostgreSQL (primary)
+   715→   715→[0762] () |     |
+   716→   716→[0763] () |     +--> pgBackRest full backup (daily 02:00)
+   717→   717→[0764] () |     +--> WAL archive (continuous)
+   718→   718→[0765] () |     +--> Base backup (weekly Sunday 01:00)
+   719→   719→[0766] () |           |
+   720→   720→[0767] () |           v
+   721→   721→[0768] () |     S3 (encrypted, cross-region replicated)
+   722→   722→[0769] () |           |
+   723→   723→[0770] () |           +--> Glacier (after 7 days)
+   724→   724→[0771] () |
+   725→   725→[0772] () +-- Redis (master)
+   726→   726→[0773] () |     |
+   727→   727→[0774] () |     +--> BGSAVE (every 6 hours)
+   728→   728→[0775] () |           |
+   729→   729→[0776] () |           v
+   730→   730→[0777] () |     S3 (encrypted)
+   731→   731→[0778] () |
+   732→   732→[0779] () +-- Object Storage (S3)
+   733→   733→[0780] () |     |
+   734→   734→[0781] () |     +--> Cross-region replication (continuous)
+   735→   735→[0782] () |
+   736→   736→[0783] () +-- Kubernetes (cluster state)
+   737→   737→[0784] () |     |
+   738→   738→[0785] () |     +--> Velero backup (daily)
+   739→   739→[0786] () |           |
+   740→   740→[0787] () |           v
+   741→   741→[0788] () |     S3 (encrypted)
+   742→   742→[0789] () |
+   743→   743→[0790] () +-- GitHub (source code)
+   744→   744→[0791] () |
+   745→   745→[0792] () +--> Mirror to Bitbucket (daily)
+   746→   746→[0794] () Verification:
+   747→   747→[0795] () +-- Daily restore test (automated, QA cluster)
+   748→   748→[0796] () +-- Quarterly DR drill (manual, full simulation)
+   749→   749→[0797] () +-- Monthly DR report (RPO/RTO actual vs target)
+   750→   750→[0799] (Heading 1) 12. Disaster Recovery
+   751→   751→[0800] (Heading 2) 12.1 DR Strategy
+   752→   752→[0801] () Disaster Recovery (DR) हे PreOne च्या business continuity चा critical component आहे. DR strategy दोन pillars वर built आहे: RPO (Recovery Point Objective — max acceptable data loss) आणि RTO (Recovery Time Objective — max acceptable downtime). PreOne चे targets: RPO ≤ 15 minutes, RTO ≤ 60 minutes. हे targets aggressive आहेत पण preschool domain मध्ये parent communication + fee operations critical असल्यामुळे justified आहेत.
+   753→   753→[0802] () DR architecture multi-layered आहे. Layer 1: Multi-AZ deployment (3 AZs) — single AZ failure handle करते. Layer 2: Automated failover (Patroni for Postgres, Sentinel for Redis) — single node failure handle करते. Layer 3: Cross-region replication (S3, ECR) — region failure handle करते. Layer 4: Multi-region standby (v1.0: active-passive; v2.0: active-active) — complete region failure handle करते. Each layer ची testing regular असते — daily automated tests + quarterly full DR drills.
+   754→   754→[0803] (Heading 2) 12.2 DR Metrics
+   755→   755→[0804] (Heading 2) 12.3 DR Runbook (High-Level)
+   756→   756→[0805] () Scenario: Primary Region Complete Failure
+   757→   757→[0807] () Phase 1: Detection (0-5 minutes)
+   758→   758→[0808] () - Cloudflare health check fails for 3 consecutive checks
+   759→   759→[0809] () - Alert triggered to on-call engineer via PagerDuty
+   760→   760→[0810] () - On-call acknowledges + starts incident bridge
+   761→   761→[0812] () Phase 2: Decision (5-15 minutes)
+   762→   762→[0813] () - On-call verifies primary region is genuinely down
+   763→   763→[0814] () - On-call escalates to DevOps Lead + Engineering Manager
+   764→   764→[0815] () - Decision: failover to DR region OR wait for primary recovery
+   765→   765→[0816] () - Decision criteria: estimated primary recovery > 30 min -> failover
+   766→   766→[0818] () Phase 3: Failover (15-45 minutes)
+   767→   767→[0819] () - Update Cloudflare DNS to point to DR region load balancer
+   768→   768→[0820] () - Promote DR Postgres replica to primary (via Patroni)
+   769→   769→[0821] () - Scale up DR Kubernetes cluster (min 3 nodes -> 10 nodes)
+   770→   770→[0822] () - Deploy latest Helm charts to DR cluster
+   771→   771→[0823] () - Verify health checks pass
+   772→   772→[0825] () Phase 4: Verification (45-55 minutes)
+   773→   773→[0826] () - Smoke tests against DR endpoints
+   774→   774→[0827] () - Verify data consistency (last 15 min may be lost - RPO)
+   775→   775→[0828] () - Monitor error rates, latency, queue backlog
+   776→   776→[0829] () - Communicate to customers via status page
+   777→   777→[0831] () Phase 5: Stabilization (55-60 minutes)
+   778→   778→[0832] () - Traffic fully routed to DR region
+   779→   779→[0833] () - On-call hands off to follow-the-sun team
+   780→   780→[0834] () - Post-incident review scheduled within 48 hours
+   781→   781→[0836] () Phase 6: Recovery (post-incident)
+   782→   782→[0837] () - Primary region restored from latest backup
+   783→   783→[0838] () - Data reconciled (DR primary -> restored primary)
+   784→   784→[0839] () - Traffic routed back to primary region
+   785→   785→[0840] () - DR cluster scaled back down to standby
+   786→   786→[0842] (Heading 1) 13. Environment Strategy
+   787→   787→[0843] (Heading 2) 13.1 Environment Pipeline
+   788→   788→[0844] () PreOne च्या 6 environments आहेत ज्यांचा specific purpose + control level आहे. प्रत्येक environment साठी स्वतंत्र Kubernetes namespace आणि configuration वापरली जाते. Environments strict pipeline follow करतात — कोणताही code change local dev पासून production पर्यंत सर्व environments मधून जाणे आवश्यक आहे. हे approach ensure करते की production मध्ये काही break होणार नाही कारण issues lower environments मध्ये catch होतील.
+   789→   789→[0845] () Local Development
+   790→   790→[0846] () |
+   791→   791→[0847] () v
+   792→   792→[0848] () Development
+   793→   793→[0849] () |
+   794→   794→[0850] () v
+   795→   795→[0851] () QA
+   796→   796→[0852] () |
+   797→   797→[0853] () v
+   798→   798→[0854] () UAT
+   799→   799→[0855] () |
+   800→   800→[0856] () v
+   801→   801→[0857] () Staging
+   802→   802→[0858] () |
+   803→   803→[0859] () v
+   804→   804→[0860] () Production
+   805→   805→[0861] (Heading 2) 13.2 Environment Catalog
+   806→   806→[0862] (Heading 2) 13.3 Environment Policies
+   807→   807→[0863] () Environment management खालील policies follow करते:
+   808→   808→[0864] () •  Each environment has separate Kubernetes namespace + config
+   809→   809→[0865] () •  No shared databases between environments — full isolation
+   810→   810→[0866] () •  Secrets per environment (no reuse); rotated independently
+   811→   811→[0867] () •  Production access: break-glass only; MFA + audit logged
+   812→   812→[0868] () •  Staging must mirror production (same K8s version, same DB version, same configs)
+   813→   813→[0869] () •  Data: synthetic data in lower envs; production-like data in staging via anonymization
+   814→   814→[0870] () •  Network policies block cross-environment traffic
+   815→   815→[0871] () •  Cost optimization: dev/QA clusters scaled down after-hours (20:00-08:00 IST)
+   816→   816→[0872] () •  Environment provisioning via Terraform modules (infrastructure-as-code)
+   817→   817→[0873] () •  Decommissioning: lower envs rebuilt weekly for hygiene
+   818→   818→[0875] (Heading 1) 14. Security
+   819→   819→[0876] (Heading 2) 14.1 Security Architecture
+   820→   820→[0877] () PreOne ची security architecture defense-in-depth model वर based आहे — multiple security layers द्वारे protection. Single layer compromise होण्याचे case मध्ये other layers protection provide करतात. Security layers: Cloudflare (edge — WAF + DDoS + bot protection), NGINX (network — TLS + rate limiting + security headers), Kubernetes (cluster — NetworkPolicies + RBAC + Pod Security Standards), Application (code — JWT auth + input validation + RBAC), Database (data — RLS + encryption at rest + audit logs). हे सर्व layers comprehensive security posture provide करतात.
+   821→   821→[0878] () Security operations core activities: vulnerability scanning (Trivy + Snyk + GitLeaks in CI/CD), penetration testing (annual third-party pentest), security training (annual OWASP training for engineers), incident response (documented runbook + on-call rotation), compliance audits (SOC 2 Type II roadmap + monthly internal audits), secrets management (K8s Secrets for v1 + Vault migration in v1.2), image signing (cosign / Sigstore — verify at deploy time), आणि supply chain security (SBOM generation + dependency pinning).
+   822→   822→[0879] (Heading 2) 14.2 Security Controls
+   823→   823→[0880] (Heading 2) 14.3 NetworkPolicies Sample
+   824→   824→[0881] () # Default deny all ingress + egress
+   825→   825→[0882] () apiVersion: networking.k8s.io/v1
+   826→   826→[0883] () kind: NetworkPolicy
+   827→   827→[0884] () metadata:
+   828→   828→[0885] () name: default-deny-all
+   829→   829→[0886] () namespace: api
+   830→   830→[0887] () spec:
+   831→   831→[0888] () podSelector: {}
+   832→   832→[0889] () policyTypes:
+   833→   833→[0890] () - Ingress
+   834→   834→[0891] () - Egress
+   835→   835→[0892] () ---
+   836→   836→[0893] () # Allow ingress from NGINX Ingress namespace
+   837→   837→[0894] () apiVersion: networking.k8s.io/v1
+   838→   838→[0895] () kind: NetworkPolicy
+   839→   839→[0896] () metadata:
+   840→   840→[0897] () name: allow-from-ingress
+   841→   841→[0898] () namespace: api
+   842→   842→[0899] () spec:
+   843→   843→[0900] () podSelector:
+   844→   844→[0901] () matchLabels:
+   845→   845→[0902] () tier: backend
+   846→   846→[0903] () policyTypes:
+   847→   847→[0904] () - Ingress
+   848→   848→[0905] () ingress:
+   849→   849→[0906] () - from:
+   850→   850→[0907] () - namespaceSelector:
+   851→   851→[0908] () matchLabels:
+   852→   852→[0909] () name: ingress
+   853→   853→[0910] () ports:
+   854→   854→[0911] () - protocol: TCP
+   855→   855→[0912] () port: 3000
+   856→   856→[0913] () ---
+   857→   857→[0914] () # Allow egress to Postgres + Redis only
+   858→   858→[0915] () apiVersion: networking.k8s.io/v1
+   859→   859→[0916] () kind: NetworkPolicy
+   860→   860→[0917] () metadata:
+   861→   861→[0918] () name: allow-egress-data
+   862→   862→[0919] () namespace: api
+   863→   863→[0920] () spec:
+   864→   864→[0921] () podSelector:
+   865→   865→[0922] () matchLabels:
+   866→   866→[0923] () tier: backend
+   867→   867→[0924] () policyTypes:
+   868→   868→[0925] () - Egress
+   869→   869→[0926] () egress:
+   870→   870→[0927] () - to:
+   871→   871→[0928] () - namespaceSelector:
+   872→   872→[0929] () matchLabels:
+   873→   873→[0930] () name: postgres
+   874→   874→[0931] () ports:
+   875→   875→[0932] () - protocol: TCP
+   876→   876→[0933] () port: 5432
+   877→   877→[0934] () - to:
+   878→   878→[0935] () - namespaceSelector:
+   879→   879→[0936] () matchLabels:
+   880→   880→[0937] () name: redis
+   881→   881→[0938] () ports:
+   882→   882→[0939] () - protocol: TCP
+   883→   883→[0940] () port: 6379
+   884→   884→[0941] () - to:
+   885→   885→[0942] () - namespaceSelector:
+   886→   886→[0943] () matchLabels:
+   887→   887→[0944] () name: monitoring
+   888→   888→[0945] () ports:
+   889→   889→[0946] () - protocol: TCP
+   890→   890→[0947] () port: 9090
+   891→   891→[0949] (Heading 1) 15. Scalability
+   892→   892→[0950] (Heading 2) 15.1 Scalability Strategy
+   893→   893→[0951] () PreOne ची scalability strategy horizontal scaling वर based आहे — more pods + more nodes, न की bigger machines. Horizontal scaling preferred कारण ते granular, cost-effective, आणि stateless-friendly आहे. Stateless API pods द्वारे any pod can serve any request — यामुळे HPA (Horizontal Pod Autoscaler) effectively scale करू शकतो. Cluster Autoscaler pending pods detect करतो आणि automatically new nodes add करतो. हे सर्व automated आहे — manual scaling intervention required नाही.
+   894→   894→[0952] () Scalability targets: API 3-30 pods, Web 2-10 pods, Worker 2-15 pods, cluster 3-20 nodes. HPA CPU + memory + custom metrics (request latency, queue depth) द्वारे scaling decisions घेतो. Cluster Autoscaler pending pods detect करतो (pods unschedulable due to resource constraints) आणि new nodes provision करतो. Scale-down द्वारे underutilized nodes automatically removed होतात (after 10 min of low utilization).
+   895→   895→[0953] (Heading 2) 15.2 Scalability Tactics
+   896→   896→[0954] (Heading 2) 15.3 HPA + Cluster Autoscaler Flow
+   897→   897→[0955] () 1. Traffic increases -> API pods CPU > 70%
+   898→   898→[0956] () 2. HPA detects high CPU via Prometheus metrics
+   899→   899→[0957] () 3. HPA increases replicas (3 -> 5)
+   900→   900→[0958] () 4. K8s scheduler tries to schedule 2 new pods
+   901→   901→[0959] () 5. If insufficient node capacity -> pods Pending
+   902→   902→[0960] () 6. Cluster Autoscaler detects Pending pods
+   903→   903→[0961] () 7. Cluster Autoscaler provisions new node (1-2 min)
+   904→   904→[0962] () 8. New pods scheduled on new node
+   905→   905→[0963] () 9. New pods pass readiness check
+   906→   906→[0964] () 10. NGINX routes traffic to new pods
+   907→   907→[0965] () 11. CPU usage normalizes
+   908→   908→[0967] () Scale-down flow (reverse):
+   909→   909→[0968] () 1. Traffic decreases -> CPU < 30%
+   910→   910→[0969] () 2. HPA decreases replicas (5 -> 3)
+   911→   911→[0970] () 3. Pods gracefully terminate (SIGTERM)
+   912→   912→[0971] () 4. NGINX removes from upstream
+   913→   913→[0972] () 5. If node underutilized -> Cluster Autoscaler drains
+   914→   914→[0973] () 6. Node removed after 10 min
+   915→   915→[0975] (Heading 1) 16. Final Production Stack
+   916→   916→[0976] (Heading 2) 16.1 Stack Summary
+   917→   917→[0977] () PreOne ची final production stack खालील table मध्ये summarized आहे. हे सर्व components v1.0 release साठी frozen आहेत आणि LOCKED status च्या अंतर्गत येतात. कोणताही change require करतो new ADR + Architecture Review Board approval. Stack चे design philosophy: open-source first, production-proven, cloud-portable, आणि operational simplicity. ही stack PreOne च्या 14 business domains, 530+ APIs, real-time WebSocket channels, आणि background jobs efficiently handle करू शकते.
+   918→   918→[0978] (Heading 2) 16.2 Stack Justification
+   919→   919→[0979] () प्रत्येक technology choice carefully evaluated आहे alternatives च्या विरुद्ध. Selection rationale documented आहे खालील table मध्ये — यामुळे future engineers ना decisions च context समजेल आणि ते informed changes करू शकतील. हे सर्व alternatives evaluated होते आणि निवड केलेली technology production-proven + team-familiar + cost-effective होती.
+   920→   920→[0981] (Heading 1) 17. Appendix A — Decision Drivers
+   921→   921→[0982] (Heading 2) 17.1 Key Decision Drivers
+   922→   922→[0983] () हा ADR चे सर्व decisions खालील drivers द्वारे influenced आहेत. हे drivers prioritized आहेत — जेव्हा drivers conflict करतात तेव्हा higher-priority driver wins. हे drivers future ADRs साठी reference सुद्धा serve करतात.
+   923→   923→[0984] (Heading 1) 18. Appendix B — Glossary
+   924→   924→[0985] (Heading 2) 18.1 Terms
+   925→   925→[0986] (Heading 1) 19. Document Control
+   926→   926→[0987] (Heading 2) 19.1 Document Information
+   927→   927→[0988] (Heading 2) 19.2 Change History
+   928→   928→[0989] (Heading 2) 19.3 Approval Matrix
+   929→   929→[0990] (Heading 2) 19.4 Next Steps
+   930→   930→[0991] () •  Architecture Review Board sign-off (this week)
+   931→   931→[0992] () •  Security review for NetworkPolicies + RBAC (next sprint)
+   932→   932→[0993] () •  DevOps team walkthrough + Q&A session
+   933→   933→[0994] () •  Terraform modules development (infrastructure-as-code)
+   934→   934→[0995] () •  Helm charts authoring for all services
+   935→   935→[0996] () •  GitHub Actions workflows implementation
+   936→   936→[0997] () •  Production cluster provisioning (EKS + node groups)
+   937→   937→[0998] () •  PostgreSQL HA setup (Patroni + etcd + PgBouncer)
+   938→   938→[0999] () •  Redis Sentinel setup (3 masters + 3 replicas)
+   939→   939→[1000] () •  Monitoring stack deployment (Prometheus + Grafana + AlertManager)
+   940→   940→[1001] () •  Logging stack deployment (Loki + Promtail + Grafana)
+   941→   941→[1002] () •  Backup + DR verification (daily restore tests)
+   942→   942→[1003] () •  Production Runbook documentation
+   943→   943→[1004] () •  Quarterly DR drill scheduling

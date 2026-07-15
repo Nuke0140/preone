@@ -1,0 +1,164 @@
+--- Table #0 ---
+Rows: 1  Cols: 1
+Header: ['P  R  E  O  N  E    E  N  T  E  R  P  R  I  S  E | PreOne Enterprise | Backend Technical Design | Backend Architecture — Enterprise Preschool Operating System | Document Version: 1.0 | Status: Backend Architecture Freeze | Date: 2026-07-14 | Product: PreOne — Enterprise Preschool Operating System | Predecessor: Vision v1.0, BRC v1.0, Master PRD v1.0, DDD v1.0, ADR Catalog, ERD v3.0, Prisma Schema v3.0, API Contract Catalog | Successor: Backend Implementation, Unit Tests, Integration Tests, Deployment, Production Release | Classification: Internal Engineering Reference | Prepared by: PreOne Architecture & Engineering Team |  | PreOne Platform                                        Backend TD v1.0']
+
+--- Table #1 ---
+Rows: 9  Cols: 4
+Header: ['Document', 'Version', 'Status', 'Relationship to BTD']
+
+--- Table #2 ---
+Rows: 19  Cols: 5
+Header: ['Component', 'Version', 'Role', 'Highlights', 'Why Chosen']
+
+--- Table #3 ---
+Rows: 7  Cols: 3
+Header: ['Directory', 'Responsibility', 'Notes']
+
+--- Table #4 ---
+Rows: 15  Cols: 4
+Header: ['#', 'Module', 'Primary Domain', 'Approximate API Count']
+
+--- Table #5 ---
+Rows: 23  Cols: 3
+Header: ['Directory', 'Responsibility', 'Critical Rule']
+
+--- Table #6 ---
+Rows: 13  Cols: 3
+Header: ['From → To', 'Status', 'Notes']
+
+--- Table #7 ---
+Rows: 9  Cols: 3
+Header: ['Responsibility', 'Mechanism', 'Notes']
+
+--- Table #8 ---
+Rows: 9  Cols: 4
+Header: ['DTO Class', 'Type', 'Endpoint', 'Purpose']
+
+--- Table #9 ---
+Rows: 9  Cols: 3
+Header: ['Responsibility', 'Mechanism', 'Example']
+
+--- Table #10 ---
+Rows: 7  Cols: 3
+Header: ['Responsibility', 'Description', 'Example']
+
+--- Table #11 ---
+Rows: 11  Cols: 3
+Header: ['Method', 'Returns', 'Notes']
+
+--- Table #12 ---
+Rows: 11  Cols: 4
+Header: ['Command', 'Module', 'Purpose', 'Event Published']
+
+--- Table #13 ---
+Rows: 11  Cols: 4
+Header: ['Query', 'Module', 'Purpose', 'Returns']
+
+--- Table #14 ---
+Rows: 25  Cols: 5
+Header: ['Event', 'Module', 'Trigger', 'Payload', 'Subscribers']
+
+--- Table #15 ---
+Rows: 11  Cols: 4
+Header: ['Event', 'Producer → Consumer', 'Purpose', 'Delivery']
+
+--- Table #16 ---
+Rows: 13  Cols: 5
+Header: ['Queue', 'Purpose', 'Priority', 'Rate Limit', 'Notes']
+
+--- Table #17 ---
+Rows: 9  Cols: 3
+Header: ['Aspect', 'Value', 'Notes']
+
+--- Table #18 ---
+Rows: 11  Cols: 5
+Header: ['Layer', 'Key Pattern', 'TTL', 'Invalidation', 'Notes']
+
+--- Table #19 ---
+Rows: 6  Cols: 3
+Header: ['Pattern', 'Flow', 'Use Case']
+
+--- Table #20 ---
+Rows: 8  Cols: 4
+Header: ['Pattern', 'Mechanism', 'Use Case', 'Flow']
+
+--- Table #21 ---
+Rows: 7  Cols: 5
+Header: ['Layer', 'Tool', 'Where', 'Error Code', 'What It Catches']
+
+--- Table #22 ---
+Rows: 11  Cols: 5
+Header: ['Exception', 'HTTP Status', 'When', 'Example Codes', 'Recovery']
+
+--- Table #23 ---
+Rows: 8  Cols: 3
+Header: ['Field', 'Type', 'Purpose']
+
+--- Table #24 ---
+Rows: 19  Cols: 3
+Header: ['Control', 'Implementation', 'Purpose']
+
+--- Table #25 ---
+Rows: 10  Cols: 3
+Header: ['Layer', 'Mechanism', 'Notes']
+
+--- Table #26 ---
+Rows: 4  Cols: 4
+Header: ['Scope', 'Mandatory?', 'Applies To', 'Source']
+
+--- Table #27 ---
+Rows: 15  Cols: 3
+Header: ['Field', 'Type', 'Purpose']
+
+--- Table #28 ---
+Rows: 7  Cols: 3
+Header: ['Level', 'When', 'Production Default']
+
+--- Table #29 ---
+Rows: 7  Cols: 4
+Header: ['Pillar', 'Tool', 'What It Captures', 'Retention']
+
+--- Table #30 ---
+Rows: 5  Cols: 4
+Header: ['Endpoint', 'What It Checks', 'Response', 'Used By']
+
+--- Table #31 ---
+Rows: 10  Cols: 5
+Header: ['Layer', 'Tool', 'Scope', 'Coverage Target', 'Speed']
+
+--- Table #32 ---
+Rows: 13  Cols: 4
+Header: ['Tactic', 'Mechanism', 'Benefit', 'When']
+
+--- Table #33 ---
+Rows: 11  Cols: 3
+Header: ['Metric', 'Target', 'Scope']
+
+--- Table #34 ---
+Rows: 19  Cols: 3
+Header: ['Aspect', 'Item', 'Tool']
+
+--- Table #35 ---
+Rows: 11  Cols: 3
+Header: ['Component', 'Service', 'Notes']
+
+--- Table #36 ---
+Rows: 16  Cols: 2
+Header: ['Term', 'Meaning']
+
+--- Table #37 ---
+Rows: 16  Cols: 2
+Header: ['Term', 'Meaning']
+
+--- Table #38 ---
+Rows: 2  Cols: 4
+Header: ['Version', 'Date', 'Author', 'Changes']
+
+--- Table #39 ---
+Rows: 7  Cols: 4
+Header: ['Role', 'Name', 'Responsibility', 'Status']
+
+--- Table #40 ---
+Rows: 9  Cols: 3
+Header: ['Document', 'Version', 'Relationship']
+

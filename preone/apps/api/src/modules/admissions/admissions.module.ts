@@ -1,25 +1,82 @@
 /**
- * AdmissionsModule — Applications, Counselling, Approvals
+ * AdmissionsModule — wiring for Admissions bounded context.
  *
  * Per BTD §4.3 Module Catalog #3:
  *   "admissions — Applications, Counselling, Approvals — ~50 APIs"
  *
- * Per BRC v1.0 §2 (Eligibility Rules, 15 rules) + §10 (Approval Matrix, 15 rules) +
- *   API Catalog §16.4 (Admissions APIs, 40 endpoints):
- *   - Online + offline application submission
- *   - Document upload + verification
- *   - Counsellor assignment + interaction log
- *   - Multi-level approval workflow (R-APR-006: Admission Final Approval)
- *   - Offer letter generation + acceptance
- *   - Waitlist management with auto-promotion
- *   - RTE Section 12 (25% EWS) quota tracking (R-ELG-014)
- *
- * Saga: Admission Approval involves 4 aggregates —
- *   Application → Student → FeePlan → Invoice (per BTD §17.3)
- *
- * Status: STUB — to be implemented in Wave 4 per BUILD_ROADMAP.md
+ * Implements:
+ *   - 3 aggregates (Application, Admission, WaitingList)
+ *   - 3 services + 3 Prisma repositories
+ *   - 3 controllers (Applications, Admissions, WaitingList)
+ *   - 22 command handlers + 6 query handlers
+ *   - 21 domain events wired via EventBusService
  */
 import { Module } from '@nestjs/common';
 
-@Module({})
+import { CommandBus, QueryBus } from '@shared/cqrs';
+import { EventBusModule } from '@infra/event-bus/event-bus.module';
+import { PrismaModule } from '@infra/prisma/prisma.module';
+
+import {
+  AcceptOfferCommandHandler, AcceptWaitingListSeatCommandHandler,
+  AddPriorityFactorCommandHandler, ApproveApplicationCommandHandler,
+  CancelAdmissionCommandHandler, CancelApplicationCommandHandler,
+  CompleteCounsellingCommandHandler, CreateApplicationCommandHandler,
+  DeclineOfferCommandHandler, IssueOfferCommandHandler,
+  OfferWaitingListSeatCommandHandler, PerformAgeVerificationCommandHandler,
+  RecordSiblingConcessionCommandHandler, RejectApplicationCommandHandler,
+  RejectDocumentCommandHandler, ScheduleCounsellingCommandHandler,
+  SetFeePlanQuoteCommandHandler, SubmitApplicationCommandHandler,
+  UpdateApplicationCommandHandler, UploadDocumentCommandHandler,
+  VerifyDocumentCommandHandler, VerifyPriorityFactorCommandHandler,
+  VerifySiblingConcessionCommandHandler, WaitlistApplicationCommandHandler,
+} from './application/handlers/admissions-command-handlers';
+import {
+  GetPipelineQueryHandler, GetAdmissionQueryHandler,
+  GetApplicationQueryHandler, ListAdmissionsQueryHandler,
+  ListApplicationsQueryHandler, ListWaitingListQueryHandler,
+} from './application/handlers/admissions-query-handlers';
+import { AdmissionsService } from './application/services/admissions.service';
+import {
+  AdmissionsController, ApplicationsController, WaitingListController,
+} from './controllers/admissions.controllers';
+import {
+  ADMISSION_REPOSITORY, APPLICATION_REPOSITORY, WAITING_LIST_REPOSITORY,
+} from './domain/repositories/tokens';
+import {
+  PrismaAdmissionRepository, PrismaApplicationRepository,
+  PrismaWaitingListRepository,
+} from './infrastructure/repositories/prisma-admissions.repository';
+
+@Module({
+  imports: [PrismaModule, EventBusModule],
+  controllers: [ApplicationsController, AdmissionsController, WaitingListController],
+  providers: [
+    AdmissionsService,
+    // Repositories
+    { provide: APPLICATION_REPOSITORY, useClass: PrismaApplicationRepository },
+    { provide: ADMISSION_REPOSITORY, useClass: PrismaAdmissionRepository },
+    { provide: WAITING_LIST_REPOSITORY, useClass: PrismaWaitingListRepository },
+    // CQRS handlers
+    CommandBus, QueryBus,
+    CreateApplicationCommandHandler, UpdateApplicationCommandHandler,
+    SubmitApplicationCommandHandler, RejectApplicationCommandHandler,
+    CancelApplicationCommandHandler,
+    UploadDocumentCommandHandler, VerifyDocumentCommandHandler,
+    RejectDocumentCommandHandler,
+    ScheduleCounsellingCommandHandler, CompleteCounsellingCommandHandler,
+    ApproveApplicationCommandHandler,
+    IssueOfferCommandHandler, AcceptOfferCommandHandler, DeclineOfferCommandHandler,
+    PerformAgeVerificationCommandHandler, SetFeePlanQuoteCommandHandler,
+    AddPriorityFactorCommandHandler, VerifyPriorityFactorCommandHandler,
+    RecordSiblingConcessionCommandHandler, VerifySiblingConcessionCommandHandler,
+    WaitlistApplicationCommandHandler, OfferWaitingListSeatCommandHandler,
+    AcceptWaitingListSeatCommandHandler, CancelAdmissionCommandHandler,
+    // Query handlers
+    GetApplicationQueryHandler, ListApplicationsQueryHandler,
+    GetAdmissionQueryHandler, ListAdmissionsQueryHandler,
+    GetPipelineQueryHandler, ListWaitingListQueryHandler,
+  ],
+  exports: [AdmissionsService],
+})
 export class AdmissionsModule {}

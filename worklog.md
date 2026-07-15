@@ -51,3 +51,44 @@ Key artifacts produced:
 - /home/z/my-project/preone/packages/database/prisma/schema.prisma (14 models, will grow to 307)
 - /home/z/my-project/preone/infra/docker/ (local dev stack)
 - /home/z/my-project/preone/extracted/ (parsed docx contents for reference)
+
+---
+Task ID: 3
+Agent: Main (Super Z)
+Task: Wave 3 — Student Lifecycle + Academics modules (per BTD §4.3 + ERD v3.0 §14+§15)
+
+Work Log:
+- Extended Prisma schema with 49 new models (22 student + 27 academics tables)
+  - Student: Student, StudentProfile, Guardian, StudentGuardian, MedicalRecord, Immunization, Allergy, StudentDocument, StudentPhoto, StudentNote, StudentFlag, StudentTag, StudentTagAssignment, SiblingRelationship, StudentStatusHistory, StudentActivityLog, PickupAuthorization, StudentMedicalHistory, StudentIdCard
+  - Academics: AcademicSession, AcademicTerm, Holiday, Subject, Curriculum, CurriculumUnit, LessonPlan, Section, SectionSubject, SectionTeacher, Enrollment, Observation, Assessment, AssessmentItem, AssessmentScore, GradeScale, LearningOutcome, ReportCardTemplate, ReportCard, Portfolio, PortfolioItem, Milestone, MilestoneAchievement
+  - Added schoolId to all tenant-scoped academics models for RLS
+  - Added back-relations to School, Branch, Classroom, User models
+  - 32 new enums (StudentStatus, Gender, BloodGroup, GuardianRelation, AcademicSessionStatus, CurriculumStatus, SectionStatus, EnrollmentStatus, AssessmentType, ReportCardStatus, PortfolioItemType, MilestoneDomain, etc.)
+  - Schema validated + Prisma client regenerated
+
+- Built Student module (13 endpoints):
+  - Domain: StudentAggregate (7-state lifecycle: PROSPECT→ACTIVE→{GRADUATED|WITHDRAWN|TRANSFERRED|EXPELLED}), GuardianAggregate, 17 domain events
+  - Application: StudentService, 9 command handlers, 4 query handlers, DTOs with class-validator + Swagger
+  - Infrastructure: PrismaStudentRepository, PrismaGuardianRepository
+  - Controller: StudentsController (create, get, list, update, enroll, promote, transfer, withdraw, graduate, reactivate, add/remove guardian, set primary guardian)
+  - Tests: 20 unit tests for StudentAggregate (state transitions, guardian management, profile updates)
+
+- Built Academics module (8 sub-domains, 30+ endpoints):
+  - Domain: 8 aggregates (AcademicSession, Curriculum, Section, Enrollment, Observation, Assessment, ReportCard, Portfolio) + child entities (AssessmentItem, PortfolioItem) + 26 domain events
+  - Application: 8 services (AcademicSessionService, CurriculumService, SectionService, EnrollmentService, ObservationService, AssessmentService, ReportCardService, PortfolioService), 23 command handlers, 13 query handlers
+  - Infrastructure: 8 Prisma repositories
+  - Controllers: 8 controllers (AcademicSessions, Curricula, Sections, Enrollments, Observations, Assessments, ReportCards, Portfolios)
+  - Tests: 17 unit tests for all 8 aggregates
+
+- Registered StudentModule + AcademicsModule in app.module.ts
+- TypeScript compiles with ZERO errors
+- All 37 unit tests pass
+
+Stage Summary:
+- Wave 3 complete: Student Lifecycle + Academics modules fully implemented
+- 49 new Prisma models added (schema now has 63 total models)
+- 21 new endpoints for Student + 30+ endpoints for Academics
+- 8 DDD aggregates with proper state machines, invariants, and domain events
+- 51 total unit tests (20 student + 17 academics + 14 identity from Wave 2.1)
+- All code follows patterns established in Wave 1-2.1 (CQRS, EventBus, repository port/adapter)
+- Next: Wave 4 (Admissions + CRM) or push to GitHub

@@ -37,6 +37,8 @@ import { S3Module } from '../infrastructure/s3/s3.module';
 
 // 14 bounded contexts (will be uncommented progressively as built)
 import { IdentityModule } from '../modules/identity/identity.module';
+import { StudentModule } from '../modules/student/student.module';
+import { AcademicsModule } from '../modules/academics/academics.module';
 
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -47,8 +49,6 @@ import { TraceContextInterceptor } from './interceptors/trace-context.intercepto
 import type { AppConfig } from '../config/env/app-config.type';
 // import { CrmModule } from './modules/crm/crm.module';
 // import { AdmissionsModule } from './modules/admissions/admissions.module';
-// import { StudentModule } from './modules/student/student.module';
-// import { AcademicsModule } from './modules/academics/academics.module';
 // import { AttendanceModule } from './modules/attendance/attendance.module';
 // import { CommunicationModule } from './modules/communication/communication.module';
 // import { FinanceModule } from './modules/finance/finance.module';
@@ -131,10 +131,10 @@ import type { AppConfig } from '../config/env/app-config.type';
 
     // 6. Business modules (14 bounded contexts) — added progressively
     IdentityModule,
+    StudentModule,
+    AcademicsModule,
     // CrmModule,
     // AdmissionsModule,
-    // StudentModule,
-    // AcademicsModule,
     // AttendanceModule,
     // CommunicationModule,
     // FinanceModule,

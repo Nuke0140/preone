@@ -1,0 +1,1465 @@
+[
+  {
+    "index": 0,
+    "rows": 1,
+    "cols": 1,
+    "data": [
+      [
+        "P  R  E  O  N  E    E  N  T  E  R  P  R  I  S  E\nPreOne ADR-111\nDevOps & Infrastructure\nArchitecture Decision Record — DevOps & Infrastructure Architecture\nADR ID: ADR-111\nStatus: LOCKED\nDocument Version: 1.0\nDate: 2026-07-14\nProduct: PreOne — Enterprise Preschool Operating System\nPredecessor: ADR Catalog v1.0, Backend TD v1.0, Frontend Architecture v1.0\nSuccessor: DevOps Runbook, Kubernetes Manifests, Terraform Modules, Production Release\nScope: Docker, Kubernetes, CI/CD, NGINX, PostgreSQL HA, Redis, Monitoring, Logging, DR\nClassification: Internal Engineering Reference\nPrepared by: PreOne Architecture & DevOps Team\n\nPreOne Platform                                        ADR-111 v1.0"
+      ]
+    ]
+  },
+  {
+    "index": 1,
+    "rows": 11,
+    "cols": 3,
+    "data": [
+      [
+        "Document",
+        "Version",
+        "Relationship to ADR-111"
+      ],
+      [
+        "Vision Document",
+        "v1.0",
+        "Strategic intent — non-functional requirements (scale, availability, compliance)"
+      ],
+      [
+        "Master PRD",
+        "v1.0",
+        "Functional requirements — infrastructure must support all FRs"
+      ],
+      [
+        "DDD",
+        "v1.0",
+        "Domain model — infrastructure must support bounded contexts + aggregates"
+      ],
+      [
+        "Backend TD",
+        "v1.0",
+        "Application architecture — Docker + K8s deployment of NestJS modules"
+      ],
+      [
+        "Frontend Architecture",
+        "v1.0",
+        "Web + Mobile deployment — Next.js SSR + React Native build pipeline"
+      ],
+      [
+        "ADR Catalog",
+        "v1.0",
+        "Decision context — ADR-111 is part of larger ADR series"
+      ],
+      [
+        "ERD",
+        "v3.0",
+        "Database schema — PostgreSQL HA must support physical schema"
+      ],
+      [
+        "Prisma Schema",
+        "v3.0",
+        "ORM config — PgBouncer + connection pooling alignment"
+      ],
+      [
+        "API Contract Catalog",
+        "v1.0",
+        "API endpoints — ingress + rate limiting + load balancing scope"
+      ],
+      [
+        "OpenAPI Specification",
+        "v1.0",
+        "API contracts — Swagger UI hosting + mock server deployment"
+      ]
+    ]
+  },
+  {
+    "index": 2,
+    "rows": 14,
+    "cols": 3,
+    "data": [
+      [
+        "Layer",
+        "Technology",
+        "Rationale"
+      ],
+      [
+        "Containerization",
+        "Docker",
+        "Industry standard; multi-stage builds; layer caching"
+      ],
+      [
+        "Orchestration",
+        "Kubernetes (K8s)",
+        "Auto-healing, auto-scaling, declarative config, huge ecosystem"
+      ],
+      [
+        "CI/CD",
+        "GitHub Actions",
+        "Native GitHub integration; matrix builds; reusable workflows"
+      ],
+      [
+        "Reverse Proxy",
+        "NGINX Ingress Controller",
+        "Production-proven; WebSocket support; rich config"
+      ],
+      [
+        "Database",
+        "PostgreSQL HA",
+        "ACID; replication; pgvector; RLS; mature ecosystem"
+      ],
+      [
+        "Cache",
+        "Redis",
+        "Sub-ms reads; pub/sub; streams; BullMQ backend"
+      ],
+      [
+        "Queue",
+        "BullMQ",
+        "Built on Redis; delayed/repeatable jobs; DLQ; sandboxed processors"
+      ],
+      [
+        "Object Storage",
+        "AWS S3 / MinIO",
+        "S3 API compatible; lifecycle to Glacier; MinIO for self-hosted"
+      ],
+      [
+        "Monitoring",
+        "Prometheus + Grafana",
+        "Pull-based metrics; PromQL; rich dashboarding"
+      ],
+      [
+        "Logging",
+        "Loki + Promtail",
+        "Loki for log storage; Promtail for collection; Grafana for queries"
+      ],
+      [
+        "Tracing",
+        "OpenTelemetry + Jaeger",
+        "Vendor-neutral; spans correlated to logs"
+      ],
+      [
+        "Secrets",
+        "Kubernetes Secrets (Vault later)",
+        "Native K8s secrets for v1; Vault migration roadmap v1.2"
+      ],
+      [
+        "Service Mesh",
+        "Linkerd (future)",
+        "Roadmap v1.3 — mTLS + traffic splitting for canary deployments"
+      ]
+    ]
+  },
+  {
+    "index": 3,
+    "rows": 6,
+    "cols": 4,
+    "data": [
+      [
+        "Image Name",
+        "Service",
+        "Size + Notes",
+        "Scaling"
+      ],
+      [
+        "preone-api",
+        "NestJS backend",
+        "Node 20 Alpine; multi-stage build; pruned devDeps; ~110 MB",
+        "Horizontally scaled via HPA"
+      ],
+      [
+        "preone-web",
+        "Next.js 16 frontend",
+        "Node 20 Alpine; standalone output; ~140 MB",
+        "SSR + static; HPA scaled"
+      ],
+      [
+        "preone-mobile-build",
+        "React Native + Expo build",
+        "Node 20 + JDK 17; ~800 MB (build-only, not deployed)",
+        "Used in CI only — produces APK/AAB/IPA"
+      ],
+      [
+        "preone-worker",
+        "BullMQ background job processor",
+        "Node 20 Alpine; same base as API but different entrypoint",
+        "Scaled by queue depth"
+      ],
+      [
+        "preone-nginx",
+        "NGINX reverse proxy",
+        "Alpine; ~25 MB; custom nginx.conf via ConfigMap",
+        "Ingress Controller manages this"
+      ]
+    ]
+  },
+  {
+    "index": 4,
+    "rows": 11,
+    "cols": 3,
+    "data": [
+      [
+        "Namespace",
+        "Workloads",
+        "Notes"
+      ],
+      [
+        "ingress",
+        "NGINX Ingress Controller pods + LoadBalancer Service",
+        "Cluster-wide; routes external traffic"
+      ],
+      [
+        "api",
+        "preone-api Deployment + HPA + Service + ConfigMaps",
+        "NestJS pods; 3-30 replicas based on load"
+      ],
+      [
+        "web",
+        "preone-web Deployment + HPA + Service",
+        "Next.js pods; 2-10 replicas"
+      ],
+      [
+        "worker",
+        "preone-worker Deployment + HPA (queue-depth based)",
+        "BullMQ processors; 2-15 replicas"
+      ],
+      [
+        "redis",
+        "Redis StatefulSet (HA mode) + Service",
+        "6 replicas (3 master + 3 replica); Sentinel for failover"
+      ],
+      [
+        "postgres",
+        "PostgreSQL StatefulSet (HA via Patroni) + Service",
+        "1 primary + 2 replicas; PgBouncer sidecar"
+      ],
+      [
+        "monitoring",
+        "Prometheus + Grafana + AlertManager + Node Exporter",
+        "Pull metrics from all namespaces"
+      ],
+      [
+        "logging",
+        "Loki + Promtail + Grafana (shared with monitoring)",
+        "Push logs via Promtail DaemonSet"
+      ],
+      [
+        "backup",
+        "Velero + cron Jobs for backups",
+        "Daily full + continuous WAL archiving"
+      ],
+      [
+        "kube-system",
+        "Kubernetes system pods (CoreDNS, CNI, etc.)",
+        "Managed by EKS/GKE"
+      ]
+    ]
+  },
+  {
+    "index": 5,
+    "rows": 12,
+    "cols": 4,
+    "data": [
+      [
+        "Stage",
+        "Action",
+        "Description",
+        "Duration"
+      ],
+      [
+        "1. Developer Push",
+        "Git push to feature branch on GitHub",
+        "Triggers workflow on push event",
+        "Seconds"
+      ],
+      [
+        "2. Lint",
+        "ESLint + Prettier + TypeScript check",
+        "Fails on lint errors; auto-fix comments via bot",
+        "~30 seconds"
+      ],
+      [
+        "3. Unit Tests",
+        "Vitest for backend; Jest for frontend",
+        "Coverage threshold 80%; fails below",
+        "~2 minutes"
+      ],
+      [
+        "4. Build",
+        "tsc build + Next.js build + NestJS build",
+        "Produces dist/ or .next/ artifacts",
+        "~3 minutes"
+      ],
+      [
+        "5. Security Scan",
+        "Trivy (image), Snyk (deps), GitLeaks (secrets)",
+        "Fails on HIGH/CRITICAL vulnerabilities",
+        "~2 minutes"
+      ],
+      [
+        "6. Docker Build",
+        "Multi-stage build via docker/build-push-action",
+        "Layer caching via GHA cache",
+        "~4 minutes"
+      ],
+      [
+        "7. Push to Registry",
+        "GHCR (GitHub Container Registry)",
+        "Tagged with SHA + branch + semantic version",
+        "~1 minute"
+      ],
+      [
+        "8. Deploy to Kubernetes",
+        "kubectl apply via Helm chart",
+        "Rolling update with readiness probes",
+        "~3 minutes"
+      ],
+      [
+        "9. Health Check",
+        "Wait for pods Ready + run smoke tests",
+        "Auto-rollback if health check fails",
+        "~1 minute"
+      ],
+      [
+        "10. Smoke Tests",
+        "Playwright e2e against new deployment",
+        "Critical user journeys only (~10 tests)",
+        "~2 minutes"
+      ],
+      [
+        "11. Production (if main branch)",
+        "Auto-deploy on merge to main",
+        "Manual approval gate for v1.0",
+        "Manual + 5 min"
+      ]
+    ]
+  },
+  {
+    "index": 6,
+    "rows": 11,
+    "cols": 3,
+    "data": [
+      [
+        "Responsibility",
+        "Configuration",
+        "Notes"
+      ],
+      [
+        "SSL Termination",
+        "TLS 1.3 certificates managed via cert-manager + Let's Encrypt",
+        "Auto-renewal at 30 days before expiry"
+      ],
+      [
+        "Reverse Proxy",
+        "Routes /api/* to api Service, /* to web Service",
+        "Path-based routing"
+      ],
+      [
+        "Load Balancing",
+        "Round-robin with health checks; max_fails=3 fail_timeout=30s",
+        "Per-upstream load balancing"
+      ],
+      [
+        "Rate Limiting",
+        "Per-IP rate limit via limit_req_zone; burst + nodelay",
+        "100 req/s default; 1000 req/s for whitelisted partners"
+      ],
+      [
+        "Compression",
+        "Gzip for text/*; Brotli for clients supporting it",
+        "Compression level 6; min length 256 bytes"
+      ],
+      [
+        "Security Headers",
+        "HSTS, X-Content-Type-Options, X-Frame-Options, CSP",
+        "OWASP-recommended headers"
+      ],
+      [
+        "WebSocket Support",
+        "Upgrade: websocket header pass-through",
+        "Socket.IO long-polling fallback also supported"
+      ],
+      [
+        "Client Caching",
+        "Cache-Control for static assets (1 year immutable)",
+        "Fingerprinted asset filenames"
+      ],
+      [
+        "Request Body Size Limit",
+        "client_max_body_size 50m",
+        "For file uploads; larger via dedicated upload endpoint"
+      ],
+      [
+        "Access Logging",
+        "JSON format logs to stdout; piped to Promtail",
+        "Includes traceId for correlation"
+      ]
+    ]
+  },
+  {
+    "index": 7,
+    "rows": 11,
+    "cols": 3,
+    "data": [
+      [
+        "Feature",
+        "Implementation",
+        "Notes"
+      ],
+      [
+        "Automatic Failover",
+        "Patroni + etcd-based leader election",
+        "Failover < 30 seconds; client reconnect via PgBouncer"
+      ],
+      [
+        "Streaming Replication",
+        "Synchronous for writes; async for read replicas",
+        "1 sync standby + 2 async standbys"
+      ],
+      [
+        "Read Scaling",
+        "PgBouncer routes reads to replicas",
+        "Application marks queries with /* replica */ comment hint"
+      ],
+      [
+        "PITR (Point-in-Time Recovery)",
+        "WAL archiving to S3; restore to any timestamp",
+        "Last 7 days PITR window"
+      ],
+      [
+        "WAL Archiving",
+        "archive_command pushes WAL files to S3 every 200ms",
+        "RPO < 15 minutes"
+      ],
+      [
+        "Connection Pooling",
+        "PgBouncer sidecar per pod; 1000 connections per pool",
+        "transaction-mode pooling"
+      ],
+      [
+        "Backups",
+        "pgBackRest daily full + continuous incremental",
+        "30-day retention; S3 lifecycle to Glacier"
+      ],
+      [
+        "Vacuuming",
+        "Autovacuum tuned per table; aggressive on high-churn tables",
+        "Prevents bloat; runs in background"
+      ],
+      [
+        "Monitoring",
+        "postgres_exporter → Prometheus → Grafana",
+        "Replication lag, connection count, cache hit ratio"
+      ],
+      [
+        "Extensions",
+        "pgvector, pgcrypto, pg_trgm, unaccent, uuid-ossp",
+        "Enabled via Postgres initdb scripts"
+      ]
+    ]
+  },
+  {
+    "index": 8,
+    "rows": 11,
+    "cols": 3,
+    "data": [
+      [
+        "Use Case",
+        "Description",
+        "TTL / Notes"
+      ],
+      [
+        "API Cache",
+        "Hot endpoint responses cached (5-60s TTL)",
+        "Permission cache, menu cache, lookup data"
+      ],
+      [
+        "Session Store",
+        "JWT refresh tokens, OTP attempts, idempotency keys",
+        "TTL-based expiry; atomic operations"
+      ],
+      [
+        "Rate Limiting",
+        "Per-IP + per-user rate limit counters",
+        "Sliding window via sorted sets"
+      ],
+      [
+        "OTP Cache",
+        "OTP codes with 5-min TTL; max 3 attempts",
+        "Atomic INCR + EXPIRE for race-condition-free validation"
+      ],
+      [
+        "Queue Backend (BullMQ)",
+        "Job queue + delayed jobs + repeatable jobs",
+        "Persistent across restarts; DLQ for failures"
+      ],
+      [
+        "Distributed Locks",
+        "Redis Redlock algorithm for cross-pod coordination",
+        "Used in scheduled jobs to prevent duplicates"
+      ],
+      [
+        "Real-time Pub/Sub",
+        "WebSocket fan-out across pods via Redis Adapter",
+        "Socket.IO Redis Adapter for multi-pod broadcast"
+      ],
+      [
+        "Feature Flags",
+        "Per-tenant feature flag cache (5-min TTL)",
+        "Refreshed from Postgres on cache miss"
+      ],
+      [
+        "Idempotency Store",
+        "Request fingerprint → response cache (24-hour TTL)",
+        "Prevents duplicate writes on retry"
+      ],
+      [
+        "Geo Indexing",
+        "Transport vehicle live location via Redis GEO",
+        "Haversine queries for nearest vehicle"
+      ]
+    ]
+  },
+  {
+    "index": 9,
+    "rows": 13,
+    "cols": 4,
+    "data": [
+      [
+        "Metric",
+        "Scope",
+        "Source",
+        "Alert Threshold"
+      ],
+      [
+        "CPU / Memory",
+        "Container + pod + node level",
+        "node-exporter + cAdvisor",
+        "Alert if CPU > 80% for 5 min"
+      ],
+      [
+        "API Latency",
+        "p50, p90, p99 per endpoint",
+        "Prometheus histogram",
+        "Alert if p99 > 1s for 5 min"
+      ],
+      [
+        "Error Rate",
+        "5xx responses per second",
+        "Prometheus counter",
+        "Alert if > 1% for 2 min"
+      ],
+      [
+        "Database Connections",
+        "Active + idle connections per pool",
+        "pgbouncer_exporter",
+        "Alert if > 80% pool capacity"
+      ],
+      [
+        "Redis Health",
+        "Memory usage, connected clients, ops/sec",
+        "redis_exporter",
+        "Alert if memory > 80%"
+      ],
+      [
+        "Queue Length",
+        "BullMQ queue depth per queue",
+        "bull-board + custom exporter",
+        "Alert if > 1000 pending for 5 min"
+      ],
+      [
+        "Pod Restarts",
+        "Restart count per pod",
+        "kube-state-metrics",
+        "Alert if > 3 restarts in 10 min"
+      ],
+      [
+        "Storage Usage",
+        "PVC + node disk usage",
+        "kubelet metrics",
+        "Alert if PVC > 85%"
+      ],
+      [
+        "Replication Lag",
+        "Postgres + Redis replica lag",
+        "Built-in metrics",
+        "Alert if lag > 5 seconds"
+      ],
+      [
+        "HTTP Status Distribution",
+        "2xx / 4xx / 5xx counts per service",
+        "NGINX exporter",
+        "Anomaly detection on 5xx spike"
+      ],
+      [
+        "Business Metrics",
+        "Admissions submitted, fees collected, attendance marked",
+        "Custom Prometheus gauges",
+        "Dashboard-only; alert via Grafana thresholds"
+      ],
+      [
+        "SLO Burn Rate",
+        "Error budget consumption per SLO",
+        "Derived metric",
+        "Alert if burn rate > 2x normal"
+      ]
+    ]
+  },
+  {
+    "index": 10,
+    "rows": 11,
+    "cols": 4,
+    "data": [
+      [
+        "Log Type",
+        "Content",
+        "When Emitted",
+        "Format"
+      ],
+      [
+        "API Requests",
+        "HTTP method, path, status, latency, userId, traceId",
+        "Per-request log emitted by NestJS interceptor",
+        "Pino JSON format"
+      ],
+      [
+        "Authentication",
+        "Login attempts, OTP send, token refresh, logout",
+        "Always logged with userId + IP + userAgent",
+        "Security audit trail"
+      ],
+      [
+        "Audit Logs",
+        "Entity changes (before/after diff) for sensitive operations",
+        "Stored in DB + shipped to Loki",
+        "Compliance requirement"
+      ],
+      [
+        "Background Jobs",
+        "Job start, success, failure, retry, DLQ",
+        "Per-job log with jobId + queueName + duration",
+        "BullMQ instrumentation"
+      ],
+      [
+        "Exceptions",
+        "Unhandled errors with stack trace + context",
+        "Pino + Sentry integration",
+        "Alert to Slack #engineering-alerts"
+      ],
+      [
+        "Infrastructure Events",
+        "Pod starts/stops, HPA scaling, failovers",
+        "Kubernetes event stream → Loki",
+        "Via kubernetes-event-exporter"
+      ],
+      [
+        "WebSocket Connections",
+        "Connect, disconnect, room joins, message count",
+        "Per-connection log with socketId + userId",
+        "Socket.IO middleware"
+      ],
+      [
+        "Database Slow Queries",
+        "Queries > 500ms with query + duration",
+        "Postgres log_min_duration_statement",
+        "Tuning + anomaly detection"
+      ],
+      [
+        "Cache Hit/Miss",
+        "Cache hit ratio per cache key prefix",
+        "Redis MONITOR (sampled)",
+        "Performance tuning"
+      ],
+      [
+        "Deployment Events",
+        "Image deployed, version, who triggered, smoke test result",
+        "GitHub Actions + ArgoCD notifications",
+        "Audit + compliance"
+      ]
+    ]
+  },
+  {
+    "index": 11,
+    "rows": 11,
+    "cols": 4,
+    "data": [
+      [
+        "Component",
+        "Frequency",
+        "Retention",
+        "Storage / Notes"
+      ],
+      [
+        "PostgreSQL Full",
+        "Daily at 02:00 IST",
+        "30 Days",
+        "pgBackRest → S3 (encrypted); lifecycle to Glacier at 7 days"
+      ],
+      [
+        "PostgreSQL WAL",
+        "Continuous (every WAL segment)",
+        "7 Days",
+        "archive_command → S3; enables PITR up to 7 days back"
+      ],
+      [
+        "PostgreSQL Base Backup",
+        "Weekly (Sunday 01:00 IST)",
+        "4 Weeks",
+        "Full base backup for faster PITR restoration"
+      ],
+      [
+        "Redis Snapshot",
+        "Every 6 hours",
+        "7 Days",
+        "BGSAVE → S3; restore on cold start"
+      ],
+      [
+        "Object Storage (S3)",
+        "Daily incremental via S3 replication",
+        "30 Days",
+        "Cross-region replication to DR region"
+      ],
+      [
+        "Kubernetes Config",
+        "Daily via Velero",
+        "30 Days",
+        "ConfigMaps, Secrets, Deployments, StatefulSets"
+      ],
+      [
+        "Kubernetes PVs",
+        "Daily via Velero + Restic",
+        "30 Days",
+        "File-system-level backup for PVs"
+      ],
+      [
+        "GitHub Repository",
+        "Daily mirror to Bitbucket",
+        "Indefinite",
+        "Disaster recovery for source code"
+      ],
+      [
+        "Container Images",
+        "GHCR + replicate to ECR (DR region)",
+        "Indefinite",
+        "Image retention policy: keep last 100 per tag"
+      ],
+      [
+        "Grafana Dashboards",
+        "Daily export to Git",
+        "Indefinite",
+        "Dashboards-as-code via Grafana Operator"
+      ]
+    ]
+  },
+  {
+    "index": 12,
+    "rows": 11,
+    "cols": 3,
+    "data": [
+      [
+        "Metric",
+        "Target",
+        "Implementation"
+      ],
+      [
+        "RPO (Recovery Point Objective)",
+        "≤ 15 Minutes",
+        "Max acceptable data loss; achieved via WAL streaming"
+      ],
+      [
+        "RTO (Recovery Time Objective)",
+        "≤ 60 Minutes",
+        "Max acceptable downtime; achieved via automated failover"
+      ],
+      [
+        "Database Recovery",
+        "Automatic Failover",
+        "Patroni + etcd leader election; < 30 seconds for primary failover"
+      ],
+      [
+        "Region Recovery",
+        "Restore from Backup",
+        "Cross-region restore from S3 + ECR; < 60 minutes for full region failover"
+      ],
+      [
+        "Backup Verification",
+        "Daily Restore Test",
+        "Automated restore to QA cluster; smoke test verification"
+      ],
+      [
+        "DR Drill",
+        "Quarterly",
+        "Full DR simulation; documented runbook; sign-off required"
+      ],
+      [
+        "Multi-AZ Deployment",
+        "Always On",
+        "Pods spread across 3 AZs; PVCs on multi-AZ storage"
+      ],
+      [
+        "Multi-Region Strategy",
+        "Active-Passive (v1.0)",
+        "Primary region active; DR region standby with replicated data"
+      ],
+      [
+        "Multi-Region Future",
+        "Active-Active (v2.0)",
+        "Roadmap — geo-routing via Route53; cross-region Postgres via logical replication"
+      ],
+      [
+        "Compliance Reporting",
+        "Monthly DR Report",
+        "RPO/RTO actual vs target; failover history; restore test results"
+      ]
+    ]
+  },
+  {
+    "index": 13,
+    "rows": 7,
+    "cols": 4,
+    "data": [
+      [
+        "Environment",
+        "Cluster / Location",
+        "Deployment Trigger",
+        "Purpose"
+      ],
+      [
+        "Local Development",
+        "developer laptop",
+        "Docker Compose for dependencies (Postgres, Redis, MinIO)",
+        "Each developer has own stack"
+      ],
+      [
+        "Development",
+        "shared dev cluster namespace",
+        "Auto-deploy from develop branch",
+        "Shared by all developers for integration testing"
+      ],
+      [
+        "QA",
+        "dedicated QA cluster",
+        "Auto-deploy from main branch after PR merge",
+        "QA team executes test cases here"
+      ],
+      [
+        "UAT",
+        "UAT cluster namespace",
+        "Manual deploy from release branch",
+        "Customer UAT — pre-staging gate"
+      ],
+      [
+        "Staging",
+        "production-mirror cluster",
+        "Manual deploy from release branch after UAT sign-off",
+        "Pre-production; load testing; partner integration"
+      ],
+      [
+        "Production",
+        "production cluster",
+        "Manual deploy after staging sign-off + change advisory board approval",
+        "Customer-facing; highest controls"
+      ]
+    ]
+  },
+  {
+    "index": 14,
+    "rows": 14,
+    "cols": 3,
+    "data": [
+      [
+        "Control",
+        "Implementation",
+        "Notes"
+      ],
+      [
+        "HTTPS Everywhere",
+        "TLS 1.3 enforced; HTTP auto-redirects to HTTPS",
+        "No plain-text HTTP endpoints exposed"
+      ],
+      [
+        "TLS 1.3",
+        "Minimum TLS version; old TLS rejected at LB",
+        "Cipher suite: ECDHE-ECDSA-AES256-GCM-SHA384"
+      ],
+      [
+        "Kubernetes Secrets",
+        "Base64-encoded at rest; etcd encryption enabled",
+        "Vault migration roadmap v1.2"
+      ],
+      [
+        "JWT Authentication",
+        "RS256-signed; 15 min access + 30 day refresh; rotated",
+        "JWKS endpoint for key distribution"
+      ],
+      [
+        "Network Policies",
+        "Default deny; explicit allow per namespace",
+        "API → Postgres allowed; API → Internet denied"
+      ],
+      [
+        "Image Vulnerability Scanning",
+        "Trivy in CI; admission controller (Kyverno) in K8s",
+        "Block deploy on CRITICAL vulnerabilities"
+      ],
+      [
+        "Role-Based Access Control (RBAC)",
+        "K8s RBAC + app-level RBAC",
+        "Least-privilege; service accounts per namespace"
+      ],
+      [
+        "Audit Logging",
+        "K8s audit log + app audit log",
+        "Immutable; shipped to Loki + S3"
+      ],
+      [
+        "Pod Security Standards",
+        "Restricted profile enforced via PSA",
+        "No privileged pods; no host namespaces"
+      ],
+      [
+        "Secret Rotation",
+        "DB credentials rotated quarterly; JWT keys annually",
+        "Automated via sealed-secrets + cron jobs"
+      ],
+      [
+        "OWASP Top 10 Protection",
+        "Helmet middleware + WAF + input validation",
+        "CSP, HSTS, X-Frame-Options, SQL injection prevention via Prisma"
+      ],
+      [
+        "DDoS Protection",
+        "Cloudflare in front; rate limiting at NGINX + Cloudflare",
+        "L3/L4 via Cloudflare; L7 via NGINX"
+      ],
+      [
+        "Compliance",
+        "SOC 2 Type II roadmap; GDPR; India DPDP Act",
+        "Annual external audit; monthly internal audit"
+      ]
+    ]
+  },
+  {
+    "index": 15,
+    "rows": 13,
+    "cols": 3,
+    "data": [
+      [
+        "Tactic",
+        "Description",
+        "Scope"
+      ],
+      [
+        "Horizontal Pod Autoscaler (HPA)",
+        "Scale pods based on CPU/Memory + custom metrics",
+        "API: 3-30 pods; Web: 2-10; Worker: 2-15"
+      ],
+      [
+        "Cluster Autoscaler",
+        "Add/remove nodes based on pending pods",
+        "Min 3 nodes; max 20 nodes per node group"
+      ],
+      [
+        "Vertical Pod Autoscaler (VPA)",
+        "Auto-adjust CPU/Memory requests based on usage",
+        "Used for stateful workloads (Postgres, Redis)"
+      ],
+      [
+        "Stateless API Pods",
+        "No session in pod; all state in Redis/DB",
+        "Any pod can serve any request; enables HPA"
+      ],
+      [
+        "Redis-based Distributed Queue",
+        "BullMQ workers scale independently of API",
+        "Workers consume from queue; auto-scaled by queue depth"
+      ],
+      [
+        "Read Replicas for Reporting",
+        "Heavy reads routed to Postgres replicas",
+        "Reports dashboard uses replica; prevents primary load"
+      ],
+      [
+        "CDN for Static Assets",
+        "Cloudflare CDN for /static/* paths",
+        "1-year immutable cache; fingerprinted filenames"
+      ],
+      [
+        "Database Connection Pooling",
+        "PgBouncer sidecar; 1000 connections per pool",
+        "Prevents connection exhaustion under load"
+      ],
+      [
+        "Redis Cluster (future)",
+        "Current: Redis Sentinel HA; Roadmap: Redis Cluster for sharding",
+        "v1.2 — when memory exceeds 25 GB"
+      ],
+      [
+        "Caching Strategy",
+        "Multi-layer: browser → CDN → NGINX → Redis → DB",
+        "Each layer has appropriate TTL; invalidation by version"
+      ],
+      [
+        "Graceful Shutdown",
+        "Pods receive SIGTERM; drain connections over 30s",
+        "Zero-downtime deployments; no dropped requests"
+      ],
+      [
+        "Circuit Breakers",
+        "opossum library for downstream service calls",
+        "Fail fast; prevent cascading failures"
+      ]
+    ]
+  },
+  {
+    "index": 16,
+    "rows": 18,
+    "cols": 3,
+    "data": [
+      [
+        "Layer",
+        "Technology",
+        "Role"
+      ],
+      [
+        "Source Control",
+        "GitHub",
+        "Git hosting + PR reviews + Issues"
+      ],
+      [
+        "CI/CD",
+        "GitHub Actions",
+        "Build + test + deploy pipeline"
+      ],
+      [
+        "Containers",
+        "Docker",
+        "Image format + build tool"
+      ],
+      [
+        "Orchestration",
+        "Kubernetes",
+        "Container orchestration"
+      ],
+      [
+        "Ingress",
+        "NGINX",
+        "Reverse proxy + load balancer"
+      ],
+      [
+        "Backend",
+        "NestJS",
+        "API + WebSocket gateway"
+      ],
+      [
+        "Web",
+        "Next.js",
+        "SSR + static site"
+      ],
+      [
+        "Mobile",
+        "React Native + Expo",
+        "iOS + Android apps"
+      ],
+      [
+        "Database",
+        "PostgreSQL HA",
+        "Primary data store"
+      ],
+      [
+        "Cache",
+        "Redis",
+        "Cache + session + queue backend"
+      ],
+      [
+        "Queue",
+        "BullMQ",
+        "Background job processing"
+      ],
+      [
+        "Storage",
+        "AWS S3 / MinIO",
+        "Object storage for files"
+      ],
+      [
+        "Monitoring",
+        "Prometheus + Grafana",
+        "Metrics + dashboards + alerts"
+      ],
+      [
+        "Logging",
+        "Loki + Promtail",
+        "Centralized log aggregation"
+      ],
+      [
+        "Tracing",
+        "OpenTelemetry + Jaeger",
+        "Distributed tracing"
+      ],
+      [
+        "Backup",
+        "PostgreSQL WAL + S3 Backups",
+        "PITR + object storage backups"
+      ],
+      [
+        "Disaster Recovery",
+        "Multi-zone with automated failover",
+        "RPO ≤ 15min; RTO ≤ 60min"
+      ]
+    ]
+  },
+  {
+    "index": 17,
+    "rows": 11,
+    "cols": 3,
+    "data": [
+      [
+        "Decision",
+        "Choice",
+        "Rationale"
+      ],
+      [
+        "Docker Swarm vs Kubernetes",
+        "Kubernetes chosen",
+        "K8s ecosystem richer; better long-term bet"
+      ],
+      [
+        "Jenkins vs GitHub Actions",
+        "GitHub Actions chosen",
+        "Native GitHub integration; YAML-based; no infra to manage"
+      ],
+      [
+        "AWS ECS vs Kubernetes",
+        "Kubernetes chosen",
+        "Portability across cloud providers"
+      ],
+      [
+        "Traefik vs NGINX Ingress",
+        "NGINX chosen",
+        "Production-proven; larger community; better WebSocket support"
+      ],
+      [
+        "MongoDB vs PostgreSQL",
+        "PostgreSQL chosen",
+        "ACID; RLS; relational fits DDD aggregates better"
+      ],
+      [
+        "RabbitMQ vs BullMQ (Redis)",
+        "BullMQ chosen",
+        "Single backend (Redis) for cache + queue; simpler ops"
+      ],
+      [
+        "ELK vs Loki",
+        "Loki chosen",
+        "Lower cost; integrates with Grafana; no separate ES cluster"
+      ],
+      [
+        "Datadog vs Prometheus+Grafana",
+        "Prometheus chosen",
+        "Open source; no vendor lock-in; mature ecosystem"
+      ],
+      [
+        "Vault vs K8s Secrets",
+        "K8s Secrets for v1; Vault later",
+        "Simpler ops for v1; Vault adds complexity"
+      ],
+      [
+        "AWS RDS vs Self-managed Postgres",
+        "Self-managed chosen",
+        "Patroni HA + PgBouncer control; RDS limitations on extensions"
+      ]
+    ]
+  },
+  {
+    "index": 18,
+    "rows": 9,
+    "cols": 3,
+    "data": [
+      [
+        "Driver",
+        "Specifics",
+        "Weight"
+      ],
+      [
+        "Operational Maturity",
+        "Team familiar with K8s + Docker + GitHub Actions",
+        "Reduce learning curve; ship faster"
+      ],
+      [
+        "Cost Optimization",
+        "Spot instances + HPA + auto-scaling",
+        "Pay only for actual usage"
+      ],
+      [
+        "Vendor Lock-in Avoidance",
+        "K8s portable across cloud providers",
+        "AWS now, but migration path to GCP/Azure"
+      ],
+      [
+        "Security Posture",
+        "Defense-in-depth; least-privilege",
+        "OWASP + SOC 2 alignment"
+      ],
+      [
+        "Compliance",
+        "GDPR + India DPDP Act + future SOC 2",
+        "Audit logs + DR + access controls"
+      ],
+      [
+        "Developer Experience",
+        "Local dev mirrors production",
+        "Docker Compose + same images"
+      ],
+      [
+        "Observability",
+        "Three pillars — metrics, logs, traces",
+        "Prometheus + Loki + Jaeger"
+      ],
+      [
+        "Reliability",
+        "Multi-AZ + automated failover",
+        "99.9% uptime target for v1.0"
+      ]
+    ]
+  },
+  {
+    "index": 19,
+    "rows": 26,
+    "cols": 2,
+    "data": [
+      [
+        "Term",
+        "Definition"
+      ],
+      [
+        "ADR",
+        "Architecture Decision Record — document capturing architectural decisions + rationale"
+      ],
+      [
+        "CI/CD",
+        "Continuous Integration / Continuous Deployment"
+      ],
+      [
+        "HPA",
+        "Horizontal Pod Autoscaler — scales pods based on metrics"
+      ],
+      [
+        "PITR",
+        "Point-in-Time Recovery — restore database to specific timestamp"
+      ],
+      [
+        "RPO",
+        "Recovery Point Objective — max acceptable data loss"
+      ],
+      [
+        "RTO",
+        "Recovery Time Objective — max acceptable downtime"
+      ],
+      [
+        "WAL",
+        "Write-Ahead Log — Postgres transaction log for durability + replication"
+      ],
+      [
+        "PgBouncer",
+        "Connection pooler for PostgreSQL"
+      ],
+      [
+        "Patroni",
+        "HA solution for PostgreSQL using etcd for leader election"
+      ],
+      [
+        "StatefulSet",
+        "K8s workload type for stateful applications (DB, cache)"
+      ],
+      [
+        "ConfigMap",
+        "K8s resource for non-confidential configuration data"
+      ],
+      [
+        "Secret",
+        "K8s resource for sensitive data (passwords, tokens)"
+      ],
+      [
+        "Ingress",
+        "K8s resource managing external access to services"
+      ],
+      [
+        "Namespace",
+        "K8s mechanism for isolating groups of resources within a cluster"
+      ],
+      [
+        "Prometheus",
+        "Pull-based metrics collection + time-series database"
+      ],
+      [
+        "Grafana",
+        "Visualization + dashboarding tool for metrics + logs"
+      ],
+      [
+        "Loki",
+        "Horizontally-scalable log aggregation system by Grafana Labs"
+      ],
+      [
+        "Promtail",
+        "Log shipping agent for Loki (similar to Promtail for Prometheus)"
+      ],
+      [
+        "OpenTelemetry",
+        "Vendor-neutral observability standard for traces, metrics, logs"
+      ],
+      [
+        "Jaeger",
+        "Distributed tracing backend (CNCF project)"
+      ],
+      [
+        "Velero",
+        "K8s backup + restore tool for cluster resources + PVs"
+      ],
+      [
+        "BullMQ",
+        "Redis-based queue library for Node.js background jobs"
+      ],
+      [
+        "RBAC",
+        "Role-Based Access Control"
+      ],
+      [
+        "DLQ",
+        "Dead Letter Queue — queue for messages that failed processing"
+      ],
+      [
+        "CDN",
+        "Content Delivery Network — edge caching for static assets"
+      ]
+    ]
+  },
+  {
+    "index": 20,
+    "rows": 11,
+    "cols": 2,
+    "data": [
+      [
+        "Document Title",
+        "PreOne ADR-111 DevOps & Infrastructure Architecture"
+      ],
+      [
+        "ADR ID",
+        "ADR-111"
+      ],
+      [
+        "Status",
+        "LOCKED"
+      ],
+      [
+        "Document Version",
+        "1.0"
+      ],
+      [
+        "Date",
+        "2026-07-14"
+      ],
+      [
+        "Product",
+        "PreOne — Enterprise Preschool Operating System"
+      ],
+      [
+        "Predecessor",
+        "ADR Catalog v1.0, Backend TD v1.0, Frontend Architecture v1.0"
+      ],
+      [
+        "Successor",
+        "DevOps Runbook, Kubernetes Manifests, Terraform Modules, Production Release"
+      ],
+      [
+        "Scope",
+        "Docker, Kubernetes, CI/CD, NGINX, PostgreSQL HA, Redis, Monitoring, Logging, DR"
+      ],
+      [
+        "Classification",
+        "Internal Engineering Reference"
+      ],
+      [
+        "Prepared by",
+        "PreOne Architecture & DevOps Team"
+      ]
+    ]
+  },
+  {
+    "index": 21,
+    "rows": 5,
+    "cols": 4,
+    "data": [
+      [
+        "Version",
+        "Date",
+        "Author",
+        "Changes"
+      ],
+      [
+        "1.0",
+        "2026-07-14",
+        "Architecture & DevOps Team",
+        "Initial LOCKED version — 16 chapters covering Docker, K8s, CI/CD, NGINX, Postgres HA, Redis, Monitoring, Logging, Backup, DR, Environments, Security, Scalability, Final Stack"
+      ],
+      [
+        "0.9",
+        "2026-07-10",
+        "Architecture & DevOps Team",
+        "Pre-lock draft — security review feedback incorporated"
+      ],
+      [
+        "0.5",
+        "2026-07-01",
+        "Architecture & DevOps Team",
+        "Initial draft — chapters 1-8 (Docker, K8s, CI/CD, NGINX, Postgres, Redis)"
+      ],
+      [
+        "0.1",
+        "2026-06-20",
+        "Architecture & DevOps Team",
+        "Skeleton — TOC + section headers + placeholder content"
+      ]
+    ]
+  },
+  {
+    "index": 22,
+    "rows": 6,
+    "cols": 4,
+    "data": [
+      [
+        "Role",
+        "Name",
+        "Responsibility",
+        "Status"
+      ],
+      [
+        "DevOps Lead",
+        "—",
+        "Infrastructure architecture, K8s setup, CI/CD",
+        "Pending"
+      ],
+      [
+        "Engineering Manager",
+        "—",
+        "Team capacity, on-call rotation, budget",
+        "Pending"
+      ],
+      [
+        "Security Lead",
+        "—",
+        "Security review, compliance sign-off",
+        "Pending"
+      ],
+      [
+        "Architecture Review Board",
+        "—",
+        "ADR review + LOCKED status approval",
+        "Pending"
+      ],
+      [
+        "CTO",
+        "—",
+        "Final approval for production release",
+        "Pending"
+      ]
+    ]
+  }
+]

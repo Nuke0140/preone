@@ -1,0 +1,282 @@
+     1→[00001] [Normal] Table of Contents
+     2→[00002] [Normal] Note: This Table of Contents is generated via field codes. To ensure page number accuracy after editing, please right-click the TOC and select "Update Field."
+     3→[00004] [Heading 1] 1. Introduction
+     4→[00005] [Heading 2] 1.1 Purpose
+     5→[00006] [Normal] PreOne Enterprise API Contract Catalog v1.0 हा PreOne Enterprise Build Roadmap चा सहावा foundational document आहे — Vision, BRC, Master PRD, DDD, आणि ERD नंतर. ह्या document चा primary purpose म्हणजे सर्व API endpoints (REST, WebSocket, Webhook, File Upload, AI) एका centralized, machine-readable, AI-friendly contract मध्ये capture करणे, ज्यामुळे Backend (NestJS), Web Portal, Mobile (PreOne Hub), QA, आणि AI Code Generation teams सर्व एकाच contract वर काम करतील. Document freeze झाल्यानंतर कोणताही API change साठी formal Change Request (CR) process mandatory आहे.
+     6→[00007] [Normal] हा catalog फक्त API चा contract define करतो — implementation details (NestJS module structure, Prisma models, deployment topology) यासाठी नाही. Document ची status आत्ता API Freeze आहे, म्हणजे endpoints, payloads, error codes, आणि behavior यावर कोणतेही breaking change यावणार नाही याची guarantee आहे. Backward-compatible additive changes (new fields, new endpoints, new optional params) आले तरी major version वाढणार नाही — त्या v1.x minor releases मध्ये handle होतील.
+     7→[00008] [Heading 2] 1.2 Scope
+     8→[00009] [Normal] ह्या catalog मध्ये 14 domains मधील ~530 REST APIs, 5 WebSocket channels, 5 outbound webhook events, 8 internal domain events, 5 file upload formats, 5 AI endpoints, आणि 8 external integration categories यांचा समावेश आहे. प्रत्येक API साठी method, path, request schema, response schema, error codes, permissions, rate limits, आणि traceability (DDD Aggregate, ERD Tables, BRC Rules, PRD FRs, ADRs, Acceptance Test IDs) defined आहे.
+     9→[00010] [Normal] Scope बाहेर: (1) Implementation-level details — NestJS decorators, Prisma schema, deployment configs; (2) UI/UX specs — those live in UI Spec v1.0; (3) Operational runbooks — those live in SRE playbook; (4) Per-tenant customizations — those are config-driven via Settings APIs. हा document प्रत्येक PreOne tenant साठी identical आहे — multi-tenancy handled via headers + RLS, not via separate contracts.
+    10→[00011] [Heading 2] 1.3 Audience
+    11→[00012] [Normal] हे document खालील teams साठी design केले आहे:
+    12→[00013] [Normal] •  Backend Engineering (NestJS) — 14 domain squads implement APIs per this contract.
+    13→[00014] [Normal] •  Web Portal Team — admin/branch head dashboards consume REST APIs + WebSocket.
+    14→[00015] [Normal] •  Mobile Team (PreOne Hub) — parent + teacher apps consume REST + WebSocket + File Upload.
+    15→[00016] [Normal] •  QA Team — contract testing, E2E, load testing per acceptance test IDs.
+    16→[00017] [Normal] •  AI Code Generation Team — OpenAPI spec feeds code generators (TypeScript, Python, Java SDKs).
+    17→[00018] [Normal] •  Partner Integrations — third-party webhook consumers + SDK users reference this catalog.
+    18→[00019] [Normal] •  DevOps/SRE — rate limiting, monitoring, alerting based on endpoint metadata herein.
+    19→[00020] [Heading 2] 1.4 Document Conventions
+    20→[00021] [Normal] ह्या document मध्ये खालील conventions वापरले आहेत:
+    21→[00022] [Normal] •  HTTP methods: UPPERCASE (GET, POST, PATCH, PUT, DELETE).
+    22→[00023] [Normal] •  Endpoint paths: kebab-case, plural nouns (/students, /purchase-orders).
+    23→[00024] [Normal] •  Request/response examples: JSON in monospace code blocks.
+    24→[00025] [Normal] •  Field names: camelCase in JSON payloads, snake_case in database columns (Prisma maps between).
+    25→[00026] [Normal] •  Enums: UPPERCASE_SNAKE (ACTIVE, PENDING_APPROVAL).
+    26→[00027] [Normal] •  Error codes: DOMAIN_REASON format (STUDENT_NOT_FOUND, AUTH_001).
+    27→[00028] [Normal] •  Rule references: R-DOM-NNN format from BRC v1.0 (e.g., R-FIN-010).
+    28→[00029] [Normal] •  FR references: FR-NNN format from Master PRD v1.0 (e.g., FR-045).
+    29→[00030] [Normal] •  ADR references: ADR-NNN format from ADR Catalog v1.0 (e.g., ADR-019).
+    30→[00031] [Heading 2] 1.5 Related Documents
+    31→[00032] [Normal] हे document standalone नाही — ते PreOne document series चा एक part आहे. खालील table related documents आणि त्यांचा purpose दर्शवतो:
+    32→[00033] [Heading 2] 1.6 Version History
+    33→[00034] [Normal] Document ची version history खालील table मध्ये आहे. Current version 1.0 = API Freeze, म्हणजे यावर कोणताही breaking change यावणार नाही. Minor changes (additive, backward-compatible) v1.1, v1.2... मध्ये येतील. Major version v2.0 साठी formal deprecation + migration plan required.
+    34→[00036] [Heading 1] 2. API Philosophy & Standards
+    35→[00037] [Heading 2] 2.1 API Philosophy
+    36→[00038] [Normal] PreOne API design चा foundational principle म्हणजे strict layering — API layer ही फक्त transport, validation, आणि serialization concern handle करते. Business logic कधीच API layer मध्ये नसेल. ह्यामुळे API reusable होते (web, mobile, third-party सर्वांसाठी same contract), testable होते (business logic isolated), आणि maintainable होते (changes domain layer मध्ये centralized).
+    37→[00039] [Normal] Layered architecture chain:
+    38→[00040] [Normal] API मध्ये Business Logic कधीच नसणार. सर्व Business Logic Application Service → Domain → Aggregate → Repository chain मध्ये राहील. API layer ही फक्त transport, validation आणि serialization concern handle करेल.
+    39→[00041] [Normal] ह्या layering चा एक direct implication: API endpoint signature stable राहते जरी underlying domain logic बदलला तरी. उदा.: /payments endpoint चा contract (request: invoiceId+amount+method, response: paymentId+receiptId) stable आहे — PaymentService implementation event sourcing वर switch झाला तरी API consumer ला कळेलच नाही. ही abstraction ही API longevity ची foundation आहे.
+    40→[00042] [Heading 2] 2.2 API Design Principles
+    41→[00043] [Normal] PreOne APIs 10 core principles follow करतात. हे principles ADR-001 (API Design Principles) मध्ये formalized आहेत आणि Governance Board द्वारे enforced:
+    42→[00044] [Heading 2] 2.3 Base URLs
+    43→[00045] [Normal] PreOne API हा 3 environments मध्ये hosted आहे. Production live tenant traffic handle करतो, Development internal staging साठी आहे, Local developer machine साठी. प्रत्येक environment चे आपले database, Redis, आणि third-party integrations आहेत — data देशात shared नाही.
+    44→[00046] [Heading 2] 2.4 API Version Path
+    45→[00047] [Normal] All API endpoints versioned via URI path prefix. Current version v1. Version path /api/v1/ ने सर्व endpoints start होतात.
+    46→[00049] [Heading 1] 3. Security
+    47→[00050] [Heading 2] 3.1 Security Architecture Overview
+    48→[00051] [Normal] PreOne API security 12 layers मध्ये structured आहे. हे layers defense-in-depth principle follow करतात — एक layer compromised झाला तरी इतर layers attack prevent करतात. Security architecture ADR-009 (Security Architecture) आणि DPDP Act 2023 compliance requirements वर based आहे.
+    49→[00052] [Normal] सर्व security controls automated tested आहेत — quarterly third-party penetration test, continuous SAST/DAST scanning via Snyk + SonarQube, आणि dependency vulnerability scanning via Dependabot. Critical vulnerabilities (CVSS ≥7.0) 24 hours अंतर्गत patched. High vulnerabilities (4.0-6.9) 7 days अंतर्गत. Medium/Low next sprint.
+    50→[00053] [Heading 2] 3.2 Security Layers
+    51→[00054] [Heading 2] 3.3 PII Encryption at Rest
+    52→[00055] [Normal] PII fields (student name, parent contact, medical info, Aadhaar) PostgreSQL pgcrypto द्वारे encrypted आहेत. Encryption key HashiCorp Vault मध्ये stored, quarterly rotated. Application layer transparent decrypt करते (Prisma extension), पण database dump compromise झाला तरी PII ciphertext मिळेल — useless without key.
+    53→[00056] [Heading 2] 3.4 Webhook Security
+    54→[00057] [Normal] Outbound webhooks HMAC-SHA256 ने signed आहेत. Recipients MUST signature verify करावी — नाही तर replay attack possible. X-PreOne-Signature header मध्ये hex-encoded signature. Replay window 5 minutes — older payloads recipient ने reject करावे.
+    55→[00058] [Heading 2] 3.5 DPDP Compliance
+    56→[00059] [Normal] DPDP Act 2023 compliance चा primary mechanism: (1) Consent management — प्रत्येक data collection point वर explicit consent logged; (2) Data Subject Access Requests (DSAR) — POST /api/v1/users/{id}/dsar endpoint; (3) Right to be forgotten — POST /api/v1/users/{id}/forget cascade deletes PII; (4) Breach notification — 72 hours अंतर्गत DPDP authority ला notify. Detailed DPDP mapping ERD v1.0 §9 मध्ये.
+    57→[00061] [Heading 1] 4. Authentication
+    58→[00062] [Heading 2] 4.1 Supported Authentication Methods
+    59→[00063] [Normal] PreOne 6 authentication methods supports करतो, वेगवेगळ्या use cases साठी. Primary method OTP Login (parents, teachers) आहे — passwordless, mobile-first, India-optimized. Password Login admins साठी आहे ज्यांचे email-based workflow आहे. Service-to-service auth API Key + mTLS द्वारे.
+    60→[00064] [Heading 2] 4.2 Login API
+    61→[00065] [Normal] Login endpoint primary authentication entry point आहे. OTP + Password दोन्ही methods same endpoint वर supported आहेत — request body मधीle field ने decide होते. Successful login access token (15min) + refresh token (30day) return करते.
+    62→[00066] [Heading 3] Request
+    63→[00067] [Heading 3] Response
+    64→[00068] [Heading 2] 4.3 Refresh Token
+    65→[00069] [Normal] Access token expiry झाल्यावर client refresh token वापरून new access token fetch करतो. Refresh token rotation — प्रत्येक refresh मध्ये old refresh token blacklist, new refresh token issue. ह्यामुळे stolen refresh token quickly useless होतो.
+    66→[00070] [Heading 2] 4.4 Logout
+    67→[00071] [Normal] Logout endpoint current session invalidate करतो — access token + refresh token दोन्ही server-side blacklist. Client ने tokens discard करावेत. Logout सर्व devices मधून करायचा असेल तर POST /api/v1/users/{id}/sessions/invalidate (admin-only) वापरा.
+    68→[00072] [Heading 2] 4.5 Token Lifecycle
+    69→[00073] [Normal] Token lifecycle खालील steps मध्ये managed होतो:
+    70→[00074] [Normal] •  User logs in via OTP/password → server issues accessToken (15min) + refreshToken (30day)
+    71→[00075] [Normal] •  Client uses accessToken for all API calls in Authorization: Bearer <token> header
+    72→[00076] [Normal] •  When accessToken expires, client calls POST /auth/refresh with refreshToken → new accessToken
+    73→[00077] [Normal] •  Refresh token is rotated on each use (one-time use) — old refresh token blacklisted
+    74→[00078] [Normal] •  User logs out → POST /auth/logout → both tokens blacklisted server-side
+    75→[00079] [Normal] •  After 30 days of inactivity → refreshToken expires → full re-authentication required
+    76→[00080] [Normal] •  Compromised token? Admin can force-invalidate all sessions for a user via POST /users/{id}/sessions/invalidate
+    77→[00082] [Heading 1] 5. Authorization
+    78→[00083] [Heading 2] 5.1 JWT Payload Structure
+    79→[00084] [Normal] JWT payload मध्ये user identity + authorization context encoded आहे. Server द्वारे signed (RS256), client द्वारे stored, प्रत्येक request मध्ये Authorization: Bearer header मध्ये sent. Payload fields:
+    80→[00085] [Heading 2] 5.2 Authorization Flow
+    81→[00086] [Normal] Authorization चा flow 4-step pipeline आहे:
+    82→[00087] [Normal] हे ADR मधील Effective Access Resolver, Permission Bundles आणि Scope Resolution शी सुसंगत असेल. Permission Resolver check करतो की user च्या roles मध्ये required permission आहे का. Scope Resolver check करतो की user हा resource च्या scope (school/branch/class/section) मध्ये access करू शकतो का. दोन्ही pass झाल्यावरच Application Service ला request पोहोचते.
+    83→[00088] [Heading 2] 5.3 Permission Bundles
+    84→[00089] [Normal] Permission Bundles हे predefined role-based permission sets आहेत. Role (e.g., 'teacher') ला multiple bundles assigned असतात. हे bundles ADR-019 (Effective Access Resolver) मध्ये defined आहेत. Permissions_version field JWT मध्ये cached — जेव्हा user ची role change होते तेव्हा permissions_version increment होतो आणि next refresh ने new permissions load होतात.
+    85→[00090] [Heading 2] 5.4 Scope Resolution
+    86→[00091] [Normal] Scope Resolution हा Authorization pipeline चा दुसरा step आहे. User च्या role मध्ये permission असला तरी scope check pass होणे mandatory — teacher फक्त स्वतःच्या classroom चे students access करू शकतो, सर्व school students नाही. Scope levels: school > branch > class > section. JWT मध्ये scope_version cached — scope change झाल्यावर version increment.
+    87→[00093] [Heading 1] 6. Multi-Tenant Headers
+    88→[00094] [Heading 2] 6.1 Required Headers
+    89→[00095] [Normal] PreOne multi-tenant SaaS architecture आहे. प्रत्येक request साठी 8 headers mandatory आहेत (किंवा optional with sensible defaults). हे headers request चा scope define करतात — कोणत्या tenant, school, branch, academic year साठी हा request आहे. Server द्वारे validated केले जाते की user चा JWT च scope ह्या headers शी match होतो.
+    90→[00096] [Heading 2] 6.2 Optional Headers
+    91→[00097] [Normal] Additional optional headers clients specific use cases साठी पाठवू शकतात:
+    92→[00098] [Heading 2] 6.3 Header Precedence Rules
+    93→[00099] [Normal] जेव्हा headers conflict करतात तेव्हा precedence rules apply होतात:
+    94→[00100] [Normal] •  JWT scope > request headers — teacher च JWT scope फक्त branch A साठी असेल आणि request मध्ये X-Branch-ID: B असेल तर 403 PERMISSION_001.
+    95→[00101] [Normal] •  X-School-ID > X-Branch-ID — branch header ने school header override करू शकत नाही, both must be consistent.
+    96→[00102] [Normal] •  Accept-Language defaults to tenant's primary locale — request header override only if locale supported.
+    97→[00103] [Normal] •  X-Timezone defaults to Asia/Kolkata — request header override accepted (IANA format only).
+    98→[00104] [Normal] •  X-Request-ID auto-generated if missing — server generated UUID v4, propagated to all downstream services + logs.
+    99→[00106] [Heading 1] 7. Request Standards
+   100→[00107] [Heading 2] 7.1 HTTP Methods
+   101→[00108] [Normal] PreOne 5 HTTP methods वापरतो, प्रत्येक method चा specific semantic meaning आहे. Methods strictly RESTful आहेत — verbs URL मध्ये नाहीत, action ने method द्वारे expressed होतो (e.g., POST /admissions/{id}/approve हा state transition आहे, तो action verb म्हणून path मध्ये exception)).
+   102→[00109] [Heading 2] 7.2 Request Body Standards
+   103→[00110] [Normal] सर्व request bodies strict standards follow करतात — consistency across endpoints साठी mandatory:
+   104→[00111] [Normal] •  Content-Type: application/json (UTF-8 encoded) for all body requests
+   105→[00112] [Normal] •  Content-Type: multipart/form-data ONLY for file upload endpoints
+   106→[00113] [Normal] •  Datetime fields: ISO 8601 with timezone — 2026-07-12T14:30:00+05:30
+   107→[00114] [Normal] •  Date fields: ISO 8601 date only — 2026-07-12
+   108→[00115] [Normal] •  Money fields: integer paise (₹250.50 → 25050). NEVER float
+   109→[00116] [Normal] •  IDs: UUID v4 string format — 01HXYZ...
+   110→[00117] [Normal] •  Booleans: true/false (lowercase JSON)
+   111→[00118] [Normal] •  Enums: UPPERCASE_SNAKE (ACTIVE, INACTIVE, PENDING_APPROVAL)
+   112→[00119] [Normal] •  Phone: E.164 format — +919876543210
+   113→[00120] [Normal] •  Email: lowercase, RFC 5322 compliant
+   114→[00121] [Normal] •  Max body size: 10MB (JSON), 100MB (multipart upload)
+   115→[00122] [Normal] •  URL: kebab-case paths, plural nouns, no verbs in path
+   116→[00123] [Heading 2] 7.3 URL Conventions
+   117→[00124] [Normal] URL design conventions consistency साठी enforced आहेत:
+   118→[00125] [Normal] •  Plural nouns for collections: /students (not /student).
+   119→[00126] [Normal] •  Kebab-case for multi-word: /purchase-orders (not /purchaseOrders or /purchase_orders).
+   120→[00127] [Normal] •  No verbs in path (with documented exceptions for state transitions): /admissions/{id}/approve.
+   121→[00128] [Normal] •  Sub-resources: /students/{id}/guardians — guardian scoped to student.
+   122→[00129] [Normal] •  IDs in path: UUID v4 format (01HXYZ...).
+   123→[00130] [Normal] •  Query params for filtering/pagination/sorting — never in path.
+   124→[00131] [Normal] •  Trailing slashes not used: /students (not /students/).
+   125→[00133] [Heading 1] 8. Response Standards
+   126→[00134] [Heading 2] 8.1 Success Response Template
+   127→[00135] [Normal] प्रत्येक successful response consistent envelope structure follow करतो — success flag, data object/array, meta object, आणि traceId. ह्या consistency मुळे clients ला uniform parsing logic लिहिता येते. Response envelope ADR-002 (Response Envelope Standard) मध्ये formalized आहे.
+   128→[00136] [Heading 2] 8.2 Error Response Template
+   129→[00137] [Normal] Error responses सुद्धा consistent structure follow करतात — success: false, error object (code, message, field, details), traceId. Error object ची structure निश्चित करते की clients ला error handling logic uniform लिहिता येतो.
+   130→[00138] [Heading 2] 8.3 HTTP Status Codes
+   131→[00139] [Normal] PreOne standard HTTP status codes वापरतो. Status code ने high-level outcome indicate होतो, error.code field ने specific reason. उदा.: 401 + AUTH_002 = expired JWT, 401 + AUTH_001 = missing JWT — same status, different code, different client action.
+   132→[00140] [Heading 2] 8.4 Meta Object
+   133→[00141] [Normal] Meta object pagination info + additional response context carry करतो. List endpoints साठी mandatory (page, pageSize, total, hasMore). Single-resource endpoints साठी optional. Meta object extensible आहे — endpoint-specific fields add होऊ शकतात (e.g., reports मध्यe generatedAt, cachedUntil).
+   134→[00142] [Heading 2] 8.5 TraceId Propagation
+   135→[00143] [Normal] प्रत्येक response मध्ये traceId field आहे. हा ID distributed tracing साठी use होतो — X-Request-ID header (or auto-generated) पासून derived, सर्व downstream services आणि logs मध्ये propagated. Production issue debug करताना traceId ने सर्व related logs + DB queries + external API calls trace होतात. Sentry + OpenTelemetry integration.
+   136→[00145] [Heading 1] 9. Error Standards
+   137→[00146] [Heading 2] 9.1 Error Code Naming Convention
+   138→[00147] [Normal] Error codes DOMAIN_REASON format मध्ये named आहेत — domain prefix + reason suffix. उदा.: STUDENT_NOT_FOUND, AUTH_002, VALIDATION_001. ह्या convention मुळे error codes searchable, sortable, आणि AI-friendly आहेत (LLM context मध्ये error code ने precise reason convey होतो).
+   139→[00148] [Heading 2] 9.2 Error Categories
+   140→[00149] [Normal] Errors 6 top-level categories मध्ये organized आहेत. प्रत्येक category चा specific HTTP status range आहे:
+   141→[00150] [Heading 2] 9.3 Error Code Catalog
+   142→[00151] [Normal] Top-level error codes चा catalog खालील table मध्ये आहे. Domain-specific codes (e.g., STUDENT_NOT_FOUND, INVOICE_ALREADY_PAID) per-domain OpenAPI spec मध्ये documented आहेत.
+   143→[00152] [Heading 2] 9.4 Error Response Payload
+   144→[00153] [Normal] Error response payload मध्ये 4 fields नेहमी असतात: code (machine-readable), message (human-readable default English), field (which input field caused error, if applicable), details (additional context). field + details optional आहेत — simple errors साठी omit होतात.
+   145→[00154] [Heading 2] 9.5 Error Localization
+   146→[00155] [Normal] Error messages Accept-Language header नुसार localized होतात. Default English. Supported: mr, hi, en, mr-IN, hi-IN. Localization catalog Redis मध्ये cached, fallback chain: requested → tenant's primary locale → English. Localization keys error codes शी mapped आहेत — message field चा translation lookup code field द्वारे.
+   147→[00156] [Heading 2] 9.6 Error Logging
+   148→[00157] [Normal] सर्व 4xx + 5xx errors Sentry ला reported होतात. 5xx errors immediate alert trigger करतात (PagerDuty). 4xx errors aggregated dashboard मध्ऍे (no alert unless threshold exceeded — e.g., 1000 AUTH_001 in 5min = potential attack). Error logs मध्ये full context: traceId, userId, tenantId, endpoint, payload hash (not full payload — PII safe), response time.
+   149→[00159] [Heading 1] 10. Pagination
+   150→[00160] [Heading 2] 10.1 Page-Based Pagination
+   151→[00161] [Normal] Default pagination page-based आहे — page + pageSize query params. Page numbering 1-indexed (page=1 पहिली page). Default pageSize 20, max 100 (larger sizes VALIDATION_001 ने rejected).
+   152→[00162] [Heading 3] Request Example
+   153→[00163] [Heading 3] Response Example
+   154→[00164] [Heading 2] 10.2 Pagination Rules
+   155→[00165] [Normal] Page-based pagination साठी rules:
+   156→[00166] [Normal] •  Default pageSize: 20. Max pageSize: 100. Larger sizes rejected with VALIDATION_001.
+   157→[00167] [Normal] •  Page numbering is 1-indexed (page=1 is first page). page=0 returns 400.
+   158→[00168] [Normal] •  For datasets >10k rows, prefer cursor-based pagination (?cursor=abc&limit=20) for performance.
+   159→[00169] [Normal] •  OFFSET pagination becomes O(n) slow at deep pages — cursor is O(1).
+   160→[00170] [Normal] •  Response meta always includes: page, pageSize, total, totalPages, hasMore, nextCursor.
+   161→[00171] [Normal] •  Empty result set returns 200 with data:[] and meta.total:0 (NOT 404).
+   162→[00172] [Normal] •  Sorting + pagination: sort must be deterministic (include id as tiebreaker).
+   163→[00173] [Heading 2] 10.3 Cursor-Based Pagination (Large Datasets)
+   164→[00174] [Normal] Datasets >10k rows साठी cursor-based pagination recommended आहे. OFFSET pagination O(n) slow होते deep pages वर — cursor O(1) राहतो. Cursor opaque string आहे (client ला decode करायची गरज नाही), server-side last-seen-ID encode करतो. Request: ?cursor=abc&limit=20. Response: meta.nextCursor field.
+   165→[00176] [Heading 1] 11. Filtering
+   166→[00177] [Heading 2] 11.1 Filter Operators
+   167→[00178] [Normal] Filtering query parameter द्वारे done आहे. Default operator equality आहे — ?status=ACTIVE म्हणजे status equals ACTIVE. Other operators square bracket syntax वापरतात: ?createdAt[gte]=2026-07-01.
+   168→[00179] [Heading 2] 11.2 Filtering Rules
+   169→[00180] [Normal] Filtering साठी rules:
+   170→[00181] [Normal] •  Filter field whitelist enforced per endpoint — unknown fields rejected with VALIDATION_001.
+   171→[00182] [Normal] •  Filter operators use square bracket syntax: field[operator]=value.
+   172→[00183] [Normal] •  Default operator (no brackets) is equality (eq).
+   173→[00184] [Normal] •  Comma-separated values for in/nin/between operators.
+   174→[00185] [Normal] •  Date filters accept ISO 8601 (date or datetime).
+   175→[00186] [Normal] •  Boolean filters accept true/false (lowercase).
+   176→[00187] [Normal] •  Null filters: ?deletedAt[is]=null or ?deletedAt[isnot]=null.
+   177→[00188] [Normal] •  SQL injection prevention: all values passed via Prisma parameterized queries.
+   178→[00189] [Heading 2] 11.3 Filter Validation
+   179→[00190] [Normal] Filter validation critical आहे — SQL injection prevention साठी. प्रत्येक endpoint चे filter whitelist defined आहे (OpenAPI spec मध्ऍे). Unknown filter fields VALIDATION_001 ने rejected. सर्व filter values Prisma parameterized queries द्वारे DB पर्यंत पोहोचतात — no string concatenation. Date filters ISO 8601 parse आणि validate होतात.
+   180→[00192] [Heading 1] 12. Sorting
+   181→[00193] [Heading 2] 12.1 Sort Syntax
+   182→[00194] [Normal] Sorting ?sort query param द्वारे done आहे. Single-field sort: ?sort=firstName. Descending: prefix with - (e.g., -createdAt). Multi-field: comma-separated (e.g., lastName,-createdAt). Legacy order=asc|desc param सुद्धा supported आहे (single-field only, backward compat).
+   183→[00195] [Heading 2] 12.2 Sorting Rules
+   184→[00196] [Normal] •  Sort parameter accepts comma-separated field names.
+   185→[00197] [Normal] •  Prefix with - for descending order (e.g., -createdAt).
+   186→[00198] [Normal] •  Legacy order=asc|desc param still supported for backward compat (single-field only).
+   187→[00199] [Normal] •  Sortable fields are whitelisted per endpoint — unknown fields rejected with VALIDATION_001.
+   188→[00200] [Normal] •  Sort is always deterministic — primary sort + id as final tiebreaker.
+   189→[00201] [Normal] •  Sort field must be indexed for performance — endpoint metadata exposes indexed sortable fields.
+   190→[00202] [Normal] •  Multi-field sort respects field order — first field has highest precedence.
+   191→[00204] [Heading 1] 13. Versioning
+   192→[00205] [Heading 2] 13.1 Versioning Policy
+   193→[00206] [Normal] URI path versioning वापरले जाते — /api/v1/, /api/v2/. हा approach clients साठी सर्वात intuitive आहे (URL ने version visible), routing सोपा आहे (load balancer prefix route), आणि debugging easier आहे (logs मध्ऍे version visible).
+   194→[00207] [Heading 2] 13.2 Versioning Rules
+   195→[00208] [Normal] Versioning strict rules follow करतात — long-term client compatibility साठी:
+   196→[00209] [Normal] •  URI path versioning: /api/v1/, /api/v2/. Most intuitive for clients, easiest to route.
+   197→[00210] [Normal] •  Within a major version, NO breaking changes — only additive (new fields, new endpoints, new optional params).
+   198→[00211] [Normal] •  Breaking changes (rename field, remove field, change type, change semantics) require new major version.
+   199→[00212] [Normal] •  New major version has 12-month overlap with prior version before sunset.
+   200→[00213] [Normal] •  Deprecation headers sent on deprecated endpoints: Sunset: Wed, 30 Jun 2027 00:00:00 GMT; Deprecation: true; Link: </api/v2/students>; rel="successor-version".
+   201→[00214] [Normal] •  Version support policy: current major + 1 prior major. v3 release → v1 sunset.
+   202→[00215] [Normal] •  Migration guide published with each major release: field mapping, behavior changes, SDK updates.
+   203→[00216] [Normal] •  Versioning is per-API-surface, not per-endpoint — all endpoints under /api/v1/ move together.
+   204→[00217] [Heading 2] 13.3 Breaking vs Non-Breaking Changes
+   205→[00218] [Normal] Breaking changes (new major version required):
+   206→[00219] [Normal] •  Remove a field from response
+   207→[00220] [Normal] •  Rename a field (e.g., studentName → firstName)
+   208→[00221] [Normal] •  Change field type (e.g., string → number)
+   209→[00222] [Normal] •  Change field semantic (e.g., amount in rupees → paise)
+   210→[00223] [Normal] •  Change required-ness of a request field (optional → required)
+   211→[00224] [Normal] •  Change error code (e.g., AUTH_001 → AUTH_BAD)
+   212→[00225] [Normal] •  Change default behavior (e.g., default pageSize 20 → 50)
+   213→[00226] [Normal] Non-breaking changes (within same major version OK):
+   214→[00227] [Normal] •  Add new field to response
+   215→[00228] [Normal] •  Add new optional field to request
+   216→[00229] [Normal] •  Add new endpoint
+   217→[00230] [Normal] •  Add new enum value (clients should handle unknown enums gracefully)
+   218→[00231] [Normal] •  Add new error code (clients should fallback to message)
+   219→[00233] [Heading 1] 14. Idempotency
+   220→[00234] [Heading 2] 14.1 Idempotency-Key Header
+   221→[00235] [Normal] Idempotency-Key header (UUID v4) POST/PUT/PATCH methods वर supported आहे. हा header server ला सांगतो की हा request retry आहे — same key + same payload आला तर cached response return करा. Payment, refund, admission submission, file upload यांसारख्या critical endpoints साठी MANDATORY आहे.
+   222→[00236] [Heading 2] 14.2 Idempotency Rules
+   223→[00237] [Normal] •  Idempotency-Key header (UUID v4) supported on POST, PUT, PATCH methods.
+   224→[00238] [Normal] •  MANDATORY for: payments, refunds, admissions submission, file uploads, invoice generation.
+   225→[00239] [Normal] •  Server stores key + response hash for 24 hours in Redis.
+   226→[00240] [Normal] •  Same Idempotency-Key + same payload → returns cached response (HTTP 200/201 + identical body).
+   227→[00241] [Normal] •  Same Idempotency-Key + DIFFERENT payload → returns 409 CONFLICT_001 (key reuse with different body).
+   228→[00242] [Normal] •  Scope: per-user, per-endpoint. Different users can use same key without conflict.
+   229→[00243] [Normal] •  Client MUST regenerate key for genuinely new requests, not retry same key for different operations.
+   230→[00244] [Normal] •  Network failure / timeout: client retries with SAME key — server deduplicates automatically.
+   231→[00245] [Normal] •  After 24h TTL, key expires — same key can be reused for new operation (uncommon, but safe).
+   232→[00246] [Heading 2] 14.3 Example: Payment with Idempotency
+   233→[00247] [Normal] Network failure झाला तर client समान Idempotency-Key ने retry करतो — server automatically deduplicates. ह्यामुळे duplicate payment होण्याचा risk zero.
+   234→[00249] [Heading 1] 15. Rate Limiting
+   235→[00250] [Heading 2] 15.1 Rate Limit Tiers
+   236→[00251] [Normal] Rate limiting tiered आहे — different client types साठी different limits. Anonymous requests (login, OTP) सर्वात कमी, authenticated users standard, service accounts high, premium tenants custom.
+   237→[00252] [Heading 2] 15.2 Rate Limit Headers
+   238→[00253] [Normal] प्रत्येक response मध्ऍे rate limit info headers include होतात — clients ला limit awareness मिळतो, proactive backoff करता येते.
+   239→[00254] [Heading 2] 15.3 429 Response
+   240→[00255] [Normal] Rate limit exceeded झाल्यावर 429 Too Many Requests response return होतो, Retry-After header सह. Clients MUST wait Retry-After seconds before retrying. Aggressive retry (ignoring Retry-After) additional rate limit penalty trigger करतो.
+   241→[00256] [Heading 2] 15.4 Rate Limit Rules
+   242→[00257] [Normal] •  Burst allowance: 2x the limit for 10 seconds (allows for page-load burst).
+   243→[00258] [Normal] •  Per-IP limit prevents single-client DDoS. Per-user limit prevents single-account abuse.
+   244→[00259] [Normal] •  Cloudflare WAF in front for volumetric DDoS (1M+ req/s mitigation).
+   245→[00260] [Normal] •  AI APIs have additional per-tenant daily quota — enforced via token counter in Redis.
+   246→[00261] [Normal] •  Premium tenants can request custom limits via Platform Admin UI — billed accordingly.
+   247→[00262] [Normal] •  Rate limit windows: 1 minute (sliding window algorithm in Redis).
+   248→[00263] [Normal] •  Long-polling/WebSocket connections do not count against rate limit (different resource model).
+   249→[00265] [Heading 1] 16. REST API Catalog
+   250→[00266] [Heading 2] 16.1 Domain Overview
+   251→[00267] [Normal] PreOne REST API 14 domains मध्ऍे ~530 endpoints organized आहेत. प्रत्येक domain चा dedicated base path आहे. Domain-wise detailed contracts API-002 to API-015 sub-documents मध्ऍे असतील (see Chapter 30). ह्या chapter मध्ऍे 9 critical domains चे sample endpoints detailed केले आहेत — Identity, Student, Admission, Attendance, Observation, Finance, Parent Communication, Inventory, HR, Reports.
+   252→[00268] [Heading 2] 16.2 Identity APIs (Sample)
+   253→[00269] [Normal] Identity domain 20 APIs — auth flows, user CRUD, role/permission management, session handling. खालील 7 sample endpoints detailed:
+   254→[00270] [Heading 3] POST /api/v1/auth/login
+   255→[00271] [Normal] Login via OTP or password — returns JWT tokens
+   256→[00273] [Heading 3] POST /api/v1/auth/logout
+   257→[00274] [Normal] Invalidate current session and tokens
+   258→[00276] [Heading 3] POST /api/v1/auth/refresh
+   259→[00277] [Normal] Rotate refresh token, issue new access token
+   260→[00279] [Heading 3] GET /api/v1/me
+   261→[00280] [Normal] Get current authenticated user profile + permissions
+   262→[00282] [Heading 3] PATCH /api/v1/me
+   263→[00283] [Normal] Update own profile (name, avatar, locale, timezone)
+   264→[00285] [Heading 3] GET /api/v1/permissions
+   265→[00286] [Normal] List all permissions available in the system
+   266→[00288] [Heading 3] GET /api/v1/roles
+   267→[00289] [Normal] List all roles defined for the tenant
+   268→[00291] [Heading 2] 16.3 Student APIs (Sample)
+   269→[00292] [Normal] Student Lifecycle domain 45 APIs — student CRUD, guardian management, classroom assignment, promotions. Top 5 endpoints:
+   270→[00293] [Heading 3] GET /api/v1/students
+   271→[00294] [Normal] List students with pagination, filtering, sorting
+   272→[00296] [Heading 3] GET /api/v1/students/{id}
+   273→[00297] [Normal] Get single student by ID — full profile
+   274→[00299] [Heading 3] POST /api/v1/students
+   275→[00300] [Normal] Create new student record
+   276→[00302] [Heading 3] PATCH /api/v1/students/{id}
+   277→[00303] [Normal] Update student profile (partial)
+   278→[00305] [Heading 3] DELETE /api/v1/students/{id}
+   279→[00306] [Normal] Soft-delete student (sets deleted_at, retains for 7y per DPDP)
+   280→[00308] [Heading 2] 16.4 Admission APIs (Sample)
+
+[showing lines 1-280 of 669; use offset=281 with limit to continue reading]

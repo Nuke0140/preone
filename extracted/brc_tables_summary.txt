@@ -1,0 +1,1205 @@
+# brc — 199 tables
+
+## Table #0  rows=1 cols=1
+Header: P  R  E  O  N  E    E  N  T  E  R  P  R  I  S  E
+PreOne Business Rules Catalog
+Enterprise Preschool Operating System
+Document: BRC v1.0
+Status: Draft (Business Review)
+Date: 2026-07-12
+Total Rules: 176 across 12 categories
+Predecessor: BPM v1.0 (Business Freeze)
+Successor: Master PRD v1.0
+Classification: Internal Engineering Reference
+Prepared by: PreOne Product & Architecture Team
+
+PreOne Platform                                        BRC v1.0
+
+## Table #1  rows=15 cols=3
+Header: Field | Purpose | Example
+  Row: Rule ID | Unique identifier (R-DOM-NNN format). Stable, never reused. | R-ADM-007
+  Row: Domain | Business domain the rule belongs to (from BPM). | Admission
+  Row: Sub-Process | Specific sub-process within the domain. | Document Verification
+
+## Table #2  rows=16 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-ELG-001 | Playgroup Age Eligibility | Application Form submission for Playgroup class | Block application; show age-appropriate class suggestion (Nu | Admission Counsellor
+  Row: R-ELG-002 | Nursery Age Eligibility | Application Form submission for Nursery class | Block application; suggest Playgroup (if <2.5) or Jr.KG (if  | Admission Counsellor
+  Row: R-ELG-003 | Jr.KG Age Eligibility | Application Form submission for Jr.KG class | Block application; suggest Nursery (if <3.5) or Sr.KG (if >4 | Admission Counsellor
+
+## Table #3  rows=14 cols=2
+Header: Rule ID | R-ELG-001
+  Row: Domain | Admission
+  Row: Sub-Process | Age Verification
+  Row: Title | Playgroup Age Eligibility
+
+## Table #4  rows=14 cols=2
+Header: Rule ID | R-ELG-002
+  Row: Domain | Admission
+  Row: Sub-Process | Age Verification
+  Row: Title | Nursery Age Eligibility
+
+## Table #5  rows=14 cols=2
+Header: Rule ID | R-ELG-003
+  Row: Domain | Admission
+  Row: Sub-Process | Age Verification
+  Row: Title | Jr.KG Age Eligibility
+
+## Table #6  rows=14 cols=2
+Header: Rule ID | R-ELG-004
+  Row: Domain | Admission
+  Row: Sub-Process | Age Verification
+  Row: Title | Sr.KG Age Eligibility
+
+## Table #7  rows=14 cols=2
+Header: Rule ID | R-ELG-005
+  Row: Domain | Admission
+  Row: Sub-Process | Age Proof
+  Row: Title | Age Proof Document Mandatory
+
+## Table #8  rows=14 cols=2
+Header: Rule ID | R-ELG-006
+  Row: Domain | Admission
+  Row: Sub-Process | Document Verification
+  Row: Title | Birth Certificate Mandatory
+
+## Table #9  rows=14 cols=2
+Header: Rule ID | R-ELG-007
+  Row: Domain | Admission
+  Row: Sub-Process | Medical Fitness
+  Row: Title | Medical Fitness Declaration
+
+## Table #10  rows=14 cols=2
+Header: Rule ID | R-ELG-008
+  Row: Domain | Admission
+  Row: Sub-Process | Document Verification
+  Row: Title | Photograph Mandatory
+
+## Table #11  rows=14 cols=2
+Header: Rule ID | R-ELG-009
+  Row: Domain | Admission
+  Row: Sub-Process | Parent Details
+  Row: Title | Parent/Guardian Identity Proof
+
+## Table #12  rows=14 cols=2
+Header: Rule ID | R-ELG-010
+  Row: Domain | Admission
+  Row: Sub-Process | Parent Details
+  Row: Title | Primary Contact Mandatory
+
+## Table #13  rows=14 cols=2
+Header: Rule ID | R-ELG-011
+  Row: Domain | Admission
+  Row: Sub-Process | Sibling Priority
+  Row: Title | Sibling Admission Priority
+
+## Table #14  rows=14 cols=2
+Header: Rule ID | R-ELG-012
+  Row: Domain | Admission
+  Row: Sub-Process | Staff Ward Quota
+  Row: Title | Staff Ward Admission Quota
+
+## Table #15  rows=14 cols=2
+Header: Rule ID | R-ELG-013
+  Row: Domain | Student Lifecycle
+  Row: Sub-Process | Transfer Admission
+  Row: Title | Transfer Student Eligibility
+
+## Table #16  rows=14 cols=2
+Header: Rule ID | R-ELG-014
+  Row: Domain | Admission
+  Row: Sub-Process | RTE Quota
+  Row: Title | RTE Section 12 (25% EWS Reservation)
+
+## Table #17  rows=14 cols=2
+Header: Rule ID | R-ELG-015
+  Row: Domain | Admission
+  Row: Sub-Process | Special Needs
+  Row: Title | Special Needs Child Admission
+
+## Table #18  rows=21 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-FIN-001 | Fee Due Date Enforcement | Invoice generated with due_date | Mark invoice overdue; trigger R-FIN-002 (late fee calculatio | Accounts Team
+  Row: R-FIN-002 | Late Fee Calculation | Invoice overdue (post R-FIN-001) | Add late fee line item to invoice; send notification; if >60 | Accounts Team
+  Row: R-FIN-003 | Refund Policy — Withdrawal Before Term Start | Parent submits withdrawal request before term start date | Process refund within 14 working days to original payment me | Accounts Team + Branch Head
+
+## Table #19  rows=14 cols=2
+Header: Rule ID | R-FIN-001
+  Row: Domain | Finance
+  Row: Sub-Process | Fee Collection
+  Row: Title | Fee Due Date Enforcement
+
+## Table #20  rows=14 cols=2
+Header: Rule ID | R-FIN-002
+  Row: Domain | Finance
+  Row: Sub-Process | Late Fee
+  Row: Title | Late Fee Calculation
+
+## Table #21  rows=14 cols=2
+Header: Rule ID | R-FIN-003
+  Row: Domain | Finance
+  Row: Sub-Process | Refund
+  Row: Title | Refund Policy — Withdrawal Before Term Start
+
+## Table #22  rows=14 cols=2
+Header: Rule ID | R-FIN-004
+  Row: Domain | Finance
+  Row: Sub-Process | Refund
+  Row: Title | Refund — Mid-Term Withdrawal
+
+## Table #23  rows=14 cols=2
+Header: Rule ID | R-FIN-005
+  Row: Domain | Finance
+  Row: Sub-Process | Discount
+  Row: Title | Sibling Discount
+
+## Table #24  rows=14 cols=2
+Header: Rule ID | R-FIN-006
+  Row: Domain | Finance
+  Row: Sub-Process | Discount
+  Row: Title | Early Bird Discount
+
+## Table #25  rows=14 cols=2
+Header: Rule ID | R-FIN-007
+  Row: Domain | Finance
+  Row: Sub-Process | GST Compliance
+  Row: Title | GST on Educational Services
+
+## Table #26  rows=14 cols=2
+Header: Rule ID | R-FIN-008
+  Row: Domain | Finance
+  Row: Sub-Process | Invoice
+  Row: Title | Invoice Number Generation
+
+## Table #27  rows=14 cols=2
+Header: Rule ID | R-FIN-009
+  Row: Domain | Finance
+  Row: Sub-Process | Receipt
+  Row: Title | Payment Receipt Generation
+
+## Table #28  rows=14 cols=2
+Header: Rule ID | R-FIN-010
+  Row: Domain | Finance
+  Row: Sub-Process | Payment
+  Row: Title | Digital Payment Mandate
+
+## Table #29  rows=14 cols=2
+Header: Rule ID | R-FIN-011
+  Row: Domain | Finance
+  Row: Sub-Process | Payment
+  Row: Title | Cheque Bounce Handling (NSF)
+
+## Table #30  rows=14 cols=2
+Header: Rule ID | R-FIN-012
+  Row: Domain | Finance
+  Row: Sub-Process | Installment
+  Row: Title | Installment Plan Approval
+
+## Table #31  rows=14 cols=2
+Header: Rule ID | R-FIN-013
+  Row: Domain | Finance
+  Row: Sub-Process | Scholarship
+  Row: Title | Merit Scholarship Eligibility
+
+## Table #32  rows=14 cols=2
+Header: Rule ID | R-FIN-014
+  Row: Domain | Finance
+  Row: Sub-Process | Write-off
+  Row: Title | Bad Debt Write-off
+
+## Table #33  rows=14 cols=2
+Header: Rule ID | R-FIN-015
+  Row: Domain | Finance
+  Row: Sub-Process | Expense
+  Row: Title | Expense Approval Matrix
+
+## Table #34  rows=14 cols=2
+Header: Rule ID | R-FIN-016
+  Row: Domain | Finance
+  Row: Sub-Process | Vendor Payment
+  Row: Title | Vendor Payment Terms
+
+## Table #35  rows=14 cols=2
+Header: Rule ID | R-FIN-017
+  Row: Domain | Finance
+  Row: Sub-Process | TDS
+  Row: Title | TDS Deduction on Vendor Payments
+
+## Table #36  rows=14 cols=2
+Header: Rule ID | R-FIN-018
+  Row: Domain | Finance
+  Row: Sub-Process | Fee Waiver
+  Row: Title | Financial Hardship Waiver
+
+## Table #37  rows=14 cols=2
+Header: Rule ID | R-FIN-019
+  Row: Domain | Finance
+  Row: Sub-Process | RTE Reimbursement
+  Row: Title | RTE Section 12 Reimbursement Claim
+
+## Table #38  rows=14 cols=2
+Header: Rule ID | R-FIN-020
+  Row: Domain | Finance
+  Row: Sub-Process | Audit
+  Row: Title | Annual Financial Audit
+
+## Table #39  rows=21 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-OPS-001 | Authorized Pickup Person List | Child enrollment / Parent app onboarding | Enforce max 4 authorized pickups per child; store photos + I | Branch Admin + Parent
+  Row: R-OPS-002 | Unauthorized Pickup Block | Person arrives for child pickup not in authorized list | Hold child in supervision area; call parent for authorizatio | Teacher + Branch Admin
+  Row: R-OPS-003 | Late Pickup Fee | Child picked up after school closing time | Auto-generate late pickup invoice; notify parent; recurring  | Branch Admin
+
+## Table #40  rows=14 cols=2
+Header: Rule ID | R-OPS-001
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Pickup Authorization
+  Row: Title | Authorized Pickup Person List
+
+## Table #41  rows=14 cols=2
+Header: Rule ID | R-OPS-002
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Pickup Authorization
+  Row: Title | Unauthorized Pickup Block
+
+## Table #42  rows=14 cols=2
+Header: Rule ID | R-OPS-003
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Pickup
+  Row: Title | Late Pickup Fee
+
+## Table #43  rows=14 cols=2
+Header: Rule ID | R-OPS-004
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Arrival
+  Row: Title | Arrival Cutoff Time
+
+## Table #44  rows=14 cols=2
+Header: Rule ID | R-OPS-005
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Attendance
+  Row: Title | Attendance Threshold for Promotion
+
+## Table #45  rows=14 cols=2
+Header: Rule ID | R-OPS-006
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Attendance
+  Row: Title | Attendance Marking Window
+
+## Table #46  rows=14 cols=2
+Header: Rule ID | R-OPS-007
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Gate Pass
+  Row: Title | Mid-Day Exit Gate Pass
+
+## Table #47  rows=14 cols=2
+Header: Rule ID | R-OPS-008
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Visitor
+  Row: Title | Visitor Logging
+
+## Table #48  rows=14 cols=2
+Header: Rule ID | R-OPS-009
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Transport
+  Row: Title | Bus Route Assignment
+
+## Table #49  rows=14 cols=2
+Header: Rule ID | R-OPS-010
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Transport
+  Row: Title | Bus Tracking — Real-time GPS
+
+## Table #50  rows=14 cols=2
+Header: Rule ID | R-OPS-011
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Transport
+  Row: Title | Bus Missing Child Alert
+
+## Table #51  rows=14 cols=2
+Header: Rule ID | R-OPS-012
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Health Check
+  Row: Title | Morning Health Check
+
+## Table #52  rows=14 cols=2
+Header: Rule ID | R-OPS-013
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Meals
+  Row: Title | Meal Allergy Check
+
+## Table #53  rows=14 cols=2
+Header: Rule ID | R-OPS-014
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Nap Time
+  Row: Title | Nap Time Supervision
+
+## Table #54  rows=14 cols=2
+Header: Rule ID | R-OPS-015
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Incidents
+  Row: Title | Incident Escalation Matrix
+
+## Table #55  rows=14 cols=2
+Header: Rule ID | R-OPS-016
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Photos
+  Row: Title | Photo Consent for Marketing
+
+## Table #56  rows=14 cols=2
+Header: Rule ID | R-OPS-017
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Timeline
+  Row: Title | Daily Timeline Push to Parent
+
+## Table #57  rows=14 cols=2
+Header: Rule ID | R-OPS-018
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Food Safety
+  Row: Title | Food Sample Retention
+
+## Table #58  rows=14 cols=2
+Header: Rule ID | R-OPS-019
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Washroom
+  Row: Title | Washroom Assistance
+
+## Table #59  rows=14 cols=2
+Header: Rule ID | R-OPS-020
+  Row: Domain | Daily Operations
+  Row: Sub-Process | CCTV
+  Row: Title | CCTV Coverage and Retention
+
+## Table #60  rows=19 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-ACD-001 | Curriculum Theme Rotation | Academic year planning (April) | Auto-create theme calendar; each theme duration 3-4 weeks; a | Academic Coordinator + Principal
+  Row: R-ACD-002 | Weekly Lesson Plan Submission | Friday end-of-day | Send reminder Friday 5 PM; escalate to Coordinator Saturday  | Teacher + Coordinator
+  Row: R-ACD-003 | Daily Activity Slots | Daily school day start | Enforce minimum activities per day; system warns if teacher  | Teacher + Coordinator
+
+## Table #61  rows=14 cols=2
+Header: Rule ID | R-ACD-001
+  Row: Domain | Academics
+  Row: Sub-Process | Curriculum Planning
+  Row: Title | Curriculum Theme Rotation
+
+## Table #62  rows=14 cols=2
+Header: Rule ID | R-ACD-002
+  Row: Domain | Academics
+  Row: Sub-Process | Weekly Planning
+  Row: Title | Weekly Lesson Plan Submission
+
+## Table #63  rows=14 cols=2
+Header: Rule ID | R-ACD-003
+  Row: Domain | Academics
+  Row: Sub-Process | Daily Activities
+  Row: Title | Daily Activity Slots
+
+## Table #64  rows=14 cols=2
+Header: Rule ID | R-ACD-004
+  Row: Domain | Academics
+  Row: Sub-Process | Observation
+  Row: Title | Observation Recording Frequency
+
+## Table #65  rows=14 cols=2
+Header: Rule ID | R-ACD-005
+  Row: Domain | Academics
+  Row: Sub-Process | Observation
+  Row: Title | Observation Quality Check
+
+## Table #66  rows=14 cols=2
+Header: Rule ID | R-ACD-006
+  Row: Domain | Academics
+  Row: Sub-Process | Milestone
+  Row: Title | Milestone Assessment Frequency
+
+## Table #67  rows=14 cols=2
+Header: Rule ID | R-ACD-007
+  Row: Domain | Academics
+  Row: Sub-Process | Milestone
+  Row: Title | Milestone Delay Alert
+
+## Table #68  rows=14 cols=2
+Header: Rule ID | R-ACD-008
+  Row: Domain | Academics
+  Row: Sub-Process | Portfolio
+  Row: Title | Portfolio Update Cadence
+
+## Table #69  rows=14 cols=2
+Header: Rule ID | R-ACD-009
+  Row: Domain | Academics
+  Row: Sub-Process | Report Card
+  Row: Title | Report Card Generation Cycle
+
+## Table #70  rows=14 cols=2
+Header: Rule ID | R-ACD-010
+  Row: Domain | Academics
+  Row: Sub-Process | Report Card
+  Row: Title | Report Card Approval Workflow
+
+## Table #71  rows=14 cols=2
+Header: Rule ID | R-ACD-011
+  Row: Domain | Academics
+  Row: Sub-Process | Promotion
+  Row: Title | Promotion Criteria
+
+## Table #72  rows=14 cols=2
+Header: Rule ID | R-ACD-012
+  Row: Domain | Academics
+  Row: Sub-Process | Promotion
+  Row: Title | Age-Based Class Cap
+
+## Table #73  rows=14 cols=2
+Header: Rule ID | R-ACD-013
+  Row: Domain | Academics
+  Row: Sub-Process | Parent-Teacher Meeting
+  Row: Title | PTM Frequency
+
+## Table #74  rows=14 cols=2
+Header: Rule ID | R-ACD-014
+  Row: Domain | Academics
+  Row: Sub-Process | Remedial
+  Row: Title | Remedial Program Trigger
+
+## Table #75  rows=14 cols=2
+Header: Rule ID | R-ACD-015
+  Row: Domain | Academics
+  Row: Sub-Process | Outdoor Play
+  Row: Title | Outdoor Play Duration
+
+## Table #76  rows=14 cols=2
+Header: Rule ID | R-ACD-016
+  Row: Domain | Academics
+  Row: Sub-Process | Activity Assessment
+  Row: Title | Activity Participation Tracking
+
+## Table #77  rows=14 cols=2
+Header: Rule ID | R-ACD-017
+  Row: Domain | Academics
+  Row: Sub-Process | Curriculum Review
+  Row: Title | Annual Curriculum Audit
+
+## Table #78  rows=14 cols=2
+Header: Rule ID | R-ACD-018
+  Row: Domain | Academics
+  Row: Sub-Process | Field Trip
+  Row: Title | Field Trip Safety Protocol
+
+## Table #79  rows=13 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-HR-001 | Staff Qualification Minimum | New staff onboarding | Mandatory qualification verification; reject if not met; doc | HR + Principal
+  Row: R-HR-002 | Staff Background Verification | New staff onboarding (post-offer, pre-joining) | Mandatory: police verification (within 30 days), 2 reference | HR + Branch Head
+  Row: R-HR-003 | Leave Entitlement Annual | Annual leave cycle (April-March) | Auto-credit leave balance on April 1; carry forward max 5 ea | HR + Staff
+
+## Table #80  rows=14 cols=2
+Header: Rule ID | R-HR-001
+  Row: Domain | HR
+  Row: Sub-Process | Recruitment
+  Row: Title | Staff Qualification Minimum
+
+## Table #81  rows=14 cols=2
+Header: Rule ID | R-HR-002
+  Row: Domain | HR
+  Row: Sub-Process | Background Verification
+  Row: Title | Staff Background Verification
+
+## Table #82  rows=14 cols=2
+Header: Rule ID | R-HR-003
+  Row: Domain | HR
+  Row: Sub-Process | Leave
+  Row: Title | Leave Entitlement Annual
+
+## Table #83  rows=14 cols=2
+Header: Rule ID | R-HR-004
+  Row: Domain | HR
+  Row: Sub-Process | Leave
+  Row: Title | Max Consecutive Leave
+
+## Table #84  rows=14 cols=2
+Header: Rule ID | R-HR-005
+  Row: Domain | HR
+  Row: Sub-Process | Substitute Teacher
+  Row: Title | Substitute Teacher Assignment
+
+## Table #85  rows=14 cols=2
+Header: Rule ID | R-HR-006
+  Row: Domain | HR
+  Row: Sub-Process | Payroll
+  Row: Title | Payroll Cutoff Date
+
+## Table #86  rows=14 cols=2
+Header: Rule ID | R-HR-007
+  Row: Domain | HR
+  Row: Sub-Process | Performance Review
+  Row: Title | Performance Review Cycle
+
+## Table #87  rows=14 cols=2
+Header: Rule ID | R-HR-008
+  Row: Domain | HR
+  Row: Sub-Process | Exit
+  Row: Title | Exit Process
+
+## Table #88  rows=14 cols=2
+Header: Rule ID | R-HR-009
+  Row: Domain | HR
+  Row: Sub-Process | POSH Compliance
+  Row: Title | Internal Complaints Committee (ICC)
+
+## Table #89  rows=14 cols=2
+Header: Rule ID | R-HR-010
+  Row: Domain | HR
+  Row: Sub-Process | Training
+  Row: Title | Annual POSH Training
+
+## Table #90  rows=14 cols=2
+Header: Rule ID | R-HR-011
+  Row: Domain | HR
+  Row: Sub-Process | Medical
+  Row: Title | Food Handler Medical Certificate
+
+## Table #91  rows=14 cols=2
+Header: Rule ID | R-HR-012
+  Row: Domain | HR
+  Row: Sub-Process | Probation
+  Row: Title | Probation Period
+
+## Table #92  rows=13 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-INV-001 | Auto Reorder Trigger | Stock level update (post-issue / post-GRN) | Create PR with vendor suggestion; route to Branch Admin appr | Inventory Manager + Branch Admin
+  Row: R-INV-002 | Minimum Stock Threshold | Daily stock reconciliation | Send P0 alert to Inventory Manager + Branch Admin; emergency | Inventory Manager
+  Row: R-INV-003 | Perishable Item Expiry Tracking | GRN for perishable item (food, paint, glue) | FIFO issuance: oldest stock issued first; expiring items fla | Inventory Manager + Kitchen In-charge
+
+## Table #93  rows=14 cols=2
+Header: Rule ID | R-INV-001
+  Row: Domain | Inventory
+  Row: Sub-Process | Reorder
+  Row: Title | Auto Reorder Trigger
+
+## Table #94  rows=14 cols=2
+Header: Rule ID | R-INV-002
+  Row: Domain | Inventory
+  Row: Sub-Process | Stock Threshold
+  Row: Title | Minimum Stock Threshold
+
+## Table #95  rows=14 cols=2
+Header: Rule ID | R-INV-003
+  Row: Domain | Inventory
+  Row: Sub-Process | Perishable
+  Row: Title | Perishable Item Expiry Tracking
+
+## Table #96  rows=14 cols=2
+Header: Rule ID | R-INV-004
+  Row: Domain | Inventory
+  Row: Sub-Process | Perishable
+  Row: Title | Expired Item Disposal
+
+## Table #97  rows=14 cols=2
+Header: Rule ID | R-INV-005
+  Row: Domain | Inventory
+  Row: Sub-Process | Asset
+  Row: Title | Asset Depreciation
+
+## Table #98  rows=14 cols=2
+Header: Rule ID | R-INV-006
+  Row: Domain | Inventory
+  Row: Sub-Process | Vendor
+  Row: Title | Vendor Rating Threshold
+
+## Table #99  rows=14 cols=2
+Header: Rule ID | R-INV-007
+  Row: Domain | Inventory
+  Row: Sub-Process | Purchase Order
+  Row: Title | PO Approval Threshold
+
+## Table #100  rows=14 cols=2
+Header: Rule ID | R-INV-008
+  Row: Domain | Inventory
+  Row: Sub-Process | Issue
+  Row: Title | Issue Slip Mandatory
+
+## Table #101  rows=14 cols=2
+Header: Rule ID | R-INV-009
+  Row: Domain | Inventory
+  Row: Sub-Process | Audit
+  Row: Title | Stock Audit Frequency
+
+## Table #102  rows=14 cols=2
+Header: Rule ID | R-INV-010
+  Row: Domain | Inventory
+  Row: Sub-Process | Return
+  Row: Title | Return Window
+
+## Table #103  rows=14 cols=2
+Header: Rule ID | R-INV-011
+  Row: Domain | Inventory
+  Row: Sub-Process | Consumption
+  Row: Title | Consumption Tracking
+
+## Table #104  rows=14 cols=2
+Header: Rule ID | R-INV-012
+  Row: Domain | Inventory
+  Row: Sub-Process | Asset Disposal
+  Row: Title | Asset Disposal Approval
+
+## Table #105  rows=13 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-COM-001 | Parent Message Response Time | Parent sends message via app | Auto-acknowledge receipt; assign to class teacher; escalate  | Teacher + Coordinator
+  Row: R-COM-002 | Unacknowledged Message Escalation | Message unacknowledged beyond SLA | Auto-escalate; notify next-level via app + SMS; log escalati | System (Automated) + Coordinator
+  Row: R-COM-003 | Non-Academic Hour Messaging Restriction | Teacher attempts to send parent message outside school hours | Show warning; teacher confirms urgent OR defers to next work | Teacher + System (Automated)
+
+## Table #106  rows=14 cols=2
+Header: Rule ID | R-COM-001
+  Row: Domain | Communication
+  Row: Sub-Process | Parent Response SLA
+  Row: Title | Parent Message Response Time
+
+## Table #107  rows=14 cols=2
+Header: Rule ID | R-COM-002
+  Row: Domain | Communication
+  Row: Sub-Process | Escalation Matrix
+  Row: Title | Unacknowledged Message Escalation
+
+## Table #108  rows=14 cols=2
+Header: Rule ID | R-COM-003
+  Row: Domain | Communication
+  Row: Sub-Process | Non-Academic Hours
+  Row: Title | Non-Academic Hour Messaging Restriction
+
+## Table #109  rows=14 cols=2
+Header: Rule ID | R-COM-004
+  Row: Domain | Communication
+  Row: Sub-Process | Broadcast
+  Row: Title | Broadcast Restriction
+
+## Table #110  rows=14 cols=2
+Header: Rule ID | R-COM-005
+  Row: Domain | Communication
+  Row: Sub-Process | Language
+  Row: Title | Language Preference
+
+## Table #111  rows=14 cols=2
+Header: Rule ID | R-COM-006
+  Row: Domain | Communication
+  Row: Sub-Process | Marketing
+  Row: Title | Marketing Communication Opt-in
+
+## Table #112  rows=14 cols=2
+Header: Rule ID | R-COM-007
+  Row: Domain | Communication
+  Row: Sub-Process | Opt-out
+  Row: Title | Communication Channel Opt-out
+
+## Table #113  rows=14 cols=2
+Header: Rule ID | R-COM-008
+  Row: Domain | Communication
+  Row: Sub-Process | Announcement
+  Row: Title | Announcement Approval Workflow
+
+## Table #114  rows=14 cols=2
+Header: Rule ID | R-COM-009
+  Row: Domain | Communication
+  Row: Sub-Process | Photos
+  Row: Title | Photo Caption Mandatory
+
+## Table #115  rows=14 cols=2
+Header: Rule ID | R-COM-010
+  Row: Domain | Communication
+  Row: Sub-Process | Chat
+  Row: Title | Two-way Chat History Retention
+
+## Table #116  rows=14 cols=2
+Header: Rule ID | R-COM-011
+  Row: Domain | Communication
+  Row: Sub-Process | WhatsApp Integration
+  Row: Title | WhatsApp Business API Rate Limit
+
+## Table #117  rows=14 cols=2
+Header: Rule ID | R-COM-012
+  Row: Domain | Communication
+  Row: Sub-Process | Emergency
+  Row: Title | Emergency Notification Cascade
+
+## Table #118  rows=19 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-CMP-001 | Parent Consent for Child Data | Admission confirmation | Capture digital consent with timestamp + IP + device; store  | Admission Counsellor + Compliance Officer
+  Row: R-CMP-002 | Consent Withdrawal | Parent withdraws consent via app | Honor withdrawal within 24 hours; stop data collection for w | Compliance Officer + System (Automated)
+  Row: R-CMP-003 | Child Data Retention Policy | Student exits school (graduation/withdrawal) | Auto-archive student record; apply retention schedule; auto- | Compliance Officer + IT
+
+## Table #119  rows=14 cols=2
+Header: Rule ID | R-CMP-001
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | DPDP Consent
+  Row: Title | Parent Consent for Child Data
+
+## Table #120  rows=14 cols=2
+Header: Rule ID | R-CMP-002
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | DPDP Consent
+  Row: Title | Consent Withdrawal
+
+## Table #121  rows=14 cols=2
+Header: Rule ID | R-CMP-003
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Child Data Retention
+  Row: Title | Child Data Retention Policy
+
+## Table #122  rows=14 cols=2
+Header: Rule ID | R-CMP-004
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Photo Storage
+  Row: Title | Child Photo Storage Encryption
+
+## Table #123  rows=14 cols=2
+Header: Rule ID | R-CMP-005
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | CCTV
+  Row: Title | CCTV Retention Period
+
+## Table #124  rows=14 cols=2
+Header: Rule ID | R-CMP-006
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | PII Audit
+  Row: Title | Quarterly PII Audit
+
+## Table #125  rows=14 cols=2
+Header: Rule ID | R-CMP-007
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Fire Safety
+  Row: Title | Fire NOC Renewal
+
+## Table #126  rows=14 cols=2
+Header: Rule ID | R-CMP-008
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Data Breach
+  Row: Title | Data Breach Notification
+
+## Table #127  rows=14 cols=2
+Header: Rule ID | R-CMP-009
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | POSH
+  Row: Title | POSH Complaint Filing
+
+## Table #128  rows=14 cols=2
+Header: Rule ID | R-CMP-010
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | POSH
+  Row: Title | POSH Confidentiality
+
+## Table #129  rows=14 cols=2
+Header: Rule ID | R-CMP-011
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | POSH
+  Row: Title | POSH Training for All Staff
+
+## Table #130  rows=14 cols=2
+Header: Rule ID | R-CMP-012
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | POSH
+  Row: Title | POSH Complaint Timeline
+
+## Table #131  rows=14 cols=2
+Header: Rule ID | R-CMP-013
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Fire Safety
+  Row: Title | Quarterly Fire Drill
+
+## Table #132  rows=14 cols=2
+Header: Rule ID | R-CMP-014
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Fire Safety
+  Row: Title | Fire Extinguisher Inspection
+
+## Table #133  rows=14 cols=2
+Header: Rule ID | R-CMP-015
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Evacuation
+  Row: Title | Evacuation Plan Display
+
+## Table #134  rows=14 cols=2
+Header: Rule ID | R-CMP-016
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | RTE
+  Row: Title | RTE Non-Discrimination
+
+## Table #135  rows=14 cols=2
+Header: Rule ID | R-CMP-017
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Food Safety
+  Row: Title | FSSAI Kitchen License
+
+## Table #136  rows=14 cols=2
+Header: Rule ID | R-CMP-018
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Food Safety
+  Row: Title | Food Handler Medical Certificate
+
+## Table #137  rows=16 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-APR-001 | Discount Approval by Amount | Discount applied to invoice | Auto-route to approver; multi-level workflow if escalation;  | Accounts Team + Multi-level Approvers
+  Row: R-APR-002 | Refund Approval Matrix | Refund request submitted | Multi-level workflow; finance verification; bank account val | Accounts Team + Multi-level Approvers
+  Row: R-APR-003 | Leave Approval Matrix | Leave application submitted | Auto-route; ensure substitute arrangement for teachers; lock | Reporting Manager + Multi-level Approvers
+
+## Table #138  rows=14 cols=2
+Header: Rule ID | R-APR-001
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Discount Approval
+  Row: Title | Discount Approval by Amount
+
+## Table #139  rows=14 cols=2
+Header: Rule ID | R-APR-002
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Refund Approval
+  Row: Title | Refund Approval Matrix
+
+## Table #140  rows=14 cols=2
+Header: Rule ID | R-APR-003
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Leave Approval
+  Row: Title | Leave Approval Matrix
+
+## Table #141  rows=14 cols=2
+Header: Rule ID | R-APR-004
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Expense Approval
+  Row: Title | Expense Approval by Amount
+
+## Table #142  rows=14 cols=2
+Header: Rule ID | R-APR-005
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Vendor Onboarding
+  Row: Title | Vendor Onboarding Approval
+
+## Table #143  rows=14 cols=2
+Header: Rule ID | R-APR-006
+  Row: Domain | Admission
+  Row: Sub-Process | Admission Approval
+  Row: Title | Admission Final Approval
+
+## Table #144  rows=14 cols=2
+Header: Rule ID | R-APR-007
+  Row: Domain | Finance
+  Row: Sub-Process | Fee Waiver
+  Row: Title | Fee Waiver Approval
+
+## Table #145  rows=14 cols=2
+Header: Rule ID | R-APR-008
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Asset Disposal
+  Row: Title | Asset Disposal Approval
+
+## Table #146  rows=14 cols=2
+Header: Rule ID | R-APR-009
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Role Escalation
+  Row: Title | Action-Based Role Escalation
+
+## Table #147  rows=14 cols=2
+Header: Rule ID | R-APR-010
+  Row: Domain | HR
+  Row: Sub-Process | Recruitment Approval
+  Row: Title | New Position Approval
+
+## Table #148  rows=14 cols=2
+Header: Rule ID | R-APR-011
+  Row: Domain | HR
+  Row: Sub-Process | Salary Revision
+  Row: Title | Salary Revision Approval
+
+## Table #149  rows=14 cols=2
+Header: Rule ID | R-APR-012
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Policy Change
+  Row: Title | School Policy Change Approval
+
+## Table #150  rows=14 cols=2
+Header: Rule ID | R-APR-013
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Data Export
+  Row: Title | Bulk Data Export Approval
+
+## Table #151  rows=14 cols=2
+Header: Rule ID | R-APR-014
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Vendor Payment
+  Row: Title | Vendor Payment Approval
+
+## Table #152  rows=14 cols=2
+Header: Rule ID | R-APR-015
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Curriculum Change
+  Row: Title | Curriculum Change Approval
+
+## Table #153  rows=13 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-NOT-001 | Fee Due Reminder Cadence | Invoice due date approaching / overdue | Multi-channel cascade; parent app + SMS + email + WhatsApp;  | System (Automated) + Accounts Team
+  Row: R-NOT-002 | Child Absence Alert | Child marked absent in attendance | Push + SMS to primary parent; if no ack within 30 min, call  | System (Automated) + Teacher
+  Row: R-NOT-003 | Daily Report Push Time | Daily school end (pickup) | Auto-compile daily sheet (activities, meals, nap, observatio | System (Automated)
+
+## Table #154  rows=14 cols=2
+Header: Rule ID | R-NOT-001
+  Row: Domain | Finance
+  Row: Sub-Process | Fee Reminder
+  Row: Title | Fee Due Reminder Cadence
+
+## Table #155  rows=14 cols=2
+Header: Rule ID | R-NOT-002
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Absence Alert
+  Row: Title | Child Absence Alert
+
+## Table #156  rows=14 cols=2
+Header: Rule ID | R-NOT-003
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Daily Report
+  Row: Title | Daily Report Push Time
+
+## Table #157  rows=14 cols=2
+Header: Rule ID | R-NOT-004
+  Row: Domain | Communication
+  Row: Sub-Process | Birthday
+  Row: Title | Birthday Greeting
+
+## Table #158  rows=14 cols=2
+Header: Rule ID | R-NOT-005
+  Row: Domain | Communication
+  Row: Sub-Process | Festival
+  Row: Title | Festival Greeting
+
+## Table #159  rows=14 cols=2
+Header: Rule ID | R-NOT-006
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Incident
+  Row: Title | Incident Notification
+
+## Table #160  rows=14 cols=2
+Header: Rule ID | R-NOT-007
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Photo Share
+  Row: Title | Photo Share Alert
+
+## Table #161  rows=14 cols=2
+Header: Rule ID | R-NOT-008
+  Row: Domain | Academics
+  Row: Sub-Process | Schedule
+  Row: Title | Event Schedule Announcement
+
+## Table #162  rows=14 cols=2
+Header: Rule ID | R-NOT-009
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Holiday
+  Row: Title | Holiday Alert
+
+## Table #163  rows=14 cols=2
+Header: Rule ID | R-NOT-010
+  Row: Domain | Daily Operations
+  Row: Sub-Process | Transport
+  Row: Title | Transport Delay Alert
+
+## Table #164  rows=14 cols=2
+Header: Rule ID | R-NOT-011
+  Row: Domain | HR
+  Row: Sub-Process | Payroll
+  Row: Title | Salary Credit Notification
+
+## Table #165  rows=14 cols=2
+Header: Rule ID | R-NOT-012
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | System
+  Row: Title | System Maintenance Notification
+
+## Table #166  rows=13 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-DAT-001 | PII Encryption at Rest | PII data stored in database | Field-level encryption; encryption keys in HSM (Hardware Sec | IT + Compliance
+  Row: R-DAT-002 | Data in Transit Encryption | Data transmission over network | All API calls over HTTPS; certificate pinning for mobile app | IT
+  Row: R-DAT-003 | PII Field Masking in UI | PII field displayed in user interface | Auto-mask in lists, exports, logs; full view only with expli | IT + System (Automated)
+
+## Table #167  rows=14 cols=2
+Header: Rule ID | R-DAT-001
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Encryption
+  Row: Title | PII Encryption at Rest
+
+## Table #168  rows=14 cols=2
+Header: Rule ID | R-DAT-002
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Encryption
+  Row: Title | Data in Transit Encryption
+
+## Table #169  rows=14 cols=2
+Header: Rule ID | R-DAT-003
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Field Masking
+  Row: Title | PII Field Masking in UI
+
+## Table #170  rows=14 cols=2
+Header: Rule ID | R-DAT-004
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Access Control
+  Row: Title | Role-Based Field Visibility
+
+## Table #171  rows=14 cols=2
+Header: Rule ID | R-DAT-005
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Audit Log
+  Row: Title | Audit Log Retention
+
+## Table #172  rows=14 cols=2
+Header: Rule ID | R-DAT-006
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Data Residency
+  Row: Title | Data Residency — India Only
+
+## Table #173  rows=14 cols=2
+Header: Rule ID | R-DAT-007
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | DSAR
+  Row: Title | Data Subject Access Request (DSAR)
+
+## Table #174  rows=14 cols=2
+Header: Rule ID | R-DAT-008
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | DSAR
+  Row: Title | Data Erasure Request
+
+## Table #175  rows=14 cols=2
+Header: Rule ID | R-DAT-009
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Backup
+  Row: Title | Backup Retention Policy
+
+## Table #176  rows=14 cols=2
+Header: Rule ID | R-DAT-010
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Breach Response
+  Row: Title | Breach Detection & Response
+
+## Table #177  rows=14 cols=2
+Header: Rule ID | R-DAT-011
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Soft Delete
+  Row: Title | Soft Delete Policy
+
+## Table #178  rows=14 cols=2
+Header: Rule ID | R-DAT-012
+  Row: Domain | Cross-Domain
+  Row: Sub-Process | Analytics
+  Row: Title | Anonymized Analytics Data
+
+## Table #179  rows=11 cols=5
+Header: Rule ID | Title | Trigger | Action | Owner
+  Row: R-PLT-001 | Tenant Data Isolation | Every data access query | Enforce at ORM layer (Prisma row-level security); audit log  | IT + Platform Admin
+  Row: R-PLT-002 | Subscription Grace Period | Subscription renewal overdue | Notify Director + Branch Head + Accounts; restrict features  | Platform Admin + Accounts
+  Row: R-PLT-003 | Tenant Suspension Process | Subscription breach / compliance violation / abuse | Notify tenant admin; provide export link; remediation plan;  | Platform Admin + Director + Legal
+
+## Table #180  rows=14 cols=2
+Header: Rule ID | R-PLT-001
+  Row: Domain | Platform
+  Row: Sub-Process | Tenant Isolation
+  Row: Title | Tenant Data Isolation
+
+## Table #181  rows=14 cols=2
+Header: Rule ID | R-PLT-002
+  Row: Domain | Platform
+  Row: Sub-Process | Subscription
+  Row: Title | Subscription Grace Period
+
+## Table #182  rows=14 cols=2
+Header: Rule ID | R-PLT-003
+  Row: Domain | Platform
+  Row: Sub-Process | Tenant Suspension
+  Row: Title | Tenant Suspension Process
+
+## Table #183  rows=14 cols=2
+Header: Rule ID | R-PLT-004
+  Row: Domain | Platform
+  Row: Sub-Process | Feature Flag
+  Row: Title | Feature Flag per Tier
+
+## Table #184  rows=14 cols=2
+Header: Rule ID | R-PLT-005
+  Row: Domain | Platform
+  Row: Sub-Process | License
+  Row: Title | License Seat Allocation
+
+## Table #185  rows=14 cols=2
+Header: Rule ID | R-PLT-006
+  Row: Domain | Platform
+  Row: Sub-Process | Branch Isolation
+  Row: Title | Branch-Level Data Partition
+
+## Table #186  rows=14 cols=2
+Header: Rule ID | R-PLT-007
+  Row: Domain | Platform
+  Row: Sub-Process | Platform Admin
+  Row: Title | Platform Admin Role Restrictions
+
+## Table #187  rows=14 cols=2
+Header: Rule ID | R-PLT-008
+  Row: Domain | Platform
+  Row: Sub-Process | Cross-Tenant
+  Row: Title | Cross-Tenant Data Block
+
+## Table #188  rows=14 cols=2
+Header: Rule ID | R-PLT-009
+  Row: Domain | Platform
+  Row: Sub-Process | Onboarding
+  Row: Title | Tenant Onboarding Validation
+
+## Table #189  rows=14 cols=2
+Header: Rule ID | R-PLT-010
+  Row: Domain | Platform
+  Row: Sub-Process | Offboarding
+  Row: Title | Tenant Offboarding Process
+
+## Table #190  rows=177 cols=4
+Header: Rule ID | Title | Related ADR | PRD Module
+  Row: R-ELG-001 | Playgroup Age Eligibility | ADR-005, ADR-012 | PRD-ADM-001
+  Row: R-ELG-002 | Nursery Age Eligibility | ADR-005 | PRD-ADM-001
+  Row: R-ELG-003 | Jr.KG Age Eligibility | ADR-005 | PRD-ADM-001
+
+## Table #191  rows=7 cols=3
+Header: DPDP Section | Requirement | BRC Rules Enforcing
+  Row: §4 | Consent for child data | R-ELG-002, R-CMP-001, R-CMP-002, R-DAT-001
+  Row: §8 | Data Principal rights (access, correction, erasure) | R-DAT-007, R-DAT-008, R-DAT-009
+  Row: §11 | Purpose limitation | R-DAT-002, R-DAT-003
+
+## Table #192  rows=5 cols=3
+Header: POSH Section | Requirement | BRC Rules Enforcing
+  Row: §4 | Internal Complaints Committee (ICC) | R-HR-009, R-CMP-011
+  Row: §9 | Time-bound complaint redressal (90 days) | R-CMP-012
+  Row: §19 | Annual POSH training mandatory | R-HR-010, R-CMP-013
+
+## Table #193  rows=5 cols=3
+Header: NBC Clause | Requirement | BRC Rules Enforcing
+  Row: §4.3 | Fire NOC renewal (annual) | R-CMP-015
+  Row: §4.4 | Fire drill frequency (quarterly) | R-CMP-016
+  Row: §4.5 | Fire extinguisher inspection (monthly) | R-CMP-017
+
+## Table #194  rows=4 cols=3
+Header: RTE Clause | Requirement | BRC Rules Enforcing
+  Row: §12(1)(c) | 25% seats reserved for EWS in entry class | R-ELG-014
+  Row: §12(2) | Reimbursement claim per state rules | R-FIN-019
+  Row: §12(3) | No discrimination against EWS students | R-CMP-019
+
+## Table #195  rows=4 cols=3
+Header: FSSAI Regulation | Requirement | BRC Rules Enforcing
+  Row: FSSR 2011 §3 | Kitchen license mandatory | R-CMP-020
+  Row: FSSR 2011 §4 | Food handler medical certificate | R-HR-011, R-CMP-021
+  Row: FSSR 2011 §5 | Sample retention (48 hours) | R-OPS-018, R-CMP-022
+
+## Table #196  rows=37 cols=2
+Header: Term | Definition
+  Row: ACV | Annual Contract Value — total contract value per school per 
+  Row: ADR | Architecture Decision Record — technical decision documentat
+  Row: BPM | Business Process Model — high-level process flow document.
+
+## Table #197  rows=7 cols=5
+Header: Role | Name | Responsibility | Signature | Date
+  Row: Product Lead | [Name] | Final product ownership + roadmap alignment | [Sign] | [DD/MM/YYYY]
+  Row: Engineering Lead | [Name] | Technical feasibility + architecture alignment | [Sign] | [DD/MM/YYYY]
+  Row: Compliance Officer | [Name] | DPDP/POSH/Fire/FSSAI compliance validation | [Sign] | [DD/MM/YYYY]
+
+## Table #198  rows=11 cols=2
+Header: Field | Value
+  Row: Document Title | PreOne Business Rules Catalog (BRC)
+  Row: Version | 1.0
+  Row: Status | Draft (Business Review)
+

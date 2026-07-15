@@ -1,0 +1,300 @@
+   370→[00435] [Normal] PreOne 5 WebSocket channels provide करतो real-time communication साठी — chat, attendance live updates, notifications, dashboard KPIs, आणि bus tracking. WebSocket API REST API साठी complementary आहे — same auth (JWT), same multi-tenant headers (passed via query param or initial auth message).
+   371→[00436] [Heading 2] 17.2 Connection Lifecycle
+   372→[00437] [Normal] WebSocket connection lifecycle 8 steps मध्ऍे managed होतो:
+   373→[00438] [Normal] •  1. Client opens WebSocket: wss://api.preone.in/ws/chat?token=eyJ...
+   374→[00439] [Normal] •  2. Server validates JWT, sends 'connected' event with sessionId
+   375→[00440] [Normal] •  3. Client subscribes to channels: { event: 'subscribe', channel: 'room:01HROOM' }
+   376→[00441] [Normal] •  4. Server confirms subscription, starts forwarding events for that channel
+   377→[00442] [Normal] •  5. Client sends messages, receives messages in real-time
+   378→[00443] [Normal] •  6. Heartbeat: client sends ping every 30s, server responds pong (timeout 60s = disconnect)
+   379→[00444] [Normal] •  7. Disconnect: client sends 'close' or TCP connection drops — server cleans up subscriptions
+   380→[00445] [Normal] •  8. Reconnect: client uses exponential backoff (1s, 2s, 4s, 8s, 16s, max 30s) with jitter
+   381→[00446] [Heading 2] 17.3 Message Envelope
+   382→[00447] [Normal] प्रत्येक WebSocket message consistent envelope structure follow करतो — event name, payload, eventId (for dedup), timestamp. ह्या consistency मुळे client-side parsing uniform राहतो.
+   383→[00448] [Heading 2] 17.4 Authentication
+   384→[00449] [Normal] WebSocket authentication JWT द्वारे — initial connection request मध्ऍे ?token=eyJ... query param, किंवा connected event नंतर auth message. Server validates JWT, returns connected event with sessionId. Invalid/expired token = 401 close code.
+   385→[00450] [Heading 2] 17.5 Subscription Scoping
+   386→[00451] [Normal] Clients subscribe to specific channels (room:01HROOM, class:01HCL, branch:01HBR). Server ने scope validate करावे — teacher फक्त स्वतःच्या classroom च room subscribe करू शकतो, सर्व branches नाही. Subscription scope JWT scope शी consistent असणे mandatory.
+   387→[00452] [Heading 2] 17.6 Heartbeat & Reconnection
+   388→[00453] [Normal] Heartbeat ping/pong दर 30 seconds — client ping, server pong. 60 seconds timeout = disconnect. Reconnection exponential backoff (1s, 2s, 4s, 8s, 16s, max 30s) with random jitter — thundering herd problem prevent करण्यासाठी.
+   389→[00455] [Heading 1] 18. Webhooks
+   390→[00456] [Heading 2] 18.1 Webhook Architecture
+   391→[00457] [Normal] Outbound webhooks PreOne ला third-party systems ला real-time events notify करू देतात. उदा.: ERP sync, parent payment gateway integration, CRM update. Webhooks at-least-once delivery model follow करतात — recipients MUST idempotent असावे (dedupe by eventId).
+   392→[00458] [Heading 2] 18.2 Webhook Events
+   393→[00459] [Normal] 5 outbound webhook events supported आहेत — admission lifecycle, finance, attendance. प्रत्येक event चा specific trigger + payload schema:
+   394→[00460] [Heading 2] 18.3 Webhook Payload Template
+   395→[00461] [Normal] Webhook payload consistent envelope structure follow करतो — event name, eventId (UUID for dedup), timestamp, tenant context, payload, metadata. ह्या structure मुळे recipients ला uniform handling logic लिहिता येते.
+   396→[00462] [Heading 2] 18.4 Webhook Delivery
+   397→[00463] [Normal] Webhook delivery semantics आणि retry policy:
+   398→[00464] [Normal] •  At-least-once delivery — recipients MUST be idempotent (dedupe by eventId).
+   399→[00465] [Normal] •  HMAC-SHA256 signature in X-PreOne-Signature header — recipient MUST verify.
+   400→[00466] [Normal] •  Replay window: 5 minutes (timestamp in payload — older payloads rejected by recipient).
+   401→[00467] [Normal] •  Retry policy: 5 attempts with exponential backoff (1min, 5min, 30min, 2h, 12h).
+   402→[00468] [Normal] •  Dead letter queue: after 5 failed attempts, event lands in DLQ for manual review.
+   403→[00469] [Normal] •  Webhook audit log: every delivery attempt logged (timestamp, status code, latency).
+   404→[00470] [Normal] •  Recipient response: 2xx = success, 4xx = do not retry (recipient error), 5xx = retry.
+   405→[00471] [Normal] •  Webhook testing: Postman Echo endpoint + integration test environment.
+   406→[00472] [Heading 2] 18.5 Webhook Registration
+   407→[00473] [Normal] Tenants webhook registration POST /api/v1/platform/webhooks द्वारे करतात — URL, events list, secret (for HMAC verification). Webhook testing mode available — Postman Echo endpoint वर test events sent होतात before production enable.
+   408→[00475] [Heading 1] 19. External Integrations
+   409→[00476] [Heading 2] 19.1 Integration Categories
+   410→[00477] [Normal] PreOne 8 external integration categories supports करतो — Payment, SMS, WhatsApp, Email, Biometric, AI/LLM, Cloud Storage, Identity/eKYC. प्रत्येक category मध्ऍे primary + fallback providers आहेत — single provider failure graceful degradation साठी.
+   411→[00478] [Heading 2] 19.2 Integration Abstraction Layer
+   412→[00479] [Normal] सर्व external integrations Adapter interfaces द्वारे abstracted आहेत. Application layer कधीच direct third-party SDK call करत नाही — always adapter द्वारे. ह्यामुळे provider switch (e.g., MSG91 → Twilio) config change मध्ऍे होतो, code change नाही.
+   413→[00480] [Normal] •  All external integrations hidden behind Adapter interfaces (NestJS providers).
+   414→[00481] [Normal] •  Adapter interface defines: name, methods, healthCheck(), fallbackStrategy.
+   415→[00482] [Normal] •  Feature flag per adapter — can disable integration without code change.
+   416→[00483] [Normal] •  Circuit breaker per adapter — 5 failures in 1 min = open circuit for 30s.
+   417→[00484] [Normal] •  Per-tenant integration config (e.g., tenant can choose their own payment gateway).
+   418→[00485] [Normal] •  Secrets per tenant stored in Vault, loaded into adapter at request time.
+   419→[00486] [Normal] •  All adapter calls logged with latency, success/failure, for observability.
+   420→[00487] [Normal] •  Adapter contract tests run in CI — every adapter mocked + tested weekly.
+   421→[00488] [Heading 2] 19.3 Per-Tenant Integration Config
+   422→[00489] [Normal] Premium tenants स्वतःचे integration providers choose करू शकतात — उदा.: tenant A चा own SendGrid account, tenant B चा SES. Per-tenant config Settings APIs द्वारे managed, secrets Vault मध्ऍे per-tenant stored. Adapter runtime वर config load करून provider initialize करतो.
+   423→[00490] [Heading 2] 19.4 Circuit Breaker
+   424→[00491] [Normal] Circuit breaker pattern — 5 failures in 1 min = open circuit for 30s. Open state मध्ऍे requests immediately fail (no provider call). Half-open state मध्ऍे limited test traffic. Closed state मध्ऍे normal operation. Circuit breaker per adapter per tenant — one tenant's bad config दुसऱ्या tenant ला affect करत नाही.
+   425→[00493] [Heading 1] 20. File Upload APIs
+   426→[00494] [Heading 2] 20.1 Supported Formats
+   427→[00495] [Normal] PreOne 5 file formats supports करते — PDF, DOCX, PNG, JPEG, MP4. प्रत्येक format चा size limit + processing pipeline defined आहे. Unsupported formats VALIDATION_001 ने rejected.
+   428→[00496] [Heading 2] 20.2 Upload Flow
+   429→[00497] [Normal] File upload 6-step flow मध्ऍे done आहे — pre-signed URL pattern वापरून direct-to-S3 upload (PreOne server bandwidth वाचवण्यासाठी).
+   430→[00498] [Normal] •  Step 1: Client calls POST /api/v1/files with { filename, contentType, size, purpose } — server validates format/size.
+   431→[00499] [Normal] •  Step 2: Server responds with { uploadUrl, fileId, expiresAt } — pre-signed S3 URL valid for 15 min.
+   432→[00500] [Normal] •  Step 3: Client uploads file directly to S3 via PUT (no PreOne server in path — saves bandwidth).
+   433→[00501] [Normal] •  Step 4: Client calls POST /api/v1/files/{fileId}/complete — server verifies upload, triggers virus scan + processing.
+   434→[00502] [Normal] •  Step 5: Server responds with { status: 'READY', downloadUrl, variants: { thumbnail, medium } }.
+   435→[00503] [Normal] •  Step 6: File is now ready for use — referenced by fileId in other API calls (e.g., observation.photos).
+   436→[00504] [Normal] •  Multipart upload: for files >5MB, S3 multipart upload API is used (10MB parts, max 1000 parts = 10GB).
+   437→[00505] [Normal] •  DPDP compliance: file deleted when parent withdraws consent or student archived (7y retention then hard-delete).
+   438→[00506] [Heading 2] 20.3 Virus Scan
+   439→[00507] [Normal] सर्व uploads ClamAV द्वारे scanned. Infected files immediately deleted + flagged. Upload marked REJECTED, client ला SYSTEM_001 error. Repeated infected uploads from same user trigger security investigation.
+   440→[00508] [Heading 2] 20.4 Image Optimization
+   441→[00509] [Normal] Image uploads (PNG, JPEG) automatic optimization — Sharp library द्वारे resize variants (thumbnail 100x100, medium 400x400, large 1200x1200), EXIF strip (privacy), quality compress (80% default). Original + variants S3 मध्ऍे stored.
+   442→[00510] [Heading 2] 20.5 Video Transcoding
+   443→[00511] [Normal] Video uploads (MP4) HLS transcoding — adaptive bitrate (240p, 480p, 720p, 1080p), thumbnail extraction at 10% mark. HLS playlist + segments S3 मध्ऍे stored, CloudFront CDN द्वारे delivered.
+   444→[00512] [Heading 2] 20.6 DPDP Compliance
+   445→[00513] [Normal] Files DPDP compliant — (1) Consent logged at upload time (parent consent for child photos); (2) Retention 7 years post-student-archival; (3) Withdraw consent = cascade delete file + variants + DB reference; (4) Breach notification 72h अंतर्गत if file storage compromised.
+   446→[00515] [Heading 1] 21. AI APIs
+   447→[00516] [Heading 2] 21.1 AI Endpoints
+   448→[00517] [Normal] PreOne 5 AI endpoints provide करतो — lesson plan generation, report card draft, observation NLP, reply suggestion, branch insights. हे endpoints Vision Document च्या AI-first platform direction शी aligned आहेत — AI augments teacher, never replaces teacher judgment. सर्व high-stakes outputs (report card, parent reply) MANDATORY human review.
+   449→[00518] [Heading 2] POST /api/v1/ai/lesson-plan
+   450→[00519] [Normal] Generate age-appropriate lesson plan from topic + duration + learning outcome
+   451→[00521] [Heading 2] POST /api/v1/ai/report-card
+   452→[00522] [Normal] Draft term report card from observations + assessments
+   453→[00524] [Heading 2] POST /api/v1/ai/observation
+   454→[00525] [Normal] Convert teacher's free-text observation into structured category + tags
+   455→[00527] [Heading 2] POST /api/v1/ai/reply
+   456→[00528] [Normal] Suggest reply for teacher to parent message
+   457→[00530] [Heading 2] POST /api/v1/ai/insights
+   458→[00531] [Normal] Generate branch-level insights from anonymized aggregate data
+   459→[00533] [Heading 2] 21.2 AI Safety Principles
+   460→[00534] [Normal] AI safety paramount आहे — child data privacy + teacher oversight. खालील principles enforced:
+   461→[00535] [Normal] •  PII redaction before LLM call — student names, parent contact, medical info replaced with placeholders.
+   462→[00536] [Normal] •  Output validation — JSON schema validation, content safety classification (no hate, no PII leakage).
+   463→[00537] [Normal] •  Human-in-the-loop for high-stakes outputs (report cards, parent communication) — teacher MUST review + edit.
+   464→[00538] [Normal] •  AI outputs flagged with 'AI DRAFT' watermark in metadata — never presented as final without human sign-off.
+   465→[00539] [Normal] •  Per-tenant daily token quota enforced — prevents runaway costs from buggy client loops.
+   466→[00540] [Normal] •  Model versioning tracked per request — audit log records which model version generated which output.
+   467→[00541] [Normal] •  Fallback strategy: every AI endpoint has a secondary model + cached-response option for outages.
+   468→[00542] [Normal] •  Aligned with Vision AI-first platform: AI augments teacher, never replaces teacher judgment.
+   469→[00544] [Heading 1] 22. Notification APIs
+   470→[00545] [Heading 2] 22.1 Notification Channels
+   471→[00546] [Normal] PreOne 5 notification channels supports करतो — Push (mobile), SMS, WhatsApp, Email, In-App. प्रत्येक event चा routing rule define करतो कोणत्या channel(s) मध्ऍे deliver होईल. Multi-channel delivery supported — same notification SMS + Push + In-App मध्ऍे एकाच वेळी.
+   472→[00547] [Heading 2] 22.2 Notification Routing
+   473→[00548] [Normal] Notification routing rules complex आहेत — per-event, per-recipient, per-time-window, per-priority. Routing engine BullMQ queue मध्ऍे events ला subscribe करतो, applies routing rules, fans out to channels.
+   474→[00549] [Normal] •  Per-event routing rules: each domain event (StudentCreated, FeePaid, etc.) maps to ≥1 channel + template.
+   475→[00550] [Normal] •  Per-recipient rules: parent vs teacher vs admin get different notification content for same event.
+   476→[00551] [Normal] •  Per-time-window rules: quiet hours (10pm–7am) — non-critical notifications batched and sent at 7am.
+   477→[00552] [Normal] •  Priority tiers: CRITICAL (absence alert — all channels immediately), HIGH (fee due — SMS+Push), NORMAL (announcement — In-App+Email), LOW (birthday greeting — In-App only).
+   478→[00553] [Normal] •  Opt-in/opt-out management: per-channel consent per user, DPDP compliant (default opt-out for marketing).
+   479→[00554] [Normal] •  DND/DNS compliance: TRAI DLT registration for SMS templates, WhatsApp Business opt-in required.
+   480→[00555] [Normal] •  Delivery receipts: FCM/APNS delivery status, SMS DLR, Email bounce tracking — all logged for analytics.
+   481→[00556] [Normal] •  Notification queue: BullMQ (Redis-backed) — failed notifications retried 3x, then DLQ.
+   482→[00557] [Normal] •  Notification analytics: delivery rate, open rate (email/push), click-through rate — per template per channel.
+   483→[00558] [Heading 2] 22.3 Opt-In/Opt-Out Management
+   484→[00559] [Normal] Per-channel consent per user — DPDP compliant. Default opt-out for marketing communications. Transactional (fee due, absence alert) opt-out नाही. Parents channel preference UI मध्ऍे manage करू शकतात. Consent changes logged audit_log मध्ऍे.
+   485→[00560] [Heading 2] 22.4 Delivery Analytics
+   486→[00561] [Normal] Notification analytics per template per channel — delivery rate, open rate (email/push), click-through rate (links). Dashboard द्वारे trends visible. Low delivery rate trigger करतो investigation (e.g., SMS DLT template rejected → fix template).
+   487→[00563] [Heading 1] 23. Event Contracts
+   488→[00564] [Heading 2] 23.1 Domain Events
+   489→[00565] [Normal] PreOne 8 internal domain events define करतो — core state changes जे multiple consumers care करतात. Events event sourcing pattern चा basis आहेत — aggregates emit events, event_store मध्ऍे persistently stored, consumers subscribe. यामुळे loose coupling + replay capability मिळते.
+   490→[00566] [Heading 2] 23.2 Event Envelope
+   491→[00567] [Normal] Event envelope consistent structure follow करतो — eventId (UUID for dedup), eventName, aggregateId, aggregateType, timestamp, version, payload, metadata. Metadata मध्ऍे tenant context + correlation ID + source + schema version.
+   492→[00568] [Heading 2] 23.3 Event Rules
+   493→[00569] [Normal] •  Event schema registry: JSON Schema per event, versioned (semver), published to internal Schema Store.
+   494→[00570] [Normal] •  Event versioning: backward-compatible changes (add fields) increment minor; breaking changes increment major + new event name.
+   495→[00571] [Normal] •  Event sourcing pattern: events stored immutably in event_store table; aggregates rebuild state from event log.
+   496→[00572] [Normal] •  Consumers: Notification Service (fan-out to channels), Analytics Service (aggregations), Webhook Dispatcher (outbound).
+   497→[00573] [Normal] •  Delivery semantics: at-least-once. Consumers MUST be idempotent — dedupe by eventId.
+   498→[00574] [Normal] •  Consumer offset tracking: per-consumer per-partition offset in Redis (Kafka-style consumer groups).
+   499→[00575] [Normal] •  Dead letter queue: events that fail processing after 5 retries → DLQ for manual review.
+   500→[00576] [Normal] •  Event replay: admin can replay events from event_store to rebuild read models or retrigger notifications.
+   501→[00577] [Heading 2] 23.4 Event Consumers
+   502→[00578] [Normal] 3 primary consumers: (1) Notification Service — events ला notification routing शी map करतो; (2) Analytics Service — events aggregate करून read models build करतो; (3) Webhook Dispatcher — events outbound webhooks द्वारे external systems ला deliver करतो. Each consumer independent — एक consumer down असला तरी इतर consumers affected होत नाहीत.
+   503→[00579] [Heading 2] 23.5 Event Replay
+   504→[00580] [Normal] Admin UI द्वारे event replay capability — उदा.: bug fix झाल्यावर last 7 days events replay करून read models rebuild. Replay idempotent — consumers eventId द्वारे dedupe. Replay operation audit_log मध्ऍे logged.
+   505→[00582] [Heading 1] 24. OpenAPI Standards
+   506→[00583] [Heading 2] 24.1 Per-Endpoint Required Fields
+   507→[00584] [Normal] प्रत्येक endpoint साठी OpenAPI spec मध्ऍे 17 fields mandatory documented आहेत. हे fields AI LLM context feeding, SDK generation, आणि developer onboarding साठी design केले आहेत. Spec completeness Governance Board द्वारे reviewed.
+   508→[00585] [Heading 2] 24.2 Spec Generation Pipeline
+   509→[00586] [Normal] OpenAPI spec source of truth आहे — code नाही. NestJS swagger decorators → openapi.json → multiple downstream artifacts. ह्यामुळे spec आणि implementation कधीच drift होत नाही.
+   510→[00587] [Normal] •  Source of truth: NestJS swagger decorators on DTOs + controllers.
+   511→[00588] [Normal] •  Build step: nestia or @nestjs/swagger generates openapi.json (OpenAPI 3.1 spec).
+   512→[00589] [Normal] •  Linting: Spectral enforces PreOne-specific rules (summary length, examples present, error codes documented).
+   513→[00590] [Normal] •  Rendering: Redoc serves interactive docs at https://docs.preone.in (always matches deployed API version).
+   514→[00591] [Normal] •  Postman: openapi-to-postman transforms spec → Postman collection v2.1 (auto-published to workspace).
+   515→[00592] [Normal] •  SDK Generation: openapi-generator outputs TypeScript + Python + Java SDKs (published to internal npm/PyPI/Maven).
+   516→[00593] [Normal] •  Contract testing: Schemathesis runs fuzz tests against staging using the spec (random valid inputs).
+   517→[00594] [Normal] •  Versioning: spec versioned with API version — /api/v1/openapi.json, /api/v2/openapi.json.
+   518→[00595] [Heading 2] 24.3 Spec Validation
+   519→[00596] [Normal] Spectral linting PreOne-specific rules enforce करतो — summary length (≤120 chars), examples present (min 1 success + 1 error), error codes documented, permissions field present, business rules field present. CI gate — spec lint failures PR block करतात.
+   520→[00597] [Heading 2] 24.4 Public Spec Distribution
+   521→[00598] [Normal] OpenAPI spec publicly accessible at https://docs.preone.in/openapi.json (read-only). Partner integrations SDK generation साठी spec fetch करतात. Spec versioned with API version — /openapi/v1.json, /openapi/v2.json.
+   522→[00600] [Heading 1] 25. Postman Collection
+   523→[00601] [Heading 2] 25.1 Collection Structure
+   524→[00602] [Normal] Postman collections structured आहेत — workspace per environment, collection per domain, folder per resource. Variables per environment, pre-request scripts JWT auto-refresh, test scripts response schema validation.
+   525→[00603] [Normal] •  Workspace per environment: PreOne Dev / PreOne Staging / PreOne Prod (isolated).
+   526→[00604] [Normal] •  Collection per domain: PreOne Identity, PreOne Finance, PreOne Academics, etc. (14 collections).
+   527→[00605] [Normal] •  Folder per resource within collection: /students → Students folder, /invoices → Invoices folder.
+   528→[00606] [Normal] •  Variables: {{baseUrl}}, {{tenantId}}, {{schoolId}}, {{branchId}}, {{token}} (auto-refreshed by pre-request script).
+   529→[00607] [Normal] •  Pre-request scripts: auto-refresh JWT 5 min before expiry, inject auth header, set trace ID.
+   530→[00608] [Normal] •  Test scripts: validate response status (2xx), schema (JSON assertion), response time (<500ms), traceId present.
+   531→[00609] [Normal] •  Examples per endpoint: min 1 success + 1 error example; max 3 examples for varied scenarios.
+   532→[00610] [Normal] •  Collection export format: Postman Collection v2.1 (compatible with Newman CLI for CI).
+   533→[00611] [Normal] •  CI integration: Newman CLI runs smoke collection on every PR; full collection runs nightly on staging.
+   534→[00612] [Normal] •  Publishing: Collection JSON published to Postman API Network (publicly accessible for partner onboarding).
+   535→[00613] [Heading 2] 25.2 Onboarding Guide
+   536→[00614] [Normal] New engineer onboarding Postman workflow:
+   537→[00615] [Normal] •  New engineer joins → 1) Install Postman, 2) Import PreOne Dev workspace link, 3) Get tenant credentials from IT, 4) Run 'Auth → Login' request to get token, 5) Token auto-refreshes for 30 days.
+   538→[00616] [Normal] •  First-week task: run all 14 collections' smoke tests — verifies environment + access + understanding.
+   539→[00617] [Normal] •  API exploration: Redoc docs at docs.preone.in for browsing, Postman for hands-on testing.
+   540→[00618] [Normal] •  QA team owns Newman CI suite — engineering team owns collection accuracy (updates with API changes).
+   541→[00619] [Normal] •  Quarterly collection audit: every endpoint in collection must match production spec (drift detection).
+   542→[00620] [Heading 2] 25.3 CI Integration
+   543→[00621] [Normal] Newman CLI Postman collections CI मध्ऍे run करतो — smoke collection every PR (15 critical endpoints), full collection nightly on staging (all 530 endpoints). Newman test failures PR block करतात. Test reports published to GitHub Actions artifacts.
+   544→[00622] [Heading 2] 25.4 Collection Publishing
+   545→[00623] [Normal] Postman collections published Postman API Network वर — partner onboarding साठी publicly accessible. Partners import करून immediately test करू शकतात. Collection versioned with API version — v1 collections, v2 collections.
+   546→[00625] [Heading 1] 26. API Testing
+   547→[00626] [Heading 2] 26.1 Testing Layers
+   548→[00627] [Normal] PreOne API testing 5 layers मध्ऍे structured आहे — Unit, Integration, Contract, E2E, Load. प्रत्येक layer चा specific tool + coverage target + frequency defined आहे. Coverage gates PR merge block करतात.
+   549→[00628] [Heading 2] 26.2 Testing Best Practices
+   550→[00629] [Normal] •  Test data: factory-pattern builders (e.g., StudentFactory.build({ firstName: 'Test' })) — no hardcoded fixtures.
+   551→[00630] [Normal] •  Database: each integration test runs in transaction, rolled back at end (no test pollution).
+   552→[00631] [Normal] •  External services: WireMock for HTTP mocks (Razorpay, MSG91, SendGrid). Test containers for Redis/S3.
+   553→[00632] [Normal] •  Snapshot testing: Jest snapshots for response schemas (not values) — catches unintended schema drift.
+   554→[00633] [Normal] •  Mutation testing: Stryker runs quarterly — verifies test suite catches intentional code mutations.
+   555→[00634] [Normal] •  Coverage gates: 80% minimum per PR (overall). 90% for finance/auth/student critical paths.
+   556→[00635] [Normal] •  Performance budgets: every endpoint has p95 latency budget (200ms read, 500ms write) — enforced via k6 in CI.
+   557→[00636] [Normal] •  Chaos engineering: monthly game-day — kill random service, verify graceful degradation.
+   558→[00637] [Heading 2] 26.3 Contract Testing
+   559→[00638] [Normal] Contract testing consumer-driven आहे — consumer (e.g., Mobile app) defines expected response shape, provider (Backend) verifies it stays compatible. Pact framework. Contracts published to internal Pact Broker. Provider CI verifies all consumer contracts on every PR. Breaking contract change = PR block.
+   560→[00639] [Heading 2] 26.4 Performance Budgets
+   561→[00640] [Normal] Performance budgets per endpoint — read endpoints p95 < 200ms, write endpoints p95 < 500ms, AI endpoints p95 < 15s. k6 load tests weekly + pre-release verify. Budget exceeded = performance regression, PR block. Performance dashboards Grafana मध्ऍे live.
+   562→[00641] [Heading 2] 26.5 Chaos Engineering
+   563→[00642] [Normal] Monthly chaos engineering game day — random service kill, network partition, DB failover, third-party outage. Verify graceful degradation, alerting, recovery. Game day findings feed into resilience improvements.
+   564→[00644] [Heading 1] 27. API Governance
+   565→[00645] [Heading 2] 27.1 Governance Board
+   566→[00646] [Normal] API Governance Board cross-functional आहे — Product, Eng, Architecture, QA, Security, Mobile. Board monthly meets, reviews new endpoint proposals, deprecation timelines, spec compliance. Emergency reviews ad-hoc.
+   567→[00647] [Heading 2] 27.2 API Lifecycle
+   568→[00648] [Normal] प्रत्येक API endpoint 7-state lifecycle pass होतो — Proposed → Approved → In Development → Beta → GA → Deprecated → Retired. State transitions Board approval सोबत. एक endpoint कधीच skip करू शकत नाही states (no shortcut from Proposed to GA).
+   569→[00649] [Heading 2] 27.3 Governance Reviews
+   570→[00650] [Normal] प्रत्येक new endpoint साठी governance review checklist:
+   571→[00651] [Normal] •  Naming review: resource nouns (plural, kebab-case), no verbs in path, consistent with domain language.
+   572→[00652] [Normal] •  Versioning review: every breaking change requires new major version + 12-month overlap plan.
+   573→[00653] [Normal] •  Documentation review: OpenAPI spec completeness (all 17 fields per endpoint filled).
+   574→[00654] [Normal] •  Security review: auth scheme, input validation, output encoding, rate limit, PII handling.
+   575→[00655] [Normal] •  Performance review: latency budget (p95 < 200ms read, < 500ms write), payload size (<10KB read).
+   576→[00656] [Normal] •  Backward compat review: additive changes only within major version — no field removal/rename.
+   577→[00657] [Normal] •  Quarterly API audit: full spec review, identify unused endpoints (zero traffic in 90 days → deprecation candidates).
+   578→[00658] [Heading 2] 27.4 Quarterly API Audit
+   579→[00659] [Normal] Quarterly full API audit — (1) Spec drift detection (deployed API vs OpenAPI spec); (2) Usage analysis (zero-traffic endpoints = deprecation candidates); (3) Security review (auth patterns, input validation); (4) Performance review (latency budgets); (5) Documentation review (spec completeness). Audit findings Board ला presented.
+   580→[00661] [Heading 1] 28. Traceability Matrix
+   581→[00662] [Heading 2] 28.1 Traceability Chain
+   582→[00663] [Normal] प्रत्येक endpoint खालील 8 engineering artifacts शी traceable आहे. ह्या traceability ने ensure होते की code change करताना impact analysis precise होतो — उदा.: BRC rule change झाला तर कोणते APIs affected होतील ते traceable.
+   583→[00664] [Heading 2] 28.2 Sample Traceability Cards
+   584→[00665] [Normal] 5 critical endpoints ची full traceability खालील cards मध्ऍे detailed आहे — Payment, Attendance, Admission, Student Create, Observation. प्रत्येक card 8 artifacts map करतो.
+   585→[00666] [Heading 3] POST /api/v1/payments
+   586→[00668] [Heading 3] POST /api/v1/attendance
+   587→[00670] [Heading 3] POST /api/v1/admissions
+   588→[00672] [Heading 3] POST /api/v1/students
+   589→[00674] [Heading 3] POST /api/v1/observations
+   590→[00676] [Heading 2] 28.3 Coverage Dashboard
+   591→[00677] [Normal] Traceability coverage dashboard Grafana मध्ऍे live — % endpoints with complete traceability (all 8 artifacts mapped). Target: 100% for GA endpoints. Current gaps + remediation plan tracked quarterly. OpenAPI spec extensions traceability info encode करतात — automation reads spec, populates Neo4j graph for queries.
+   592→[00679] [Heading 1] 29. Domain-wise API Catalog Summary
+   593→[00680] [Heading 2] 29.1 Domain Summary
+   594→[00681] [Normal] 14 domains × ~530 APIs total. खालील table domain-wise summary दर्शवतो — API count, base paths, primary resources, auth tier. Detailed per-endpoint contracts API-002 to API-015 sub-documents मध्ऍे (see Chapter 30).
+   595→[00682] [Heading 2] 29.2 Per-Domain Top Endpoints
+   596→[00683] [Normal] प्रत्येक domain चे top 4-7 endpoints खालील summarized केले आहेत. Full endpoint inventory per-domain sub-documents मध्ऍे (API-002 to API-015).
+   597→[00684] [Heading 3] Identity (20 APIs)
+   598→[00686] [Heading 3] CRM (35 APIs)
+   599→[00688] [Heading 3] Admissions (40 APIs)
+   600→[00690] [Heading 3] Student Lifecycle (45 APIs)
+   601→[00692] [Heading 3] Academics (50 APIs)
+   602→[00694] [Heading 3] Daily Operations (45 APIs)
+   603→[00696] [Heading 3] Parent Communication (40 APIs)
+   604→[00698] [Heading 3] Finance (60 APIs)
+   605→[00700] [Heading 3] Inventory (35 APIs)
+   606→[00702] [Heading 3] HR (40 APIs)
+   607→[00704] [Heading 3] Administration (30 APIs)
+   608→[00706] [Heading 3] Reports (30 APIs)
+   609→[00708] [Heading 3] Settings (35 APIs)
+   610→[00710] [Heading 3] Platform (25 APIs)
+   611→[00713] [Heading 1] 30. Modular API Document Split Recommendation
+   612→[00714] [Heading 2] 30.1 Recommendation
+   613→[00715] [Normal] Enterprise स्तरावर एकच API document ठेवण्यापेक्षा ह्या 16 स्वतंत्र API Contract Documents मध्ये विभागणे अधिक योग्य राहील. यामुळे प्रत्येक domain squad स्वतःच्या contract ची ownership घेऊ शकते, changes isolated राहतात, आणि document size manageable राहतो (~80 pages प्रति sub-doc vs ~800 pages monolith). प्रत्येक sub-doc मध्ये प्रत्येक endpoint साठी पूर्ण OpenAPI schema, request/response examples, validation rules, RBAC permissions, BRC Rule IDs, ADR references, ERD table mapping, DDD aggregate mapping आणि acceptance test IDs दिले जातील. त्यामुळे Backend (NestJS), Web, Mobile (PreOne Hub), QA आणि AI Code Generation या सर्व टीम्सना एकाच contract वर काम करता येईल.
+   614→[00716] [Heading 2] 30.2 Sub-Document Catalog (API-001 to API-016)
+   615→[00717] [Normal] ह्या catalog ला 16 स्वतंत्र API Contract Documents मध्ऍे विभाजित करण्याची recommendation आहे. प्रत्येक sub-doc साठी scope, sections covered, audience, length, freeze stage खालील table मध्ऍे defined आहे.
+   616→[00718] [Heading 2] 30.3 Sub-Document Details
+   617→[00719] [Heading 3] API-001 — Foundation & Standards
+   618→[00721] [Heading 3] API-002 — Identity & Authentication
+   619→[00723] [Heading 3] API-003 — CRM
+   620→[00725] [Heading 3] API-004 — Admissions
+   621→[00727] [Heading 3] API-005 — Student Lifecycle
+   622→[00729] [Heading 3] API-006 — Academics
+   623→[00731] [Heading 3] API-007 — Daily Operations
+   624→[00733] [Heading 3] API-008 — Parent Communication
+   625→[00735] [Heading 3] API-009 — Finance
+   626→[00737] [Heading 3] API-010 — Inventory
+   627→[00739] [Heading 3] API-011 — HR
+   628→[00741] [Heading 3] API-012 — Administration
+   629→[00743] [Heading 3] API-013 — Reports & Analytics
+   630→[00745] [Heading 3] API-014 — Settings
+   631→[00747] [Heading 3] API-015 — Platform Management
+   632→[00749] [Heading 3] API-016 — Webhooks, Events & External Integrations
+   633→[00751] [Heading 2] 30.4 Migration Path
+   634→[00752] [Normal] Current monolith catalog वरून 16 sub-documents मध्ऍे migration 5 phases मध्ऍे done होईल:
+   635→[00753] [Normal] •  Phase 1 (current): API-001 Foundation & Standards frozen as this catalog v1.0.
+   636→[00754] [Normal] •  Phase 2 (next 4 weeks): Each domain squad drafts their API-XXX sub-doc using API-001 as template.
+   637→[00755] [Normal] •  Phase 3 (week 5–8): Cross-squad review, OpenAPI spec alignment, governance approval per sub-doc.
+   638→[00756] [Normal] •  Phase 4 (week 9): All 16 sub-docs frozen v1.0, this catalog becomes the master index.
+   639→[00757] [Normal] •  Phase 5 (ongoing): Sub-docs evolve independently under their squad ownership; this catalog updated annually as master reference.
+   640→[00758] [Heading 2] 30.5 Sub-Document Ownership
+   641→[00759] [Normal] प्रत्येक sub-doc ची ownership dedicated domain squad कडे असेल — उदा.: API-009 Finance ची ownership Finance Backend Squad कडे. Squad ची responsibility: spec accuracy, version updates, breaking change proposals, partner communication. Cross-cutting concerns (auth, headers, error format) API-001 Foundation च्या owner (Architecture Lead) कडे.
+   642→[00761] [Heading 1] 31. Glossary
+   643→[00762] [Normal] ह्या document मध्ऍे वापरलेल्या technical terms ची definitions खालील table मध्ऍे आहेत. Terms alphabetically sorted आहेत.
+   644→[00764] [Heading 1] 32. Document Control & Sign-off
+   645→[00765] [Heading 2] 32.1 Version History
+   646→[00766] [Normal] Document ची version history खालील table मध्ऍे. Current version 1.0 = API Freeze, signed off by Governance Board.
+   647→[00767] [Heading 2] 32.2 Approval Matrix
+   648→[00768] [Normal] API Freeze sign-off साठी 6 roles ची approval mandatory आहे. सर्व roles signed-off झाल्यावरच version 1.0 publish होतो.
+   649→[00769] [Heading 2] 32.3 Review Cadence
+   650→[00770] [Normal] Post-freeze review cadence:
+   651→[00771] [Normal] •  Quarterly post-freeze: full spec audit by Governance Board.
+   652→[00772] [Normal] •  Per major version release: full review + sign-off.
+   653→[00773] [Normal] •  Continuous: any breaking change proposal triggers ad-hoc review.
+   654→[00774] [Normal] •  Annual: master catalog (this document) refresh to incorporate sub-doc evolution.
+   655→[00775] [Heading 2] 32.4 Distribution List
+   656→[00776] [Normal] हे document खालील 9 teams ला distributed आहे — internal engineering reference, external distribution prohibited.
+   657→[00777] [Normal] •  Backend Engineering (NestJS squads — 14 domain teams)
+   658→[00778] [Normal] •  Web Portal Team (admin/branch head dashboards)
+   659→[00779] [Normal] •  Mobile Team (PreOne Hub — parent + teacher apps)
+   660→[00780] [Normal] •  QA Team (contract + E2E + load testing)
+   661→[00781] [Normal] •  DevOps/SRE Team (rate limiting, monitoring, deployment)
+   662→[00782] [Normal] •  AI/ML Team (lesson plan, report card, observation AI features)
+   663→[00783] [Normal] •  Product Team (roadmap alignment, feature prioritization)
+   664→[00784] [Normal] •  Compliance Team (DPDP, POSH, FSSAI audit trail)
+   665→[00785] [Normal] •  Partner Integrations Team (third-party webhook consumers, SDK users)
+   666→[00786] [Heading 2] 32.5 Companion Documents
+   667→[00787] [Normal] ह्या document च्या समवेत PreOne document series चे इतर documents खालील table मध्ऍे:
+   668→[00789] [Normal] ह्या document ची final authority PreOne Product Lead कडे आहे. कोणताही clarification किंवा change request साठी product team शी संपर्क करावा. Document freeze झाल्यानंतर changes साठी formal CR process (Governance Board review) mandatory आहे. Modular split (API-001 to API-016) पूर्ण झाल्यावर प्रत्येक sub-doc स्वतःची ownership + CR process follow करेल.
+   669→

@@ -8,9 +8,10 @@
  * entities MUST go through the aggregate root. The root enforces invariants.
  */
 import { Entity } from './entity';
+
 import type { DomainEvent } from './domain-event';
 
-export abstract class AggregateRoot<TProps extends Record<string, unknown>> extends Entity<TProps> {
+export abstract class AggregateRoot<TProps extends object> extends Entity<TProps> {
   /**
    * Called by the application service after the repository has successfully
    * persisted this aggregate. Bumps version + clears queued events.

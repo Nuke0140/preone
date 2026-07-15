@@ -9,6 +9,7 @@
  *   dashboard_kpi:{tenantId}:{branchId}:{role} — KPI bundle (60s TTL)
  */
 import { Injectable, Logger } from '@nestjs/common';
+
 import { RedisService, RedisDb } from '@infra/redis/redis.service';
 
 @Injectable()

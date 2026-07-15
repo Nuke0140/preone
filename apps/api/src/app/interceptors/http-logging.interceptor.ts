@@ -13,8 +13,8 @@ import {
   NestInterceptor,
   Logger,
 } from '@nestjs/common';
-import { Observable, tap } from 'rxjs';
 import { Request, Response } from 'express';
+import { Observable, tap } from 'rxjs';
 
 @Injectable()
 export class HttpLoggingInterceptor implements NestInterceptor {

@@ -11,10 +11,12 @@
  *   - Verify with JWT_ACCESS_PUBLIC_KEY (RSA public key)
  *   - Refresh tokens stored hashed in DB; rotation invalidates previous
  */
+import { createHash, randomUUID } from 'node:crypto';
+
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SignJWT, jwtVerify, importPKCS8, importSPKI } from 'jose';
-import { createHash } from 'node:crypto';
+
 import type { AppConfig } from '@config/env/app-config.type';
 import { RedisService, RedisDb } from '@infra/redis/redis.service';
 
@@ -30,11 +32,13 @@ interface AccessTokenClaims {
   session_id: string;
 }
 
+type KeyLike = Awaited<ReturnType<typeof importPKCS8>>;
+
 @Injectable()
 export class JwtService {
   private readonly logger = new Logger(JwtService.name);
-  private privateKey: CryptoKey | undefined;
-  private publicKey: CryptoKey | undefined;
+  private privateKey: KeyLike | undefined;
+  private publicKey: KeyLike | undefined;
 
   constructor(
     private readonly config: ConfigService<AppConfig, true>,
@@ -54,10 +58,10 @@ export class JwtService {
   }
 
   async signRefresh(claims: { sub: string }): Promise<string> {
-    // Refresh tokens use HS256 (shared secret) — simpler, shorter
-    const secret = this.config.get('app.jwtRefreshTokenTtl', { infer: true });
-    const refreshSecret = process.env.JWT_REFRESH_SECRET!;
-    return new SignJWT({ ...claims })
+    const refreshSecret = process.env.JWT_REFRESH_SECRET ?? 'preone-dev-refresh-secret-change-me';
+    // jti (JWT ID) makes each refresh token unique even when issued for the same
+    // user within the same second — required for proper rotation + blacklist semantics.
+    return new SignJWT({ ...claims, jti: randomUUID() })
       .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
       .setIssuedAt()
       .setIssuer(this.config.get('app.jwtIssuer', { infer: true }))
@@ -78,7 +82,7 @@ export class JwtService {
   }
 
   async verifyRefresh(token: string) {
-    const refreshSecret = process.env.JWT_REFRESH_SECRET!;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET ?? 'preone-dev-refresh-secret-change-me';
     const { payload } = await jwtVerify(token, new TextEncoder().encode(refreshSecret), {
       issuer: this.config.get('app.jwtIssuer', { infer: true }),
       audience: this.config.get('app.jwtAudience', { infer: true }),
@@ -105,17 +109,19 @@ export class JwtService {
     await this.redis.forDb(RedisDb.SESSION_STORE).setex(`revoked_refresh:${hash}`, ttl, '1');
   }
 
-  private async getPrivateKey(): Promise<CryptoKey> {
+  private async getPrivateKey(): Promise<KeyLike> {
     if (!this.privateKey) {
-      const pem = process.env.JWT_ACCESS_PRIVATE_KEY!;
+      const pem = process.env.JWT_ACCESS_PRIVATE_KEY ?? '';
+      if (!pem) throw new Error('JWT_ACCESS_PRIVATE_KEY is not set.');
       this.privateKey = await importPKCS8(pem, 'RS256');
     }
     return this.privateKey;
   }
 
-  private async getPublicKey(): Promise<CryptoKey> {
+  private async getPublicKey(): Promise<KeyLike> {
     if (!this.publicKey) {
-      const pem = process.env.JWT_ACCESS_PUBLIC_KEY!;
+      const pem = process.env.JWT_ACCESS_PUBLIC_KEY ?? '';
+      if (!pem) throw new Error('JWT_ACCESS_PUBLIC_KEY is not set.');
       this.publicKey = await importSPKI(pem, 'RS256');
     }
     return this.publicKey;

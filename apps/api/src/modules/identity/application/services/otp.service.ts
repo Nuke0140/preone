@@ -7,9 +7,10 @@
  */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RedisService, RedisDb } from '@infra/redis/redis.service';
-import type { AppConfig } from '@config/env/app-config.type';
+
 import { BusinessException } from '@common/errors/exceptions';
+import type { AppConfig } from '@config/env/app-config.type';
+import { RedisService, RedisDb } from '@infra/redis/redis.service';
 
 @Injectable()
 export class OtpService {

@@ -4,7 +4,9 @@
  * Routes are EXCLUDED from the /v1 prefix and JwtAuthGuard (@Public()).
  */
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+
 import { Public } from '@app/decorators/auth.decorators';
+
 import { HealthService, type HealthReport } from './health.service';
 
 @Controller('health')

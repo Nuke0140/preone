@@ -9,9 +9,10 @@
  *   - response header X-Trace-Id (for client-side correlation)
  *   - AsyncLocalStorage (so Pino logger can pick it up automatically)
  */
+import { randomUUID } from 'node:crypto';
+
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { randomUUID } from 'node:crypto';
 
 const W3C_TRACEPARENT_REGEX = /^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$/;
 
@@ -19,7 +20,7 @@ const W3C_TRACEPARENT_REGEX = /^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-
 export class TraceIdMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     // Try to extract traceId from incoming W3C traceparent header
-    const traceparent = req.headers['traceparent'] as string | undefined;
+    const traceparent = req.headers.traceparent as string | undefined;
     let traceId: string;
 
     if (traceparent && W3C_TRACEPARENT_REGEX.test(traceparent)) {

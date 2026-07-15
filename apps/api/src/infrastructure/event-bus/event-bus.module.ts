@@ -9,6 +9,7 @@
  * v1.1: replace with Redis Stream for cross-instance reliability.
  */
 import { Global, Module } from '@nestjs/common';
+
 import { EventBusService } from './event-bus.service';
 
 @Global()

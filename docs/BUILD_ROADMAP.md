@@ -11,7 +11,7 @@
 | Wave | Duration  | Modules                                  | Outcome                                   |
 | ---- | --------- | ---------------------------------------- | ----------------------------------------- |
 | 1    | ✅ Done   | Foundation (Bootstrap, Kernel, Identity) | App boots, login works, Prisma migrated   |
-| 2    | 2 weeks   | Identity APIs (full) + Platform Mgmt     | Multi-tenant onboarding, RBAC matrix      |
+| 2    | ✅ Done   | Identity APIs (full)                     | 35 endpoints, 138 tests, RBAC matrix      |
 | 3    | 3 weeks   | Student + Academics                      | Student profile, classroom, observations  |
 | 4    | 3 weeks   | Admissions + CRM                         | Application → Approval saga, lead funnel  |
 | 5    | 3 weeks   | Attendance + Communication               | Daily ops, parent chat, notifications     |

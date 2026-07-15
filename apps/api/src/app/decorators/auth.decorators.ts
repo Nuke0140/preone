@@ -43,7 +43,9 @@ export const Permissions = (...permissions: string[]) => SetMetadata(PERMISSIONS
  * ReqUser decorator — extracts AuthenticatedUser from request.
  * Usage: @ReqUser() user: AuthenticatedUser
  */
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { createParamDecorator } from '@nestjs/common';
+
+import type { ExecutionContext } from '@nestjs/common';
 export const ReqUser = createParamDecorator(
   (data: keyof AuthenticatedUser | undefined, ctx: ExecutionContext): AuthenticatedUser | unknown => {
     const req = ctx.switchToHttp().getRequest();

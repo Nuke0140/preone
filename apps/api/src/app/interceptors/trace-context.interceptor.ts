@@ -3,8 +3,9 @@
  * AsyncLocalStorage so Pino logger can auto-include them in every log.
  */
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
-import { Observable } from 'rxjs';
 import { Request } from 'express';
+import { Observable } from 'rxjs';
+
 import { traceContextStorage } from '@app/bootstrap/context/trace-context.storage';
 
 @Injectable()

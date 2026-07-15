@@ -1,18 +1,17 @@
 /**
  * PrismaSchoolRepository — concrete implementation backed by Prisma.
  *
- * Per BTD §6.1: "Infrastructure → Domain: Allowed (implements interfaces)"
- * Per BTD §11.3: Repository pattern with Prisma.
- * Per ERD v3.0 §5.2: All queries run within tenant context (SET app.school_id).
- *
  * NOTE: School is the tenant anchor — it is NOT tenant-scoped (no school_id
  * on schools table). Platform admin role required to access.
  */
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+
 import { PrismaService } from '@infra/prisma/prisma.service';
-import type { School as PrismaSchool } from '@prisma/client';
+
 import { SchoolAggregate, type SchoolProps, type SchoolStatus, type SchoolTier } from '../../domain/aggregates/school.aggregate';
-import type { SchoolRepository } from '../../domain/repositories/school.repository';
+
+import type { SchoolListFilter, SchoolRepository } from '../../domain/repositories/school.repository';
 
 @Injectable()
 export class PrismaSchoolRepository implements SchoolRepository {
@@ -40,18 +39,43 @@ export class PrismaSchoolRepository implements SchoolRepository {
     return row ? this.toDomain(row) : undefined;
   }
 
-  async listByStatus(status: string, page: number, pageSize: number): Promise<{
+  async findByPhone(phone: string): Promise<SchoolAggregate | undefined> {
+    const row = await this.prisma.school.findFirst({ where: { phone } });
+    return row ? this.toDomain(row) : undefined;
+  }
+
+  async listByStatus(status: SchoolStatus, page: number, pageSize: number): Promise<{
     items: SchoolAggregate[];
     total: number;
   }> {
+    return this.list({ status }, page, pageSize);
+  }
+
+  async list(filter: SchoolListFilter, page: number, pageSize: number): Promise<{
+    items: SchoolAggregate[];
+    total: number;
+  }> {
+    const where: Prisma.SchoolWhereInput = {
+      deletedAt: null,
+      ...(filter.status ? { status: filter.status } : {}),
+      ...(filter.search
+        ? {
+            OR: [
+              { name: { contains: filter.search, mode: 'insensitive' } },
+              { email: { contains: filter.search, mode: 'insensitive' } },
+              { phone: { contains: filter.search } },
+            ],
+          }
+        : {}),
+    };
     const [rows, total] = await Promise.all([
       this.prisma.school.findMany({
-        where: { status: status as any },
+        where,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.school.count({ where: { status: status as any } }),
+      this.prisma.school.count({ where }),
     ]);
     return { items: rows.map((r) => this.toDomain(r)), total };
   }
@@ -73,13 +97,13 @@ export class PrismaSchoolRepository implements SchoolRepository {
   async delete(aggregate: SchoolAggregate): Promise<void> {
     await this.prisma.school.update({
       where: { id: aggregate.id },
-      data: { deletedAt: new Date() },
+      data: { deletedAt: new Date(), status: 'CANCELLED' },
     });
   }
 
   // ─────── Mappers ───────
 
-  private toDomain(row: PrismaSchool): SchoolAggregate {
+  private toDomain(row: Prisma.SchoolGetPayload<{}>): SchoolAggregate {
     const props: SchoolProps = {
       name: row.name,
       legalName: row.legalName ?? undefined,
@@ -88,8 +112,8 @@ export class PrismaSchoolRepository implements SchoolRepository {
       website: row.website ?? undefined,
       gstNumber: row.gstNumber ?? undefined,
       panNumber: row.panNumber ?? undefined,
-      status: row.status as SchoolStatus,
-      tier: row.tier as SchoolTier,
+      status: row.status,
+      tier: row.tier,
       branchCount: row.branchCount,
       maxBranches: row.maxBranches,
       studentSeats: row.studentSeats,
@@ -103,11 +127,10 @@ export class PrismaSchoolRepository implements SchoolRepository {
       cancelledAt: row.cancelledAt?.toISOString(),
       deletedAt: row.deletedAt?.toISOString(),
     };
-    // Reconstitute aggregate without re-raising events
     return new SchoolAggregate(props, row.id, row.version);
   }
 
-  private toPersistence(a: SchoolAggregate): any {
+  private toPersistence(a: SchoolAggregate): Prisma.SchoolUncheckedCreateInput {
     return {
       id: a.id,
       name: a.name,

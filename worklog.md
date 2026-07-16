@@ -301,3 +301,39 @@ Stage Summary:
 - Key insight: every "merge" question was actually a "deprecate the orphan ERD v3.0 spec copy" question. The operational models are canonical; the spec copies are dead weight. The fix is deprecation, never schema merge. Zero high-risk changes recommended. Zero application breakage expected.
 - Follow-up recommended: audit the remaining 12 bounded contexts (CRM, Communication, Transport, Administration, Attendance, Settings, Platform, Reports, Identity, Cross-cutting, Admissions, Academics-non-medical) for the same systemic spec-vs-operational pattern.
 - 7 deliverable documents written to /home/z/my-project/ddd-review/. No schema, code, or migration files modified.
+
+---
+Task ID: 4
+Agent: Main (Super Z) — Chief Enterprise Architect
+Task: FINAL enterprise compatibility audit of 5 Prisma deprecation candidates (Staff, StaffProfile, StudentMedicalRecord, FeeInstallment, InventoryStock). ANALYSIS ONLY — no code, schema, or migration modifications. Cover every layer: Database (views/materialized views/triggers/functions/procedures/extensions), Infrastructure (Docker/K8s/Terraform/Helm), CI/CD (GitHub Actions/build scripts), Backend (services/repositories/DTOs/commands/queries/events/policies/guards/validators), Frontend (Next.js/React Native/shared packages), Generated code (Prisma Client/OpenAPI/Swagger/SDK/GraphQL), Testing (unit/integration/E2E/fixtures/factories/snapshots), Documentation (ADR/DDD/ERD/PRD/API/BRC/Vision), Operations (backup/monitoring/Grafana/Prometheus/logging), Analytics (SQL reports/BI/export jobs). For every candidate answer 10 mandatory questions. Generate enterprise-compatibility-audit.md with verdicts: SAFE / SAFE WITH WARNINGS / NOT SAFE / MANUAL REVIEW REQUIRED.
+
+Work Log:
+- Read ddd-review/07-final-architecture-decision.md to identify the 5 deprecation candidates (out of 13 reviewed, 8 were "Keep").
+- Mapped repository structure: identified 18 .prisma files, 8 migration files, init.sql, Docker/K8s/Terraform/Helm infra, single CI workflow, 380+ backend TS files, empty frontend/worker/shared-package directories.
+- Database layer audit: searched all migrations for CREATE VIEW / CREATE MATERIALIZED VIEW / CREATE TRIGGER / CREATE FUNCTION / CREATE PROCEDURE referencing the 5 deprecated tables → ZERO matches. Found 40+ CREATE TRIGGER statements on canonical tables only (employees, leave_requests, payroll_runs, leads, etc.). init.sql verified clean.
+- Infrastructure audit: grepped infra/ for all 5 model names + table names → ZERO matches across Docker, K8s, Terraform, Helm.
+- CI/CD audit: grepped .github/workflows/ci.yml → ZERO matches. Verified package.json scripts use generic Prisma CLI commands.
+- Backend audit: grepped apps/api/src/ for \bStaff\b (10 file matches, ALL JSDoc/comment English-word usage, NOT Prisma refs), StaffProfile (0 matches), StudentMedicalRecord (0 matches), \bFeeInstallment\b (0 matches — word boundary correctly excludes FeePlanInstallment), \bInventoryStock\b (0 matches). Verified all 14 *.module.ts files register zero Staff* providers. Verified hr.module.ts registers only Employee/Leave/Payroll/PerformanceReview providers.
+- Frontend audit: confirmed apps/web/src/, apps/mobile/src/, apps/parent-app/src/, apps/teacher-app/src/ are ALL EMPTY. No frontend code exists.
+- Shared packages audit: confirmed packages/{shared,types,ui,config}/src/ are ALL EMPTY. No shared package code exists.
+- Worker audit: confirmed apps/worker/src/{handlers,jobs,processors,queues} are ALL EMPTY. No worker code exists.
+- Generated code audit: verified node_modules/.prisma/client/index.d.ts auto-generates types for all 5 models (1,765 grep hits combined) — but ZERO app code imports them (verified by grep "from '@prisma/client'" across all 22 import sites). OpenAPI is generated dynamically via SwaggerModule.createDocument() in main.ts:138 — no static artifacts exist. No SDK, no GraphQL.
+- Testing audit: grepped all 46 test files (18 unit + 3 integration + 1 e2e + 24 module-local) → ZERO references to any of the 5 deprecated models. No fixtures/factories/snapshots exist as separate files.
+- Documentation audit: stale "Staff" mentions in docs/ARCHITECTURE.md, PROJECT_STRUCTURE.md, hr.module.ts are English-word usage in module labels, NOT Prisma refs.
+- Operations audit: grepped infra/secrets/ and apps/api/src/infrastructure/{audit,cache,event-bus,otel,prisma,redis,realtime,s3} → ZERO references.
+- Analytics audit: Reports module (apps/api/src/modules/reports/) verified — zero SQL report references to any of the 5 deprecated tables.
+- Seeds audit: verified 02-identity.ts has 'staff.read.execute'/'staff.update.execute' permission CODE STRINGS with resource:'staff' — these are RBAC labels, NOT Prisma refs. BUT discovered drift vs runtime permission-catalog.ts which uses resource:'employee'. Filed as §5.3 manual-review item.
+- CRITICAL DISCOVERY 1: StaffStatus enum (cross_cutting.prisma:699) is exclusively used by the deprecated Staff model — must be dropped together. The Wave 13 migration line 78 has CREATE TYPE "StaffStatus" AS ENUM ('PLACEHOLDER').
+- CRITICAL DISCOVERY 2: StaffDepartment and StaffDesignation enums MUST NOT be dropped — they are used by canonical Department (hr.prisma:647) and Designation (hr.prisma:670) models. StaffRole enum is canonical, used by Employee (hr.prisma:126) and 5 TS files.
+- CRITICAL DISCOVERY 3: The Wave 13 migration (20260716000006_wave_13_database_v3_completion/migration.sql) is a STUB — 110 lines containing 86 CREATE TYPE statements + a 24-line comment block. The actual CREATE TABLE statements for staffs/staff_profiles/student_medical_records/fee_installments/inventory_stocks DO NOT EXIST in migration history. Production DB state is uncertain → MANUAL REVIEW REQUIRED.
+- CRITICAL DISCOVERY 4: Verified zero @relation declarations pointing to any of the 5 deprecated models across all 18 .prisma files. Confirmed 100% orphan status at the Prisma level.
+- Compiled per-candidate answers to all 10 mandatory questions with file:line evidence for each claim.
+- Generated /home/z/my-project/enterprise-compatibility-audit.md (8 sections, ~750 lines) with per-candidate verdicts, cross-cutting concerns, recommended deprecation sequence, and out-of-scope findings.
+
+Stage Summary:
+- Final verdicts: Staff = SAFE WITH WARNINGS (must drop StaffStatus together, must NOT drop StaffDepartment/StaffDesignation/StaffRole); StaffProfile = SAFE; StudentMedicalRecord = SAFE; FeeInstallment = SAFE (verify migration SQL targets fee_installments not fee_plan_installments); InventoryStock = SAFE (verify migration SQL targets inventory_stocks not stock_lots/stock_movements).
+- 4 MANUAL REVIEW REQUIRED items raised: (1) production DB state of 5 tables — Wave 13 migration is stub-only, so table existence is uncertain; (2) 9 stale "Staff" JSDoc/comment references need updating; (3) RBAC seed drift between 02-identity.ts (resource:'staff') and permission-catalog.ts (resource:'employee') — separate ticket; (4) CI pipeline must be verified to run prisma generate before tsc.
+- 3 out-of-scope findings logged for follow-up: (a) 4 sibling orphan models StaffDocument/StaffQualification/StaffExperience/StaffBankDetail share the same pattern; (b) 86 placeholder enum stubs need real values; (c) Wave 13 migration authoring pattern is unusual and should be reviewed.
+- Provided 8-phase deprecation sequence (Pre-flight → Documentation → Schema → Migration → Generated Code → Build & Test → Deploy → Rollback) with explicit DO-NOT-REMOVE list (StaffDepartment, StaffDesignation, StaffRole enums).
+- Zero code, schema, or migration files modified. ANALYSIS ONLY.
+- Deliverable: /home/z/my-project/enterprise-compatibility-audit.md

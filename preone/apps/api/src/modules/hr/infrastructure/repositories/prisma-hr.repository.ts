@@ -588,7 +588,7 @@ export class PrismaPerformanceReviewRepository implements PerformanceReviewRepos
     tenantId: string, cycle: string, cycleYear: number,
   ): Promise<PerformanceReviewAggregate[]> {
     const rows = await this.prisma.performanceReview.findMany({
-      where: { schoolId: tenantId, cycle, cycleYear },
+      where: { schoolId: tenantId, cycle: cycle as any, cycleYear },
       include: { goals: true, competencies: true },
     });
     return rows.map(r => this._hydrate(r));

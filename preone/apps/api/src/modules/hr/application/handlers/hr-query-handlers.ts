@@ -117,7 +117,8 @@ implements QueryHandler<GetEmployeeLeaveBalanceQuery> {
     const entitlements = { CASUAL: 12, SICK: 8, EARNED: 18 };
     const used: Record<string, number> = { CASUAL: 0, SICK: 0, EARNED: 0 };
     for (const l of leaves) {
-      if (used[l.leaveType] !== undefined) used[l.leaveType] += Number(l.totalDays);
+      const lt = l.leaveType as keyof typeof used;
+      if (used[lt] !== undefined) used[lt] += Number(l.totalDays);
     }
     const remaining: Record<string, number> = {};
     for (const k of Object.keys(entitlements)) {

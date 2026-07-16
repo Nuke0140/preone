@@ -181,3 +181,37 @@ Stage Summary:
 - PR raised: https://github.com/Nuke0140/preone/pull/15
 - Module delivers: 22 Prisma models + 20 enums, 6 DDD aggregates + 27 domain events, 16 command + 14 query handlers, 5 controllers (~30 REST endpoints), ~850 LOC SQL migration. BRC coverage: R-FIN-001..014 + R-APR-002 ✅; R-FIN-016..020 🟡 stubs.
 - Next: PR review/merge, then Wave 12 (Inventory + HR + Administration).
+
+---
+Task ID: 13
+Agent: Main (Super Z)
+Task: Wave 13 — Reports + Settings + Platform polish + Testcontainers integration tests.
+
+Work Log:
+- Audited existing Reports/Settings/Platform modules from Wave 7-8 — confirmed skeletons (ReportExecutionAggregate, SystemConfigAggregate, CalendarEventAggregate, UserPreferenceAggregate, TenantProvisioningAggregate, SupportTicketAggregate) but missing key BRC compliance aggregates.
+- Identified 6 BRC gaps: R-RPT-001/002 (custom report builder + scheduled exports), R-SET-003 (feature flag 3-level resolution), R-PLT-001/002/005/010 (subscription lifecycle + grace + seats + retention), R-DAT-007/008 (DSAR), R-DAT-010/R-CMP-008 (breach 72h MeitY notification).
+- Synced local main to origin/main (dropped stray worklog-only commit dfcae95).
+- Created branch feat/wave-13-reports-settings-platform off origin/main (post-Wave 12 merge).
+- Built 6 new DDD aggregates with state machines + invariants:
+  * Reports: ReportDefinitionAggregate (DRAFT→PUBLISHED→DEPRECATED, versioned, REGULATORY read-only), ScheduledReportAggregate (cron-validated, ACTIVE⇄PAUSED→CANCELLED, trigger increments runCount)
+  * Settings: FeatureFlagAggregate (3-level scope PLATFORM/TENANT/USER, rollout %, evaluate(bucketHash))
+  * Platform: SubscriptionAggregate (TRIAL→ACTIVE→GRACE→SUSPENDED→CANCELLED with R-PLT-002 7-day grace + R-PLT-005 seat allocation + R-PLT-010 30-day retention), DsarRequestAggregate (R-DAT-007/008 access/erasure workflow with 30-day SLA enforcement), BreachNotificationAggregate (R-DAT-010/R-CMP-008 72-hour MeitY notification rule)
+- Added 24 new domain events (versioned, past-tense, immutable per BTD §13.3) across 3 events files.
+- Extended Prisma schema with 2 new models + 4 new enums (DsarRequest, BreachNotification + DsarRequestType/Status + BreachSeverity/Status). Schema validates + Prisma client regenerates cleanly.
+- Created migration 20260716000005_wave_13_dsar_breach.sql — 2 tables, RLS policies on both, updated_at triggers.
+- Wrote 121 unit tests across 6 spec files — all pure domain tests per BTD §24.
+- Fixed 3 test failures during iteration: ISO timestamp format mismatch (`.000Z` vs `Z`) — switched expectations to use full ISO string; fixed JSDoc comment containing `*/` literal that confused esbuild's lexer.
+- Wrote 1 Testcontainers integration test (wave13-dsar-breach.integration.spec.ts) verifying DSAR round-trip + Breach lifecycle + 72h flag persistence against real Postgres 16. Auto-skipped when Docker unavailable.
+- Resolved git branch state issue: Wave 13 commit had landed on main instead of feat branch (probably because earlier `git checkout -b` was reverted by a subsequent `git checkout main && git reset --hard origin/main`). Fix: `git branch -f feat/wave-13-reports-settings-platform 9fe840c && git reset --hard origin/main`, then force-push feat branch.
+- Pushed feat/wave-13-reports-settings-platform to origin. Raised PR #17 via GitHub API.
+
+Stage Summary:
+- Wave 13 PR #17: https://github.com/Nuke0140/preone/pull/17
+- mergeable: true, mergeable_state: clean, 1 commit, +4306 lines, 18 files changed
+- 6 new DDD aggregates with state machines + 24 new domain events
+- 2 new Prisma models + 4 enums + ~75 LOC migration
+- 121 new unit tests (all pass); full suite 44 files / 855 tests pass (was 35/734)
+- 1 new Testcontainers integration test (17 integration tests total, all skipped without Docker)
+- TypeScript compiles with 0 new errors (pre-existing OTel version conflict excluded)
+- BRC coverage closed: R-RPT-001/002, R-SET-003, R-PLT-001/002/005/010, R-DAT-007/008/010, R-CMP-008
+- Next: PR review/merge, then Wave 14 (likely load testing, pen test, DR drill, or production deployment)

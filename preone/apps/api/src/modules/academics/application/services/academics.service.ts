@@ -37,6 +37,7 @@ import {
   ENROLLMENT_REPOSITORY, OBSERVATION_REPOSITORY, PORTFOLIO_REPOSITORY,
   REPORT_CARD_REPOSITORY, SECTION_REPOSITORY,
 } from '../../domain/repositories/tokens';
+
 import type { AcademicSessionRepository } from '../../domain/repositories/academics.repository';
 import type { AssessmentRepository } from '../../domain/repositories/academics.repository';
 import type { CurriculumRepository } from '../../domain/repositories/academics.repository';
@@ -45,7 +46,6 @@ import type { ObservationRepository } from '../../domain/repositories/academics.
 import type { PortfolioRepository } from '../../domain/repositories/academics.repository';
 import type { ReportCardRepository } from '../../domain/repositories/academics.repository';
 import type { SectionRepository } from '../../domain/repositories/academics.repository';
-
 import type {
   AcademicSessionResponseDto, AssessmentResponseDto, CreateAcademicSessionDto,
   CreateAssessmentDto, CreateCurriculumDto, CreateEnrollmentDto, CreateObservationDto,
@@ -297,7 +297,7 @@ export class EnrollmentService {
   async createEnrollment(dto: CreateEnrollmentDto, tenantId: string, actorId: string): Promise<EnrollmentResponseDto> {
     // Check student isn't already enrolled in this session
     const existing = await this.enrollments.findByStudentAndSession(dto.studentId, dto.sessionId);
-    if (existing && existing.isActive) {
+    if (existing?.isActive) {
       throw new ConflictException('ALREADY_ENROLLED', `Student ${dto.studentId} is already enrolled in session ${dto.sessionId}`);
     }
     // Check section capacity + age eligibility
@@ -313,7 +313,7 @@ export class EnrollmentService {
     const enrollment = EnrollmentAggregate.create({
       tenantId, studentId: dto.studentId, sessionId: dto.sessionId,
       sectionId: dto.sectionId, enrollmentNumber,
-      type: dto.type as any, startDate: dto.startDate,
+      type: dto.type, startDate: dto.startDate,
     });
     await this.enrollments.save(enrollment);
     // Increment section count
@@ -410,7 +410,7 @@ export class ObservationService {
     const obs = ObservationAggregate.create({
       tenantId, enrollmentId: dto.enrollmentId, sectionId: dto.sectionId,
       observedAt: dto.observedAt ?? new Date().toISOString(),
-      category: dto.category as any, title: dto.title,
+      category: dto.category, title: dto.title,
       description: dto.description, rating: dto.rating,
       isPrivate: dto.isPrivate ?? true, observedBy,
     });
@@ -466,7 +466,7 @@ export class AssessmentService {
   async createAssessment(dto: CreateAssessmentDto, tenantId: string, createdBy: string): Promise<AssessmentResponseDto> {
     const a = AssessmentAggregate.create({
       tenantId, sectionId: dto.sectionId, termId: dto.termId,
-      name: dto.name, type: dto.type as any,
+      name: dto.name, type: dto.type,
       description: dto.description, totalMarks: dto.totalMarks,
       passingMarks: dto.passingMarks,
       weightPercent: dto.weightPercent ?? 0,

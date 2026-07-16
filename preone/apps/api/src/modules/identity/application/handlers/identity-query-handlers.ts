@@ -22,6 +22,7 @@ import {
 import {
   SCHOOL_REPOSITORY, USER_REPOSITORY,
 } from '../../domain/repositories/tokens';
+
 import type { SchoolRepository } from '../../domain/repositories/school.repository';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 

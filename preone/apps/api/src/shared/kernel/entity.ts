@@ -16,7 +16,21 @@ import type { DomainEvent } from './domain-event';
 
 export abstract class Entity<TProps extends object> {
   protected readonly _id: string;
-  protected readonly _props: TProps;
+  /**
+   * Aggregate state. Exposed as `readonly` (not `protected`) so that
+   * repository implementations can read internal state for persistence —
+   * this is the standard DDD "persistence escape hatch" pattern.
+   *
+   * The previous pattern used bracket-notation access (`agg['_props']`)
+   * to bypass TypeScript's protected check at compile time, but that
+   * obscured the intent. Making it explicitly public is honest about
+   * what repositories need.
+   *
+   * Mutators remain protected (`_touch`, `_addDomainEvent`) so external
+   * callers still cannot mutate state — only the aggregate's own methods
+   * can do that.
+   */
+  readonly _props: TProps;
   private _domainEvents: DomainEvent[] = [];
   private _version: number;
 

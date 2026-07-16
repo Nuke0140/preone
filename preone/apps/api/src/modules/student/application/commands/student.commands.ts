@@ -30,7 +30,7 @@ export interface CreateStudentPayload {
   photoUrl?: string;
   custodyNotes?: string;
   isPickupRestricted?: boolean;
-  guardians: Array<{
+  guardians: {
     firstName: string;
     lastName: string;
     email?: string;
@@ -45,7 +45,7 @@ export interface CreateStudentPayload {
     isPickupAuthorized: boolean;
     isEmergencyContact: boolean;
     custodyHolder: boolean;
-  }>;
+  }[];
 }
 
 export class CreateStudentCommand implements Command<CreateStudentPayload, { id: string }> {

@@ -28,9 +28,9 @@
  */
 import { Module } from '@nestjs/common';
 
-import { CommandBus, QueryBus } from '@shared/cqrs';
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 import {
   AddGuardianCommandHandler, CreateStudentCommandHandler,
@@ -44,9 +44,7 @@ import {
   ListStudentsQueryHandler, SearchStudentsQueryHandler,
 } from './application/handlers/student-query-handlers';
 import { StudentService } from './application/services/student.service';
-
 import { StudentsController } from './controllers/students.controller';
-
 import {
   GUARDIAN_REPOSITORY, STUDENT_REPOSITORY,
 } from './domain/repositories/tokens';

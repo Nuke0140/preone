@@ -25,10 +25,11 @@ import { Prisma, PrismaClient } from '@prisma/client';
 
 import { EventBusService } from '@infra/event-bus/event-bus.service';
 import { PrismaService } from '@infra/prisma/prisma.service';
+import type { TenantContext } from '@infra/prisma/prisma.service';
 
 import { PrismaOutboxRepository } from '../infrastructure/repositories/prisma-outbox.repository';
+
 import type { IntegrationEventEnvelope } from '../domain/events/identity-events';
-import type { TenantContext } from '@infra/prisma/prisma.service';
 
 interface WorkOptions {
   /** Tenant context — when provided, RLS session vars are set. */

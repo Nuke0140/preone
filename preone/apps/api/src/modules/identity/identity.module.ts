@@ -29,25 +29,9 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { CommandBus, QueryBus } from '@shared/cqrs';
 import { EventBusService } from '@infra/event-bus/event-bus.service';
 import { PrismaService } from '@infra/prisma/prisma.service';
-
-import { AuthService } from './application/services/auth.service';
-import { BranchService } from './application/services/branch.service';
-import { JwtService } from './application/services/jwt.service';
-import { OtpService } from './application/services/otp.service';
-import { PermissionService } from './application/services/permission.service';
-import { RoleService } from './application/services/role.service';
-import { SchoolService } from './application/services/school.service';
-import { UserService } from './application/services/user.service';
-import {
-  PermissionResolver,
-} from './application/services/permission-resolver.service';
-import {
-  IdentityEventTranslator,
-} from './application/services/event-translator.service';
-import { UnitOfWork } from './application/unit-of-work';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 import {
   ChangeUserRolesCommandHandler, CreateSchoolCommandHandler,
@@ -56,21 +40,40 @@ import {
 import {
   GetSchoolQueryHandler, GetUserQueryHandler, ListUsersQueryHandler,
 } from './application/handlers/identity-query-handlers';
-
+import { AuthService } from './application/services/auth.service';
+import { BranchService } from './application/services/branch.service';
+import {
+  IdentityEventTranslator,
+} from './application/services/event-translator.service';
+import { JwtService } from './application/services/jwt.service';
+import { OtpService } from './application/services/otp.service';
+import {
+  PermissionResolver,
+} from './application/services/permission-resolver.service';
+import { PermissionService } from './application/services/permission.service';
+import { RoleService } from './application/services/role.service';
+import { SchoolService } from './application/services/school.service';
+import { UserService } from './application/services/user.service';
+import { UnitOfWork } from './application/unit-of-work';
 import { AuthController } from './controllers/auth.controller';
+import { BranchesController } from './controllers/branches.controller';
 import { PermissionsController } from './controllers/permissions.controller';
 import { RolesController } from './controllers/roles.controller';
 import { SchoolsController } from './controllers/schools.controller';
 import { UsersController } from './controllers/users.controller';
-import { BranchesController } from './controllers/branches.controller';
-
 import {
   SCHOOL_REPOSITORY, BRANCH_REPOSITORY, USER_REPOSITORY, ROLE_REPOSITORY,
   PERMISSION_REPOSITORY,
 } from './domain/repositories/tokens';
 import {
+  OutboxPublisher,
+} from './infrastructure/jobs/outbox-publisher';
+import {
   PrismaBranchRepository,
 } from './infrastructure/repositories/prisma-branch.repository';
+import {
+  PrismaOutboxRepository,
+} from './infrastructure/repositories/prisma-outbox.repository';
 import {
   PrismaPermissionRepository,
 } from './infrastructure/repositories/prisma-permission.repository';
@@ -83,12 +86,6 @@ import {
 import {
   PrismaUserRepository,
 } from './infrastructure/repositories/prisma-user.repository';
-import {
-  PrismaOutboxRepository,
-} from './infrastructure/repositories/prisma-outbox.repository';
-import {
-  OutboxPublisher,
-} from './infrastructure/jobs/outbox-publisher';
 
 @Module({
   controllers: [

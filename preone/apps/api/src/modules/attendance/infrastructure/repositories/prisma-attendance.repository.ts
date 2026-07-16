@@ -19,6 +19,7 @@ import {
   IncidentActionEntity, IncidentReportAggregate, IncidentReportProps,
   IncidentSeverity, IncidentStatus, IncidentType,
 } from '../../domain/aggregates/incident-report.aggregate';
+
 import type {
   AttendanceListFilter, AttendanceRepository, DailyLogListFilter,
   DailyLogRepository, DailyReportListFilter, DailyReportRepository,
@@ -224,7 +225,7 @@ export class PrismaAttendanceRepository implements AttendanceRepository {
   }
 
   async save(agg: AttendanceAggregate): Promise<void> {
-    const p = agg['_props'] as AttendanceProps;
+    const p = agg._props;
     const data = {
       schoolId: p.tenantId,
       studentId: p.studentId,
@@ -256,12 +257,12 @@ export class PrismaAttendanceRepository implements AttendanceRepository {
       await this.prisma.attendanceCorrection.create({
         data: {
           id: c.id, schoolId: p.tenantId, attendanceId: agg.id,
-          correctedBy: c['_props'].correctedBy,
-          approvedBy: c['_props'].approvedBy ?? null,
-          fromStatus: c['_props'].fromStatus, toStatus: c['_props'].toStatus,
-          reason: c['_props'].reason, correctedAt: new Date(c['_props'].correctedAt),
-          approvedAt: c['_props'].approvedAt ? new Date(c['_props'].approvedAt) : null,
-          isApproved: c['_props'].isApproved,
+          correctedBy: c._props.correctedBy,
+          approvedBy: c._props.approvedBy ?? null,
+          fromStatus: c._props.fromStatus, toStatus: c._props.toStatus,
+          reason: c._props.reason, correctedAt: new Date(c._props.correctedAt),
+          approvedAt: c._props.approvedAt ? new Date(c._props.approvedAt) : null,
+          isApproved: c._props.isApproved,
         },
       });
     }
@@ -408,7 +409,7 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
   }
 
   async save(agg: DailyLogAggregate): Promise<void> {
-    const p = agg['_props'] as DailyLogProps;
+    const p = agg._props;
     const data = {
       schoolId: p.tenantId,
       attendanceId: p.attendanceId,
@@ -570,7 +571,7 @@ export class PrismaIncidentReportRepository implements IncidentReportRepository 
   }
 
   async save(agg: IncidentReportAggregate): Promise<void> {
-    const p = agg['_props'] as IncidentReportProps;
+    const p = agg._props;
     const data = {
       schoolId: p.tenantId,
       studentId: p.studentId,
@@ -600,7 +601,7 @@ export class PrismaIncidentReportRepository implements IncidentReportRepository 
     // Sync actions
     await this.prisma.incidentAction.deleteMany({ where: { incidentId: agg.id } });
     for (const a of p.actions.values()) {
-      const ap = a['_props'];
+      const ap = a._props;
       await this.prisma.incidentAction.create({
         data: {
           id: a.id, schoolId: p.tenantId, incidentId: agg.id,
@@ -682,7 +683,7 @@ export class PrismaDailyReportRepository implements DailyReportRepository {
   }
 
   async save(agg: DailyReportAggregate): Promise<void> {
-    const p = agg['_props'] as DailyReportProps;
+    const p = agg._props;
     const data = {
       schoolId: p.tenantId,
       studentId: p.studentId,

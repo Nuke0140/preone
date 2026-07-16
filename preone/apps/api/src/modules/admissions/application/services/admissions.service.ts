@@ -24,6 +24,7 @@ import {
 import {
   ADMISSION_REPOSITORY, APPLICATION_REPOSITORY, WAITING_LIST_REPOSITORY,
 } from '../../domain/repositories/tokens';
+
 import type {
   AdmissionListFilter, AdmissionRepository,
   ApplicationListFilter, ApplicationRepository, WaitingListRepository,

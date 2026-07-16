@@ -11,11 +11,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import {
-  CommandBus, CommandHandler,
-} from '@shared/cqrs';
-import {
   ConflictException, ValidationException,
 } from '@common/errors/exceptions';
+import {
+  CommandBus, CommandHandler,
+} from '@shared/cqrs';
 
 import {
   AddGuardianCommand, CreateStudentCommand, EnrollStudentCommand,
@@ -68,7 +68,7 @@ export class UpdateStudentCommandHandler implements CommandHandler<UpdateStudent
 
   async handle(command: UpdateStudentCommand): Promise<{ id: string }> {
     const { payload, metadata } = command;
-    await this.students.updateStudent(payload.studentId, payload as any, metadata.tenantId);
+    await this.students.updateStudent(payload.studentId, payload, metadata.tenantId);
     return { id: payload.studentId };
   }
 }

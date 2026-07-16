@@ -43,3 +43,36 @@ export class CalendarEventCancelledEvent extends DomainEvent<{
   eventId: string;
   tenantId: string;
 }> {}
+
+// ─── Wave 13: Feature Flag (3-level resolution per BRC §8.2) ──────────────────
+
+export class FeatureFlagCreatedEvent extends DomainEvent<{
+  flagId: string;
+  key: string;
+  scope: 'PLATFORM' | 'TENANT' | 'USER';
+  tenantId?: string;
+  userId?: string;
+}> {}
+
+export class FeatureFlagValueChangedEvent extends DomainEvent<{
+  flagId: string;
+  key: string;
+  scope: 'PLATFORM' | 'TENANT' | 'USER';
+  oldValue: boolean;
+  newValue: boolean;
+  changedBy: string;
+}> {}
+
+export class FeatureFlagRolloutChangedEvent extends DomainEvent<{
+  flagId: string;
+  key: string;
+  scope: 'PLATFORM' | 'TENANT' | 'USER';
+  oldRollout: number;
+  newRollout: number;
+}> {}
+
+export class FeatureFlagArchivedEvent extends DomainEvent<{
+  flagId: string;
+  key: string;
+  archivedBy: string;
+}> {}

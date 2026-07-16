@@ -21,9 +21,28 @@ const envSchema = z.object({
   JWT_REFRESH_TOKEN_TTL: z.string().default('30d'),
   JWT_ISSUER: z.string().default('preone.api'),
   JWT_AUDIENCE: z.string().default('preone.app'),
-  JWT_ACCESS_PUBLIC_KEY: z.string(),
-  JWT_ACCESS_PRIVATE_KEY: z.string(),
-  JWT_REFRESH_SECRET: z.string(),
+  JWT_ACCESS_PUBLIC_KEY: z.string().min(1, 'JWT_ACCESS_PUBLIC_KEY is required'),
+  JWT_ACCESS_PRIVATE_KEY: z.string().min(1, 'JWT_ACCESS_PRIVATE_KEY is required'),
+  // JWT_REFRESH_SECRET: required, min 32 chars, reject known-weak placeholders.
+  // Zod validator runs BEFORE JwtService.onModuleInit, so this is the first
+  // line of defense — the app fails-fast at ConfigModule load time.
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters (HMAC-SHA256 best practice)')
+    .refine(
+      (v) => !['preone-dev-refresh-secret-change-me', 'change-me-in-production-min-32-chars', 'secret', 'test', 'dev', 'placeholder'].includes(v),
+      'JWT_REFRESH_SECRET is set to a known weak placeholder — generate a strong random value',
+    ),
+
+  // PII encryption key (pgcrypto). Required in production; optional in
+  // non-production (PrismaService falls back to a warned dev key).
+  PII_ENCRYPTION_KEY: z
+    .string()
+    .optional()
+    .refine(
+      (v) => v === undefined || v.trim().length > 0,
+      'PII_ENCRYPTION_KEY must not be empty when set',
+    ),
 
   BODY_LIMIT: z.string().default('50mb'),
 

@@ -21,12 +21,6 @@ import type {
   CampaignRepository, FollowUpRepository, LeadRepository,
 } from '../../domain/repositories/crm.repository';
 
-// Prisma enum types for type-safe where clauses
-import type {
-  LeadStatus as PrismaLeadStatus,
-  CampaignStatus as PrismaCampaignStatus,
-  FollowUpStatus as PrismaFollowUpStatus,
-} from '@prisma/client';
 
 // ─── Lead Repository ──────────────────────────────────────────
 
@@ -131,7 +125,7 @@ export class PrismaLeadRepository implements LeadRepository {
     const rows = await this.prisma.lead.findMany({
       where: {
         schoolId: tenantId, assignedCounsellorId: counsellorId,
-        ...(status ? { status: status as PrismaFollowUpStatus } : {}),
+        ...(status ? { status: status as any } : {}),
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -148,7 +142,7 @@ export class PrismaLeadRepository implements LeadRepository {
 
   async findByStatus(tenantId: string, status: string, limit = 100): Promise<LeadAggregate[]> {
     const rows = await this.prisma.lead.findMany({
-      where: { schoolId: tenantId, status: status as PrismaLeadStatus },
+      where: { schoolId: tenantId, status: status as any },
       take: limit,
       orderBy: { updatedAt: 'desc' },
     });
@@ -282,7 +276,7 @@ export class PrismaCampaignRepository implements CampaignRepository {
 
   async findByStatus(tenantId: string, status: string): Promise<CampaignAggregate[]> {
     const rows = await this.prisma.campaign.findMany({
-      where: { schoolId: tenantId, status: status as PrismaLeadStatus },
+      where: { schoolId: tenantId, status: status as any },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(r => this._hydrate(r));
@@ -394,7 +388,7 @@ export class PrismaFollowUpRepository implements FollowUpRepository {
     const rows = await this.prisma.followUp.findMany({
       where: {
         schoolId: tenantId, counsellorId,
-        ...(status ? { status: status as PrismaFollowUpStatus } : {}),
+        ...(status ? { status: status as any } : {}),
       },
       orderBy: { scheduledAt: 'asc' },
     });

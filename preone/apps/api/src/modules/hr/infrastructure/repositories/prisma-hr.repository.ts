@@ -603,7 +603,7 @@ export class PrismaPerformanceReviewRepository implements PerformanceReviewRepos
       employeeId: row.employeeId,
       reviewerId: row.reviewerId,
       hrReviewerId: row.hrReviewerId ?? undefined,
-      cycle: row.cycle as any,
+      cycle: row.cycle as any,  // Prisma ReviewCycle → local ReviewCycle
       cycleYear: row.cycleYear,
       status: row.status,
       goals: (row.goals ?? []).map((g: any) => ({

@@ -121,7 +121,8 @@ implements QueryHandler<GetEmployeeLeaveBalanceQuery> {
     }
     const remaining: Record<string, number> = {};
     for (const k of Object.keys(entitlements)) {
-      remaining[k] = Math.max(0, entitlements[k as keyof typeof entitlements] - used[k]);
+      const ent: number = (entitlements as Record<string, number>)[k] ?? 0;
+      remaining[k] = Math.max(0, ent - (used[k] ?? 0));
     }
     return { entitlements, used, remaining };
   }

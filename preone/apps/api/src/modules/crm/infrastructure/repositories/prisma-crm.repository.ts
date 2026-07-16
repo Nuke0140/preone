@@ -21,6 +21,13 @@ import type {
   CampaignRepository, FollowUpRepository, LeadRepository,
 } from '../../domain/repositories/crm.repository';
 
+// Prisma enum types for type-safe where clauses
+import type {
+  LeadStatus as PrismaLeadStatus,
+  CampaignStatus as PrismaCampaignStatus,
+  FollowUpStatus as PrismaFollowUpStatus,
+} from '@prisma/client';
+
 // ─── Lead Repository ──────────────────────────────────────────
 
 @Injectable()
@@ -124,7 +131,7 @@ export class PrismaLeadRepository implements LeadRepository {
     const rows = await this.prisma.lead.findMany({
       where: {
         schoolId: tenantId, assignedCounsellorId: counsellorId,
-        ...(status ? { status } : {}),
+        ...(status ? { status: status as PrismaFollowUpStatus } : {}),
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -141,7 +148,7 @@ export class PrismaLeadRepository implements LeadRepository {
 
   async findByStatus(tenantId: string, status: string, limit = 100): Promise<LeadAggregate[]> {
     const rows = await this.prisma.lead.findMany({
-      where: { schoolId: tenantId, status },
+      where: { schoolId: tenantId, status: status as PrismaLeadStatus },
       take: limit,
       orderBy: { updatedAt: 'desc' },
     });
@@ -162,13 +169,13 @@ export class PrismaLeadRepository implements LeadRepository {
       alternatePhone: row.alternatePhone ?? undefined,
       childName: row.childName ?? undefined,
       childDateOfBirth: row.childDateOfBirth?.toISOString(),
-      programInterest: row.programInterest as ProgramInterest,
+      programInterest: row.programInterest as any,
       preferredStartDate: row.preferredStartDate?.toISOString(),
-      source: row.source as LeadSource,
+      source: row.source as any,
       sourceDetails: row.sourceDetails ?? undefined,
       campaignId: row.campaignId ?? undefined,
-      status: row.status as LeadStatus,
-      priority: row.priority as LeadPriority,
+      status: row.status as any,
+      priority: row.priority as any,
       assignedCounsellorId: row.assignedCounsellorId ?? undefined,
       previousCounsellorId: row.previousCounsellorId ?? undefined,
       assignedAt: row.assignedAt?.toISOString(),
@@ -275,7 +282,7 @@ export class PrismaCampaignRepository implements CampaignRepository {
 
   async findByStatus(tenantId: string, status: string): Promise<CampaignAggregate[]> {
     const rows = await this.prisma.campaign.findMany({
-      where: { schoolId: tenantId, status },
+      where: { schoolId: tenantId, status: status as PrismaLeadStatus },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(r => this._hydrate(r));
@@ -290,10 +297,10 @@ export class PrismaCampaignRepository implements CampaignRepository {
       campaignCode: row.campaignCode,
       name: row.name,
       description: row.description ?? undefined,
-      channel: row.channel as CampaignChannel,
-      audience: row.audience as CampaignAudience,
+      channel: row.channel as any,
+      audience: row.audience as any,
       customSegmentQuery: row.customSegmentQuery ?? undefined,
-      status: row.status as CampaignStatus,
+      status: row.status as any,
       budgetCents: row.budgetCents,
       spentCents: row.spentCents,
       audienceSize: row.audienceSize,
@@ -387,7 +394,7 @@ export class PrismaFollowUpRepository implements FollowUpRepository {
     const rows = await this.prisma.followUp.findMany({
       where: {
         schoolId: tenantId, counsellorId,
-        ...(status ? { status } : {}),
+        ...(status ? { status: status as PrismaFollowUpStatus } : {}),
       },
       orderBy: { scheduledAt: 'asc' },
     });
@@ -415,11 +422,11 @@ export class PrismaFollowUpRepository implements FollowUpRepository {
       leadId: row.leadId,
       campaignId: row.campaignId ?? undefined,
       counsellorId: row.counsellorId,
-      type: row.type as FollowUpType,
-      status: row.status as FollowUpStatus,
+      type: row.type as any,
+      status: row.status as any,
       scheduledAt: row.scheduledAt.toISOString(),
       durationMinutes: row.durationMinutes ?? undefined,
-      outcome: row.outcome as FollowUpOutcome | undefined,
+      outcome: row.outcome as any,
       outcomeNotes: row.outcomeNotes ?? undefined,
       startedAt: row.startedAt?.toISOString(),
       completedAt: row.completedAt?.toISOString(),

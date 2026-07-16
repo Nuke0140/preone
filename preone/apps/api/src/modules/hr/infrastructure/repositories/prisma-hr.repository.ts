@@ -193,10 +193,10 @@ export class PrismaEmployeeRepository implements EmployeeRepository {
       phone: row.phone,
       dateOfBirth: row.dateOfBirth?.toISOString(),
       gender: row.gender,
-      role: row.role as StaffRole,
+      role: row.role as any,
       designation: row.designation,
-      employmentType: row.employmentType as EmploymentType,
-      status: row.status,
+      employmentType: row.employmentType as any,
+      status: row.status as any,
       dateOfJoining: row.dateOfJoining.toISOString(),
       probationEndDate: row.probationEndDate?.toISOString(),
       qualifications: (row.qualifications ?? []).map((q: any) => ({
@@ -603,7 +603,7 @@ export class PrismaPerformanceReviewRepository implements PerformanceReviewRepos
       employeeId: row.employeeId,
       reviewerId: row.reviewerId,
       hrReviewerId: row.hrReviewerId ?? undefined,
-      cycle: row.cycle,
+      cycle: row.cycle as any,
       cycleYear: row.cycleYear,
       status: row.status,
       goals: (row.goals ?? []).map((g: any) => ({

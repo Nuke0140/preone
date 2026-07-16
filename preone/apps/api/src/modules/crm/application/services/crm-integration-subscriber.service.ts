@@ -22,7 +22,7 @@ import {
   CampaignLaunchedEvent, LeadCapturedEvent, LeadConvertedEvent,
   LeadLostEvent,
 } from '../../domain/events/crm-events';
-import { AdmissionApprovedEvent } from '../../../admissions/domain/events/admissions-events';
+import { ApplicationApprovedEvent } from '../../../admissions/domain/events/admissions-events';
 
 @Injectable()
 export class CrmIntegrationEventSubscriber {
@@ -92,10 +92,10 @@ export class CrmIntegrationEventSubscriber {
       );
     });
 
-    // ─── AdmissionApproved → mark lead as CONVERTED if linked ───
+    // ─── ApplicationApproved → mark lead as CONVERTED if linked ───
     // When an admission is approved, find the linked lead (if any) and mark it CONVERTED.
-    this.eventBus.subscribe(AdmissionApprovedEvent.name, async (event) => {
-      const e = event as AdmissionApprovedEvent;
+    this.eventBus.subscribe(ApplicationApprovedEvent.name, async (event) => {
+      const e = event as ApplicationApprovedEvent;
       try {
         // Find application by admissionId to get the leadId
         const admission = await this.prisma.admission.findUnique({
@@ -103,7 +103,7 @@ export class CrmIntegrationEventSubscriber {
           include: { application: true },
         });
         if (!admission?.application?.leadId) {
-          this.logger.debug(`AdmissionApproved: no linked lead for admission ${e.payload.admissionId}`);
+          this.logger.debug(`ApplicationApproved: no linked lead for admission ${e.payload.admissionId}`);
           return;
         }
         const leadId = admission.application.leadId;
@@ -120,7 +120,7 @@ export class CrmIntegrationEventSubscriber {
         );
       } catch (err) {
         this.logger.error(
-          `Failed to auto-convert lead on AdmissionApproved: ${(err as Error).message}`,
+          `Failed to auto-convert lead on ApplicationApproved: ${(err as Error).message}`,
           (err as Error).stack,
         );
       }

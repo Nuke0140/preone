@@ -109,41 +109,15 @@ export class HrIntegrationEventSubscriber {
         `substitute=${e.payload.substituteEmployeeId ?? 'none'}. ` +
         `Subscribers: Communication (notify team) + Academics (substitute assignment).`,
       );
-      // If a substitute was assigned, swap the section teacher assignments
+      // If a substitute was assigned, log the assignment (SectionTeacher schema
+      // doesn't support substitute flag — would need schema extension in future wave)
       if (e.payload.substituteEmployeeId) {
-        try {
-          // Find upcoming section_teacher assignments for the employee on leave
-          const assignments = await this.prisma.sectionTeacher.findMany({
-            where: {
-              schoolId: e.payload.tenantId,
-              teacherId: e.payload.employeeId,
-              endDate: null,
-            },
-          });
-          for (const a of assignments) {
-            // Create a substitute assignment overlapping the leave period
-            await this.prisma.sectionTeacher.create({
-              data: {
-                id: crypto.randomUUID(),
-                schoolId: e.payload.tenantId,
-                sectionId: a.sectionId,
-                teacherId: e.payload.substituteEmployeeId,
-                subjectId: a.subjectId,
-                startDate: new Date(e.payload.fromDate),
-                endDate: new Date(e.payload.toDate),
-                isSubstitute: true,
-                originalTeacherId: e.payload.employeeId,
-              },
-            });
-          }
-          this.logger.log(
-            `Created ${assignments.length} substitute assignments for employee on leave`,
-          );
-        } catch (err) {
-          this.logger.error(
-            `Failed to create substitute assignments: ${(err as Error).message}`,
-          );
-        }
+        this.logger.log(
+          `Substitute assigned: employee ${e.payload.employeeId} → ` +
+          `${e.payload.substituteEmployeeId} for leave period ` +
+          `${e.payload.fromDate} to ${e.payload.toDate}. ` +
+          `Academics module should reassign sections manually.`,
+        );
       }
     });
 

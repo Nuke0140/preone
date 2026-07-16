@@ -379,7 +379,10 @@ export class HrService {
     overallRating: number, goalFinalRatings: Record<string, number>,
   ): Promise<void> {
     const review = await this._loadReviewOrThrow(reviewId, tenantId);
-    review.completeHrReview(goalFinalRatings, overallRating as 1 | 2 | 3 | 4 | 5);
+    review.completeHrReview(
+      goalFinalRatings as Record<string, 1 | 2 | 3 | 4 | 5>,
+      overallRating as 1 | 2 | 3 | 4 | 5,
+    );
     await this.reviews.save(review);
     await this.eventBus.publishAll(review.commit());
   }

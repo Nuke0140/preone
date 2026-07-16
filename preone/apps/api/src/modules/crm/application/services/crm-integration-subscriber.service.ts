@@ -57,13 +57,12 @@ export class CrmIntegrationEventSubscriber {
         `Communication (conversion thank-you message).`,
       );
       try {
-        // Update the admission application with lead attribution
+        // Update the admission application with lead attribution (leadId only —
+        // source/campaignId are stored on the Lead itself for attribution)
         await this.prisma.application.update({
           where: { id: e.payload.applicationId },
           data: {
             leadId: e.payload.leadId,
-            source: e.payload.source,
-            campaignId: e.payload.campaignId,
           },
         }).catch(() => {
           this.logger.debug(`Application ${e.payload.applicationId} not found or already linked`);

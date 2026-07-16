@@ -267,6 +267,29 @@ model School {
   gstConfigs          GstConfig[]
   messageReadReceipts MessageReadReceipt[]
 
+  // ─── Wave 6 back-relations (HR) ───
+  employees              Employee[]
+  employeeQualifications EmployeeQualification[]
+  employeeDocuments      EmployeeDocument[]
+  leaveRequests          LeaveRequest[]
+  leaveBalances          LeaveBalance[]
+  payrollRuns            PayrollRun[]
+  payslips               Payslip[]
+  performanceReviews     PerformanceReview[]
+  reviewGoals            ReviewGoal[]
+  reviewCompetencies     ReviewCompetency[]
+  employeeAttendances    EmployeeAttendance[]
+
+  // ─── Wave 6 back-relations (CRM) ───
+  leads                    Lead[]
+  campaigns                Campaign[]
+  followUps                FollowUp[]
+  leadTags                 LeadTag[]
+  leadActivities           LeadActivity[]
+  campaignTemplates        CampaignTemplate[]
+  campaignAudienceSegments CampaignAudienceSegment[]
+  counsellorTargets        CounsellorTarget[]
+
   @@index([status])
   @@index([tier])
   @@index([createdAt])
@@ -333,6 +356,12 @@ model Branch {
   gstConfigs     GstConfig[]
   notifications  Notification[]
 
+  // ─── Wave 6 back-relations (HR + CRM) ───
+  employees   Employee[]
+  payrollRuns PayrollRun[]
+  leads       Lead[]
+  campaigns   Campaign[]
+
   @@unique([schoolId, code])
   @@index([schoolId, isActive])
   @@index([city, state])
@@ -396,6 +425,15 @@ model User {
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]
   messageReadReceipts      MessageReadReceipt[]
+
+  // ─── Wave 6 back-relations (HR + CRM) ───
+  employeeProfile        Employee?
+  approvedLeaves         LeaveRequest[]       @relation("LeaveApprover")
+  approvedPayrollRuns    PayrollRun[]
+  counsellorFollowUps    FollowUp[]
+  assignedLeads          Lead[]               @relation("LeadAssignedCounsellor")
+  previousLeads          Lead[]               @relation("LeadPreviousCounsellor")
+  counsellorTargets      CounsellorTarget[]
 
   @@unique([schoolId, email])
   @@index([schoolId, status])
@@ -4575,7 +4613,10 @@ model Employee {
   exitReason             String?       @map("exit_reason") @db.Text
   exitInterviewConducted Boolean       @default(false) @map("exit_interview_conducted")
   leaves                 LeaveRequest[]
+  substituteFor          LeaveRequest[]       @relation("SubstituteFor")
+  leaveBalances          LeaveBalance[]
   payrolls               Payslip[]
+  employeeAttendances    EmployeeAttendance[]
   reviewsAsEmployee      PerformanceReview[] @relation("ReviewEmployee")
   reviewsAsReviewer      PerformanceReview[] @relation("ReviewReviewer")
   reviewsAsHr            PerformanceReview[] @relation("ReviewHr")
@@ -4662,7 +4703,7 @@ model LeaveRequest {
 
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  approver   User?    @relation(fields: [approverId], references: [id])
+  approver   User?    @relation("LeaveApprover", fields: [approverId], references: [id])
   substitute Employee? @relation("SubstituteFor", fields: [substituteEmployeeId], references: [id])
 
   @@index([schoolId, status])
@@ -5024,8 +5065,8 @@ model Lead {
   school              School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   branch              Branch?   @relation(fields: [branchId], references: [id])
   campaign            Campaign? @relation(fields: [campaignId], references: [id])
-  assignedCounsellor  User?     @relation(fields: [assignedCounsellorId], references: [id])
-  previousCounsellor  User?     @relation(fields: [previousCounsellorId], references: [id])
+  assignedCounsellor  User?     @relation("LeadAssignedCounsellor", fields: [assignedCounsellorId], references: [id])
+  previousCounsellor  User?     @relation("LeadPreviousCounsellor", fields: [previousCounsellorId], references: [id])
 
   @@unique([schoolId, leadCode])
   @@index([schoolId, status])
@@ -5063,6 +5104,7 @@ model Campaign {
   cancellationReason     String?          @map("cancellation_reason") @db.Text
   attributedRevenueCents Int              @default(0) @map("attributed_revenue_cents")
   leads                  Lead[]
+  followUps              FollowUp[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz

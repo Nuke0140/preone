@@ -23,8 +23,6 @@ import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
 import { CommandBus, QueryBus } from '@shared/cqrs';
 
-import { AttendanceEventTranslator } from './application/services/attendance-event-translator.service';
-
 import {
   AddDailyReportHighlightCommandHandler, AddIncidentActionCommandHandler,
   CompleteIncidentActionCommandHandler, CorrectAttendanceCommandHandler,

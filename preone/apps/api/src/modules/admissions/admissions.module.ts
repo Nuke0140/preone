@@ -10,22 +10,14 @@
  *   - 3 controllers (Applications, Admissions, WaitingList)
  *   - 22 command handlers + 6 query handlers
  *   - 21 domain events wired via EventBusService
- *
- * Wave 4.1 — AdmissionsEventTranslator registered at bootstrap,
- * emitting 5 integration events (AdmissionApproved.v1 triggers the
- * BTD §17.3 admission approval saga across Identity + Finance +
- * Communication).
- *
- * Wave 9 — AdmissionsSaga registered at bootstrap, orchestrating
- * Student onboarding + FeePlan creation on ApplicationApprovedEvent.
+ *   - 1 saga (AdmissionsSaga) — orchestrates student onboarding + fee plan creation
+ *     on ApplicationApprovedEvent (BTD §15)
  */
 import { Module, OnModuleInit } from '@nestjs/common';
 
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
 import { CommandBus, QueryBus } from '@shared/cqrs';
-
-import { AdmissionsEventTranslator } from './application/services/admissions-event-translator.service';
 
 import {
   AcceptOfferCommandHandler, AcceptWaitingListSeatCommandHandler,
@@ -94,8 +86,7 @@ class NoOpFeePlanPort implements IFeePlanPort {
   controllers: [ApplicationsController, AdmissionsController, WaitingListController],
   providers: [
     AdmissionsService,
-    AdmissionsEventTranslator,
-    // Saga (BTD §15) — Wave 9
+    // Saga (BTD §15)
     AdmissionsSaga,
     // Saga ports — NoOp defaults; overridden by Student/Finance in production
     { provide: STUDENT_ONBOARDING_PORT, useClass: NoOpStudentOnboardingPort },

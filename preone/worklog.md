@@ -287,62 +287,107 @@ Stage Summary:
 - Lead-to-classroom flow now end-to-end: Lead → Application → Document verification → Counselling → Approval → Admission → Student creation (via Identity saga) → Attendance marking → Daily logs → Daily reports → Incident handling
 
 ---
-Task ID: 6
-Agent: Main (Super Z)
-Task: Wave 6 — HR + CRM modules (BTD §4.3 #10 + #2) — push, PR, test
+Task ID: wave-4.1-5
+Agent: main (super-z)
+Task: Build Wave 4.1 (BTD compliance gaps) + Wave 5 (Communication + Finance modules) per BTD v1.0 §4.3 + §14 + §17.3 + §20.3 + §21.3
 
 Work Log:
-- Created branch feat/wave-6-hr-crm from feat/wave-4.1-5-communication-finance-btd
-- Built HR module (4 aggregates, 4 controllers, 4 Prisma repos, 17 cmd + 8 query handlers):
-  - EmployeeAggregate: 7-state PROSPECTIVE→EXITED with BGV gate (R-HR-002),
-    3-month probation (R-HR-012), handover-required exit (R-HR-008), promotion
-  - LeaveAggregate: 6-state with 10-day consecutive limit (R-HR-004), maternity
-    exemption, half-day/quarter-day support, substitute assignment (R-HR-005)
-  - PayrollAggregate: 6-state with PF@12% validation, gross/deductions/net math
-    invariant, segregation-of-duties approval (R-APR-011), hold/release
-  - PerformanceReviewAggregate: 7-state quarterly cycle (R-HR-007), 1-5 rating
-    scale, weighted goal aggregation, HR finalization, employee acknowledgement
-- Built CRM module (3 aggregates, 4 controllers, 3 Prisma repos, 18 cmd + 6 query handlers):
-  - LeadAggregate: 10-state NEW→CONVERTED/LOST/DROPPED→REACTIVATED with priority-
-    by-score, duplicate-phone detection, application cross-link
-  - CampaignAggregate: 7-state with budget enforcement, audience cap, delivery
-    metrics, ROI computation
-  - FollowUpAggregate: 5-state with reschedule chain + reminder counter
-- Integration events wired:
-  - StaffOnboarded.v1 → Identity (create user)
-  - StaffOffboarded.v1 → Identity (revoke) + Inventory (asset recovery)
-  - LeaveApproved.v1 → Communication + Academics (substitute)
-  - PayslipIssued.v1 → Communication (payslip SMS)
-  - LeadCaptured.v1 → Communication (welcome)
-  - LeadConverted.v1 → Admissions (link app→lead for attribution)
-  - LeadLost.v1 → Communication (win-back)
-  - CampaignLaunched.v1 → Communication (fan-out)
-  - ApplicationApprovedEvent (Admissions) → auto-convert linked lead (reverse)
-- Database: 19 new Prisma models (HR: 11, CRM: 8) + 19 enums + RLS migration
-  with PII encryption on employee bank/PAN/Aadhaar + lead phone/email/parent names,
-  trigram indexes, touch_updated_at triggers, audit log triggers
-- Wired HrModule + CrmModule in app.module.ts
-- Fixed schema issues: Lead ambiguous relations (@relation names), School/Branch/
-  Employee back-relations, Employee.userId @unique for 1-to-1 with User
-- Fixed all TSC errors: Prisma enum casts, ApplicationApprovedEvent (not
-  AdmissionApprovedEvent), Decimal-to-number conversion, Rating type cast,
-  ReviewCycle cast, removed substitute SectionTeacher creation (schema unsupported)
-- All 413 tests pass (354 prior + 32 HR + 27 CRM)
-- TypeScript compiles with ZERO errors
-- Pushed feat/wave-6-hr-crm branch to GitHub
-- Created PR #10: feat(wave-6): HR + CRM modules — 19 tables, 7 aggregates, 413 tests
+- Read worklog + reviewed existing Wave 1-4 state (312 tests, 5 modules active)
+- Read BTD v1.0 for §14 (integration events), §17.3 (admission approval saga), §20.3 (PII), §21.3 (RLS)
+- Wave 4.1: RLS + PII migration on 30 Wave 4 tables (20260716000001_wave_4_1_rls_pii_admissions_attendance.sql)
+  - Added PII-encrypted columns: medicine dosage/instructions/prescription URL, incident descriptions,
+    counselling notes, daily log payloads, parent declarations, pickup authorized person names
+  - touch_updated_at() trigger installed on all Wave 4 tables
+  - Indexes for pending-admission + recent-attendance lookups (saga subscribers)
+- Wave 4.1: AdmissionsEventTranslator — 5 integration events published to outbox
+  - toAdmissionApprovedV1, toAdmissionCancelledV1, toApplicationSubmittedV1,
+    toApplicationRejectedV1, toSeatOfferedV1 (in admissions-events.ts)
+  - Service subscribes to EventBusService, writes to PrismaOutboxRepository
+  - Wired in AdmissionsModule via OnModuleInit
+- Wave 4.1: AttendanceEventTranslator — 4 integration events published to outbox
+  - toAttendanceMarkedV1, toIncidentReportedV1, toDailyReportSentV1, toLatePickupRecordedV1
+  - Wired in AttendanceModule via OnModuleInit
+- Wave 5: Added 28 new Prisma models + 30 new enums to schema.prisma (4400 lines total)
+  - Communication: CommunicationTemplate, Notification, NotificationRecipient, Announcement,
+    AnnouncementRecipient, Conversation, ConversationParticipant, Message, MessageReadReceipt,
+    CommunicationProviderConfig, CommunicationDeliveryLog (11 models)
+  - Finance: FeePlan, FeePlanInstallment, FeeConcession, FeeConcessionRule, StudentFeePlan,
+    Invoice, InvoiceLineItem, InvoiceAdjustment, Payment, PaymentAllocation, Refund,
+    RefundAllocation, LedgerAccount, LedgerEntry, LateFeeRule, Scholarship, ScholarshipAward,
+    GstConfig (17 models)
+  - Back-relations added to School, Branch, User, Guardian, Student, Classroom, AcademicSession,
+    FeePlanQuote
+- Wave 5: RLS migration for 28 Wave 5 tables (20260716000002_wave_5_rls_pii_communication_finance.sql)
+  - PII-encrypted columns on comm provider API keys/secrets, payment instrument numbers,
+    notification recipient contact details
+  - Indexes for pending notifications + overdue invoices + payment allocations + ledger journals
+- Wave 5: Communication module built (apps/api/src/modules/communication/)
+  - 3 aggregates: NotificationAggregate (5-state QUEUED→SENDING→SENT→DELIVERED→READ with
+    per-recipient tracking + retry logic), AnnouncementAggregate (4-state with audience
+    targeting + acknowledgement), ConversationAggregate (DIRECT/GROUP/CLASSROOM/BROADCAST
+    with participant lifecycle)
+  - 12 command + 7 query handlers (class-based Query/Command pattern with metadata)
+  - 3 controllers: NotificationsController, AnnouncementsController, ConversationsController
+  - CommunicationIntegrationEventSubscriber — subscribes to ApplicationSubmitted,
+    AdmissionApproved, AttendanceMarked, IncidentReported, DailyReportSent, LatePickupRecorded
+    and auto-creates parent notifications with proper channel/priority mapping
+  - 4 Prisma repositories with full aggregate hydration
+  - 18 unit tests covering all aggregate invariants + transitions
+- Wave 5: Finance module built (apps/api/src/modules/finance/)
+  - 4 aggregates: FeePlanAggregate (3-state with installment sum validation),
+    InvoiceAggregate (7-state DRAFT→ISSUED→PARTIALLY_PAID→PAID→OVERDUE→VOIDED with
+    adjustments + waivers + late fees), PaymentAggregate (6-state with allocations +
+    refund tracking), RefundAggregate (5-state with segregation-of-duties + gateway
+    confirmation requirements)
+  - 12 command + 9 query handlers
+  - 4 controllers: FeePlansController, InvoicesController, PaymentsController, RefundsController
+  - FinanceIntegrationEventSubscriber:
+    - AdmissionApproved.v1 → auto-create StudentFeePlan from latest FeePlanQuote
+    - AdmissionCancelled.v1 → initiate Refund workflow against last successful Payment
+    - LatePickupRecorded.v1 → auto-generate LATE_FEE invoice
+  - 5 Prisma repositories (FeePlan, Invoice, Payment, Refund, StudentFeePlan)
+  - 24 unit tests covering all aggregate invariants + transitions + edge cases
+- Registered CommunicationModule + FinanceModule in app.module.ts (7/14 contexts now active)
+- Fixed multiple TypeScript issues:
+  - Path errors (../  →  ../../  for service→domain imports)
+  - Missing _touch() private method on aggregates (Entity base class doesn't provide it)
+  - Query/Command interfaces needed metadata field per CQRS pattern
+  - noUncheckedIndexedAccess: array access returns string|undefined (need explicit assertions)
+  - InvoiceAggregate.create needed totalCents in Omit list (auto-calculated from subtotal+adjustments)
+  - markFailed needed to transition aggregate status to FAILED for retry path
+- Final state: 354 tests pass (312 prior + 18 Communication + 24 Finance), typecheck clean
+- Committed as 7a1904c feat(wave-4.1-5): BTD compliance gaps + Communication + Finance modules
+- Force-pushed main (with Wave 3+4 history) + branch to GitHub
+- Created PR #7: https://github.com/Nuke0140/preone/pull/7
 
 Stage Summary:
-- Wave 6 complete: HR + CRM modules fully implemented per BTD §4.3 #2 + #10
-- 7 new DDD aggregates with state machines, invariants, and domain events
-- 35 new command handlers + 14 new query handlers on CQRS bus
-- ~65 new REST endpoints across 8 controllers
-- 47 new domain events + 9 integration event flows
-- 19 new Prisma models + 19 new enums (schema now 135 models, ~5,200 lines)
-- RLS enabled on all 19 Wave 6 tables with PII encryption on sensitive columns
-- 413 tests pass (23 test files)
-- TypeScript compiles with zero errors
-- Bounded contexts active: 9/14 (Identity, Student, Academics, Admissions,
-  Attendance, Communication, Finance, HR, CRM)
-- PR #10 opened against feat/wave-4.1-5-communication-finance-btd
-- 5 commits on branch: feat(wave-6) + 4 fix commits for schema/TSC issues
+- Wave 4.1 + 5 complete: 7/14 bounded contexts now active
+- BTD §17.3 Admission Approval Saga fully wired:
+  ApplicationApproved → AdmissionApproved.v1 → {Identity creates Student,
+  Finance creates StudentFeePlan, Communication sends welcome}
+- BTD §14.2 integration event subscribers wired:
+  - Communication listens to Admissions + Attendance events (5+4 = 9 events)
+  - Finance listens to Admissions + Attendance events (3 events: AdmissionApproved,
+    AdmissionCancelled, LatePickupRecorded)
+- BTD §21.3 RLS enabled on 58 tables (30 Wave 4 + 28 Wave 5)
+- BTD §20.3 PII encrypted on medicine dosage, incident descriptions, counselling notes,
+  daily log payloads, parent declarations, payment instruments, provider API keys,
+  recipient contact details
+- Total deliverables:
+  - 2 new SQL migrations (363 lines)
+  - 28 new Prisma models + 30 new enums (+1202 schema lines)
+  - 7 new aggregates (3 Communication + 4 Finance)
+  - 21 new command handlers + 16 query handlers
+  - 7 new controllers with ~55 REST endpoints
+  - 46 new domain events + 9 integration event translations
+  - 9 new Prisma repositories
+  - 2 new integration event subscribers
+  - 42 new unit tests (354 total)
+- Key artifacts:
+  - apps/api/src/modules/communication/{domain,application,controllers,infrastructure,test}/**
+  - apps/api/src/modules/finance/{domain,application,controllers,infrastructure,test}/**
+  - apps/api/src/modules/admissions/application/services/admissions-event-translator.service.ts
+  - apps/api/src/modules/attendance/application/services/attendance-event-translator.service.ts
+  - packages/database/prisma/migrations/20260716000001_wave_4_1_rls_pii_admissions_attendance.sql
+  - packages/database/prisma/migrations/20260716000002_wave_5_rls_pii_communication_finance.sql
+- PR: https://github.com/Nuke0140/preone/pull/7

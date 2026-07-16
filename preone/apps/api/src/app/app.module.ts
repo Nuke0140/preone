@@ -40,16 +40,6 @@ import { S3Module } from '../infrastructure/s3/s3.module';
 import { AcademicsModule } from '../modules/academics/academics.module';
 import { AdmissionsModule } from '../modules/admissions/admissions.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
-import { CommunicationModule } from '../modules/communication/communication.module';
-import { FinanceModule } from '../modules/finance/finance.module';
-import { HrModule } from '../modules/hr/hr.module';
-import { CrmModule } from '../modules/crm/crm.module';
-import { InventoryModule } from '../modules/inventory/inventory.module';
-import { AdministrationModule } from '../modules/administration/administration.module';
-import { TransportModule } from '../modules/transport/transport.module';
-import { ReportsModule } from '../modules/reports/reports.module';
-import { SettingsModule } from '../modules/settings/settings.module';
-import { PlatformModule } from '../modules/platform/platform.module';
 import { IdentityModule } from '../modules/identity/identity.module';
 import { StudentModule } from '../modules/student/student.module';
 

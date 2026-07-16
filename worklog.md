@@ -337,3 +337,77 @@ Stage Summary:
 - Provided 8-phase deprecation sequence (Pre-flight → Documentation → Schema → Migration → Generated Code → Build & Test → Deploy → Rollback) with explicit DO-NOT-REMOVE list (StaffDepartment, StaffDesignation, StaffRole enums).
 - Zero code, schema, or migration files modified. ANALYSIS ONLY.
 - Deliverable: /home/z/my-project/enterprise-compatibility-audit.md
+
+---
+Task ID: 5
+Agent: Main (Super Z)
+Task: Three sequential feature waves — Wave 16.1 (DB-backed WS scope checks + service integration), Wave 17 (8 external integration adapters + circuit breaker), Wave 18 (5 AI endpoints). Push branches, raise PRs, run tests.
+
+Work Log:
+- Wave 16.1 (branch feat/wave-16.1-db-scope-checks-service-integration):
+  - Created WsScopeCheckService (3 DB-backed scope checks: canTeacherAccessSection via SectionTeacher, canParentAccessSection via Guardian→StudentGuardian→Enrollment, canParentAccessTrip via Guardian→StudentGuardian→TransportAttendance; 60s Redis cache; fail-closed on DB errors; invalidate() method)
+  - Refactored WsScopeResolver to be async + DB-backed (was sync + JWT-only in Wave 16.0); role helpers: isAdmin/isCenterHead/isTeacher/isParent/isTransportStaff; teachers now denied trip channels per spec
+  - Updated WsSubscriptionManager to await the now-async resolver
+  - Created RealtimeEventPublisher (service-layer facade over WsPubSubBridge); publish/publishToUser/publishToBranch; auto-generates WsMessageEnvelope; drops invalid channels + non-JSON-serializable payloads
+  - Wired RealtimeEventPublisher into CommunicationService (sendNotification → 'notification.created', publishAnnouncement → 'announcement.published', sendMessage → 'chat.message.sent'), AttendanceService (markAttendance → 'attendance.marked'/'attendance.updated'), TransportService (startTrip/completeTrip/markTripDelayed/cancelTrip → 'trip.*' events)
+  - Updated RealtimeModule to import CacheModule + PrismaModule, register + export WsScopeCheckService + RealtimeEventPublisher
+  - Wrote 48 tests (23 ws-scope-resolver, 14 ws-scope-check.service, 5 realtime-event-publisher, 6 ws-subscription-manager updated for async); also updated ws-base-gateway.spec.ts to use mocked WsScopeCheckService
+  - TypeScript: zero errors in modified files (only pre-existing OTel error remains)
+  - All 48 tests pass
+
+- Wave 17 (branch feat/wave-17-external-integrations, rebased on top of Wave 16.1):
+  - Created CircuitBreakerService (3-state machine CLOSED→OPEN→HALF_OPEN→CLOSED, rolling-window failure counter, slow-call detection, manual trip()/reset(), CircuitOpenError with retryAfterSeconds, per-instance state, unregistered pass-through)
+  - Created 8 adapters following the same shape: SmsAdapter, WhatsAppAdapter, EmailAdapter, PaymentAdapter (stricter: threshold=3, reset=60s), BiometricAdapter (PII-safe: never logs template data), AiLlmAdapter (slow threshold 30s for LLMs), CloudStorageAdapter, KycAdapter (PII-safe: Aadhaar masked XXXX-XXXX-1234, PAN masked ABCDE****F)
+  - Each adapter ships with a StubXxxProvider for dev/test
+  - Created IntegrationsModule (@Global, env-driven config, exports all 8 adapters + CircuitBreakerService)
+  - Wired IntegrationsModule into AppModule
+  - Wrote 18 tests (12 circuit-breaker covering all states + slow-call + rolling-window + manual trip/reset, 6 sms.adapter covering send success/failure/circuit-open/checkHealth — representative of all 8 adapters)
+  - All 18 tests pass
+
+- Wave 18 (branch feat/wave-18-ai-endpoints, rebased on top of Wave 17):
+  - Created AiModule under src/modules/ai/ with: application/dto/ai.dto.ts (class-validator DTOs), application/services/ai.service.ts (orchestrator), controllers/ai.controllers.ts (5 endpoints), ai.module.ts
+  - 5 endpoints (all require 'ai.execute' permission): POST /v1/ai/lesson-plan/generate, POST /v1/ai/report-card/generate, POST /v1/ai/observation/suggest, POST /v1/ai/reply/suggest, GET /v1/ai/insights
+  - AiService: builds prompts, calls AiLlmAdapter.complete() (goes through circuit breaker), parses responses (JSON-array parse with newline-split fallback for observations/replies, summary+highlights split for insights), falls back to deterministic stubs when LLM circuit is OPEN (model field = 'fallback' so callers can distinguish)
+  - PII redaction (defense-in-depth): Aadhaar/PAN/phone/email all stripped from prompts before LLM call
+  - /insights computes KPIs from Prisma (attendance rate, fee collection rate, active students, active staff, pending leads) then asks LLM for actionable insights
+  - Added AI_PERMISSIONS array with 'ai.execute' permission to permission-catalog.ts
+  - Added 'ai' Swagger tag to main.ts DocumentBuilder
+  - Wired AiModule into AppModule
+  - Wrote 17 tests (lesson-plan prompt construction + response + fallback, report-card with tone, observation JSON-array parse + newline fallback, reply JSON-array parse + pad-to-3 + history, insights KPI computation + zero-division + summary/highlights split, PII redaction for Aadhaar/PAN/phone/email)
+  - Fixed BigInt arithmetic (Prisma aggregate returns BigInt for Int columns — wrapped in Number())
+  - Fixed Prisma field names (LeadStatus: NEW/ASSIGNED/CONTACTED not FOLLOW_UP; PaymentStatus: SUCCESS not CAPTURED with paidAt; Invoice: totalCents not totalAmountCents; Employee: status='ACTIVE' no deletedAt; Lead: no deletedAt)
+  - TypeScript: zero errors in new files
+  - All 17 tests pass
+
+- Branch topology (clean linear chain after rebase):
+  - main → d18207a (audit)
+  - feat/wave-16.1-db-scope-checks-service-integration → bd51723 (Wave 16.1)
+  - feat/wave-17-external-integrations → c21b229 (Wave 17, includes Wave 16.1)
+  - feat/wave-18-ai-endpoints → 990e1ff (Wave 18, includes Wave 16.1 + 17)
+
+- All 3 branches pushed to origin (force-pushed wave-17 + wave-18 after rebase)
+- Created 3 PRs via GitHub REST API:
+  - PR #26: wave-16.1 → main (https://github.com/Nuke0140/preone/pull/26)
+  - PR #27: wave-17 → main (https://github.com/Nuke0140/preone/pull/27)
+  - PR #28: wave-18 → main (https://github.com/Nuke0140/preone/pull/28, retargeted from wave-17 to main after rebase)
+
+- Final test run on wave-18 branch (which includes all 3 waves): 83 tests across 7 files, ALL PASSING
+  - 23 ws-scope-resolver (Wave 16.1)
+  - 14 ws-scope-check.service (Wave 16.1)
+  - 5 realtime-event-publisher (Wave 16.1)
+  - 6 ws-subscription-manager (Wave 16.1)
+  - 12 circuit-breaker.service (Wave 17)
+  - 6 sms.adapter (Wave 17)
+  - 17 ai.service (Wave 18)
+
+- Pre-existing failures noted: 2 tests in ws-base-gateway.spec.ts were already failing on main BEFORE Wave 16.1 (verified by git stash + checkout main + re-run). Left as-is for the team to triage separately. Not introduced by these waves.
+
+Stage Summary:
+- 3 feature waves delivered: Wave 16.1 (DB-backed WS scope checks + 5 service integrations), Wave 17 (8 external integration adapters + circuit breaker), Wave 18 (5 AI endpoints with PII redaction + fallbacks)
+- 83 unit tests across all 3 waves, all passing
+- 3 PRs raised: #26 (Wave 16.1), #27 (Wave 17), #28 (Wave 18) — all targeting main
+- Clean linear branch topology — each wave builds on the previous one
+- Zero TypeScript errors in any new/modified file (only pre-existing OTel error remains)
+- No schema changes, no migrations, no frontend changes
+- Recommended merge order: PR #26 (Wave 16.1) → PR #27 (Wave 17) → PR #28 (Wave 18)
+- Follow-up recommended: Wave 17.1 (wire real providers behind feature flags + tenant-level config), Wave 18.1 (Redis caching for identical prompts, SSE streaming, per-tenant token budget), triage the 2 pre-existing ws-base-gateway test failures on main

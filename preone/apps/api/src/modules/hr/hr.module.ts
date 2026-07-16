@@ -1,31 +1,97 @@
 /**
- * HrModule — Staff, Payroll, Leave, Attendance, Performance
+ * HrModule — wiring for HR bounded context.
  *
  * Per BTD §4.3 Module Catalog #10:
- *   "hr — Staff, Payroll, Leave, Attendance — ~40 APIs"
+ *   "hr — Staff, Payroll, Leave, Attendance — ~45 APIs"
  *
- * Per BRC v1.0 §6 (HR Rules, 12 rules) + §9 (Compliance, POSH) +
- *   API Catalog §16.13 + ERD v3.0 (HR, 31 tables):
- *   - Employee onboarding + BGV (R-HR-002: Background Verification)
- *   - Staff qualification minimum (R-HR-001)
- *   - Leave management (R-HR-003: 18 days annual, R-HR-004: max 10 consecutive)
- *   - Substitute teacher assignment (R-HR-005)
- *   - Payroll cutoff + payslip generation (R-HR-006)
- *   - Performance review cycle (R-HR-007: quarterly)
- *   - Exit process (R-HR-008: notice period + handover)
- *   - Internal Complaints Committee (R-HR-009, R-CMP-009 to R-CMP-012)
- *   - Annual POSH training (R-HR-010)
- *   - Food handler medical certificate (R-HR-011, R-CMP-018)
- *   - Probation period (R-HR-012: 3 months)
- *   - Salary revision approval (R-APR-011) + new position (R-APR-010)
- *   - Biometric integration (eSSL / Secugen / Mantra)
- *
- * Aggregates: EmployeeAggregate, LeaveAggregate, PayrollAggregate,
- *             PerformanceReviewAggregate
- *
- * Status: STUB — to be implemented in Wave 7 per BUILD_ROADMAP.md
+ * Implements:
+ *   - 4 aggregates (Employee, Leave, Payroll, PerformanceReview)
+ *   - 1 service + 4 Prisma repositories
+ *   - 4 controllers (Employees, Leaves, Payrolls, PerformanceReviews)
+ *   - 17 command handlers + 8 query handlers
+ *   - 25 domain events wired via EventBusService
+ *   - 1 integration-event subscriber (listens to Identity + emits to Identity/Comm)
  */
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 
-@Module({})
-export class HrModule {}
+import { CommandBus, QueryBus } from '@shared/cqrs';
+import { EventBusModule } from '@infra/event-bus/event-bus.module';
+import { PrismaModule } from '@infra/prisma/prisma.module';
+
+import { HrIntegrationEventSubscriber } from './application/services/hr-integration-subscriber.service';
+import { HrService } from './application/services/hr.service';
+import {
+  ActivateEmployeeCommandHandler, ApplyLeaveCommandHandler,
+  ApproveLeaveCommandHandler, ApprovePayrollCommandHandler,
+  CancelLeaveCommandHandler, ClearBgvCommandHandler,
+  CompleteExitCommandHandler, CompleteReviewCommandHandler,
+  CreateEmployeeCommandHandler, GeneratePayrollCommandHandler,
+  MarkPayrollPaidCommandHandler, OnboardEmployeeCommandHandler,
+  PromoteEmployeeCommandHandler, RejectLeaveCommandHandler,
+  ResignEmployeeCommandHandler, StartReviewCommandHandler,
+  SuspendEmployeeCommandHandler,
+} from './application/handlers/hr-command-handlers';
+import {
+  GetEmployeeLeaveBalanceQueryHandler, GetEmployeeQueryHandler,
+  GetPayrollQueryHandler, ListEmployeesQueryHandler,
+  ListEmployeeLeavesQueryHandler, ListPayrollsQueryHandler,
+  ListPendingLeavesQueryHandler, ListReviewsQueryHandler,
+} from './application/handlers/hr-query-handlers';
+import {
+  EmployeesController, LeavesController, PayrollsController,
+  PerformanceReviewsController,
+} from './controllers/hr.controllers';
+import {
+  EMPLOYEE_REPOSITORY, LEAVE_REPOSITORY, PAYROLL_REPOSITORY,
+  PERFORMANCE_REVIEW_REPOSITORY,
+} from './domain/repositories/tokens';
+import {
+  PrismaEmployeeRepository, PrismaLeaveRepository,
+  PrismaPayrollRepository, PrismaPerformanceReviewRepository,
+} from './infrastructure/repositories/prisma-hr.repository';
+
+@Module({
+  imports: [PrismaModule, EventBusModule],
+  controllers: [
+    EmployeesController, LeavesController, PayrollsController,
+    PerformanceReviewsController,
+  ],
+  providers: [
+    HrService,
+    HrIntegrationEventSubscriber,
+    // Repositories
+    { provide: EMPLOYEE_REPOSITORY, useClass: PrismaEmployeeRepository },
+    { provide: LEAVE_REPOSITORY, useClass: PrismaLeaveRepository },
+    { provide: PAYROLL_REPOSITORY, useClass: PrismaPayrollRepository },
+    { provide: PERFORMANCE_REVIEW_REPOSITORY, useClass: PrismaPerformanceReviewRepository },
+    // CQRS
+    CommandBus, QueryBus,
+    // Command handlers (17)
+    CreateEmployeeCommandHandler, OnboardEmployeeCommandHandler,
+    ClearBgvCommandHandler, ActivateEmployeeCommandHandler,
+    PromoteEmployeeCommandHandler, SuspendEmployeeCommandHandler,
+    ResignEmployeeCommandHandler, CompleteExitCommandHandler,
+    ApplyLeaveCommandHandler, ApproveLeaveCommandHandler,
+    RejectLeaveCommandHandler, CancelLeaveCommandHandler,
+    GeneratePayrollCommandHandler, ApprovePayrollCommandHandler,
+    MarkPayrollPaidCommandHandler, StartReviewCommandHandler,
+    CompleteReviewCommandHandler,
+    // Query handlers (8)
+    GetEmployeeQueryHandler, ListEmployeesQueryHandler,
+    ListPendingLeavesQueryHandler, ListEmployeeLeavesQueryHandler,
+    GetEmployeeLeaveBalanceQueryHandler,
+    GetPayrollQueryHandler, ListPayrollsQueryHandler,
+    ListReviewsQueryHandler,
+  ],
+  exports: [HrService],
+})
+export class HrModule implements OnModuleInit {
+  constructor(private readonly subscriber: HrIntegrationEventSubscriber) {}
+
+  onModuleInit(): void {
+    // Subscribe to integration events from Identity
+    // Per BTD §14.1 — HR is a SUBSCRIBER on UserCreated (link user → employee)
+    // and a PRODUCER of StaffOnboarded.v1 (Identity creates user account)
+    this.subscriber.register();
+  }
+}

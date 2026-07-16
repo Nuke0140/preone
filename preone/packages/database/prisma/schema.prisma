@@ -267,6 +267,29 @@ model School {
   gstConfigs          GstConfig[]
   messageReadReceipts MessageReadReceipt[]
 
+  // ─── Wave 6 back-relations (HR) ───
+  employees              Employee[]
+  employeeQualifications EmployeeQualification[]
+  employeeDocuments      EmployeeDocument[]
+  leaveRequests          LeaveRequest[]
+  leaveBalances          LeaveBalance[]
+  payrollRuns            PayrollRun[]
+  payslips               Payslip[]
+  performanceReviews     PerformanceReview[]
+  reviewGoals            ReviewGoal[]
+  reviewCompetencies     ReviewCompetency[]
+  employeeAttendances    EmployeeAttendance[]
+
+  // ─── Wave 6 back-relations (CRM) ───
+  leads                    Lead[]
+  campaigns                Campaign[]
+  followUps                FollowUp[]
+  leadTags                 LeadTag[]
+  leadActivities           LeadActivity[]
+  campaignTemplates        CampaignTemplate[]
+  campaignAudienceSegments CampaignAudienceSegment[]
+  counsellorTargets        CounsellorTarget[]
+
   @@index([status])
   @@index([tier])
   @@index([createdAt])
@@ -333,6 +356,12 @@ model Branch {
   gstConfigs     GstConfig[]
   notifications  Notification[]
 
+  // ─── Wave 6 back-relations (HR + CRM) ───
+  employees   Employee[]
+  payrollRuns PayrollRun[]
+  leads       Lead[]
+  campaigns   Campaign[]
+
   @@unique([schoolId, code])
   @@index([schoolId, isActive])
   @@index([city, state])
@@ -396,6 +425,15 @@ model User {
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]
   messageReadReceipts      MessageReadReceipt[]
+
+  // ─── Wave 6 back-relations (HR + CRM) ───
+  employeeProfile        Employee?
+  approvedLeaves         LeaveRequest[]       @relation("LeaveApprover")
+  approvedPayrollRuns    PayrollRun[]
+  counsellorFollowUps    FollowUp[]
+  assignedLeads          Lead[]               @relation("LeadAssignedCounsellor")
+  previousLeads          Lead[]               @relation("LeadPreviousCounsellor")
+  counsellorTargets      CounsellorTarget[]
 
   @@unique([schoolId, email])
   @@index([schoolId, status])
@@ -4424,3 +4462,786 @@ model GstConfig {
   @@unique([schoolId, branchId])
   @@map("gst_configs")
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Wave 6 — HR Module Prisma Models (BTD §4.3 #10, BRC §6, ERD HR 31 tables)
+// ───────────────────────────────────────────────────────────────────────────
+
+// ─── Enums: HR ───
+
+enum EmployeeStatus {
+  PROSPECTIVE
+  ONBOARDED
+  ACTIVE
+  ON_LEAVE
+  SUSPENDED
+  RESIGNED
+  EXITED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  CONSULTANT
+  INTERN
+}
+
+enum StaffRole {
+  PRINCIPAL
+  COORDINATOR
+  CLASS_TEACHER
+  ACTIVITY_TEACHER
+  RECEPTION_ADMISSION
+  ACCOUNTS
+  INVENTORY_STORE_KEEPER
+  TRANSPORT_MANAGER
+  HR
+  ADMIN_STAFF
+  FACILITY
+}
+
+enum BgvStatus {
+  PENDING
+  IN_PROGRESS
+  CLEARED
+  FAILED
+}
+
+enum LeaveType {
+  CASUAL
+  SICK
+  EARNED
+  MATERNITY
+  PATERNITY
+  UNPAID
+  SABBATICAL
+  COMP_OFF
+}
+
+enum LeaveStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  TAKEN
+  CANCELLED
+}
+
+enum LeaveDayType {
+  FULL
+  FIRST_HALF
+  SECOND_HALF
+  FIRST_QUARTER
+  LAST_QUARTER
+}
+
+enum PayrollStatus {
+  DRAFT
+  GENERATED
+  APPROVED
+  PAID
+  ARCHIVED
+  ON_HOLD
+}
+
+enum PayslipStatus {
+  PENDING
+  PAID
+  ON_HOLD
+  REVERSED
+}
+
+enum ReviewCycle {
+  Q1
+  Q2
+  Q3
+  Q4
+  ANNUAL
+  PROBATION_END
+}
+
+enum ReviewStatus {
+  DRAFT
+  SELF_ASSESSMENT
+  MANAGER_REVIEW
+  HR_REVIEW
+  COMPLETED
+  ARCHIVED
+  CANCELLED
+}
+
+// ─── HR Models ───
+
+model Employee {
+  id                     String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId               String        @map("school_id") @db.Uuid
+  branchId               String?       @map("branch_id") @db.Uuid
+  employeeCode           String        @map("employee_code") @db.VarChar(32)
+  userId                 String?       @unique @map("user_id") @db.Uuid
+  firstName              String        @map("first_name") @db.VarChar(100)
+  lastName               String        @map("last_name") @db.VarChar(100)
+  displayName            String?       @map("display_name") @db.VarChar(200)
+  email                  String        @db.VarChar(255)
+  phone                  String        @db.VarChar(20)
+  dateOfBirth            DateTime?     @map("date_of_birth") @db.Date
+  gender                 String?       @db.VarChar(10)
+  role                   StaffRole
+  designation            String        @db.VarChar(100)
+  employmentType         EmploymentType @map("employment_type")
+  status                 EmployeeStatus @default(PROSPECTIVE)
+  dateOfJoining          DateTime      @map("date_of_joining") @db.Date
+  probationEndDate       DateTime?     @map("probation_end_date") @db.Date
+  qualifications         EmployeeQualification[]
+  documents              EmployeeDocument[]
+  bgvStatus              BgvStatus     @default(PENDING) @map("bgv_status")
+  bgvInitiatedAt         DateTime?     @map("bgv_initiated_at") @db.Timestamptz
+  bgvClearedAt           DateTime?     @map("bgv_cleared_at") @db.Timestamptz
+  bgvVendor              String?       @map("bgv_vendor") @db.VarChar(100)
+  bgvReportUrl           String?       @map("bgv_report_url") @db.Text
+  salaryCents            Int           @map("salary_cents")
+  bankAccountNumber      String?       @map("bank_account_number") @db.VarChar(255)
+  bankIfsc               String?       @map("bank_ifsc") @db.VarChar(20)
+  panNumber              String?       @map("pan_number") @db.VarChar(255)
+  aadhaarNumber          String?       @map("aadhaar_number") @db.VarChar(255)
+  emergencyContactName   String?       @map("emergency_contact_name") @db.VarChar(100)
+  emergencyContactPhone  String?       @map("emergency_contact_phone") @db.VarChar(20)
+  reportingManagerId     String?       @map("reporting_manager_id") @db.Uuid
+  handoverCompleted      Boolean       @default(false) @map("handover_completed")
+  resignationDate        DateTime?     @map("resignation_date") @db.Date
+  lastWorkingDate        DateTime?     @map("last_working_date") @db.Date
+  exitReason             String?       @map("exit_reason") @db.Text
+  exitInterviewConducted Boolean       @default(false) @map("exit_interview_conducted")
+  leaves                 LeaveRequest[]
+  substituteFor          LeaveRequest[]       @relation("SubstituteFor")
+  leaveBalances          LeaveBalance[]
+  payrolls               Payslip[]
+  employeeAttendances    EmployeeAttendance[]
+  reviewsAsEmployee      PerformanceReview[] @relation("ReviewEmployee")
+  reviewsAsReviewer      PerformanceReview[] @relation("ReviewReviewer")
+  reviewsAsHr            PerformanceReview[] @relation("ReviewHr")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch  Branch? @relation(fields: [branchId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@unique([schoolId, employeeCode])
+  @@index([schoolId, status])
+  @@index([schoolId, role])
+  @@index([userId])
+  @@map("employees")
+}
+
+model EmployeeQualification {
+  id              String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String   @map("school_id") @db.Uuid
+  employeeId      String   @map("employee_id") @db.Uuid
+  degree          String   @db.VarChar(100)
+  institution     String   @db.VarChar(200)
+  yearOfPassing   Int      @map("year_of_passing")
+  isVerified      Boolean  @default(false) @map("is_verified")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("employee_qualifications")
+}
+
+model EmployeeDocument {
+  id            String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String    @map("school_id") @db.Uuid
+  employeeId    String    @map("employee_id") @db.Uuid
+  documentType  String    @map("document_type") @db.VarChar(50)
+  fileName      String    @map("file_name") @db.VarChar(255)
+  fileUrl       String    @map("file_url") @db.Text
+  uploadedAt    DateTime  @map("uploaded_at") @db.Timestamptz
+  verifiedAt    DateTime? @map("verified_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("employee_documents")
+}
+
+model LeaveRequest {
+  id                    String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String        @map("school_id") @db.Uuid
+  branchId              String?       @map("branch_id") @db.Uuid
+  employeeId            String        @map("employee_id") @db.Uuid
+  leaveType             LeaveType     @map("leave_type")
+  status                LeaveStatus   @default(PENDING)
+  fromDate              DateTime      @map("from_date") @db.Date
+  toDate                DateTime      @map("to_date") @db.Date
+  dayType               LeaveDayType  @map("day_type")
+  totalDays             Decimal       @map("total_days") @db.Decimal(5, 2)
+  reason                String        @db.Text
+  appliedAt             DateTime      @map("applied_at") @db.Timestamptz
+  approverId            String?       @map("approver_id") @db.Uuid
+  approvedAt            DateTime?     @map("approved_at") @db.Timestamptz
+  approvalNotes         String?       @map("approval_notes") @db.Text
+  rejectionReason       String?       @map("rejection_reason") @db.Text
+  substituteEmployeeId  String?       @map("substitute_employee_id") @db.Uuid
+  isCriticalPeriod      Boolean       @default(false) @map("is_critical_period")
+  attachmentUrl         String?       @map("attachment_url") @db.Text
+  cancelledAt           DateTime?     @map("cancelled_at") @db.Timestamptz
+  cancellationReason    String?       @map("cancellation_reason") @db.Text
+  takenAt               DateTime?     @map("taken_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  approver   User?    @relation("LeaveApprover", fields: [approverId], references: [id])
+  substitute Employee? @relation("SubstituteFor", fields: [substituteEmployeeId], references: [id])
+
+  @@index([schoolId, status])
+  @@index([employeeId])
+  @@index([schoolId, fromDate, toDate])
+  @@map("leave_requests")
+}
+
+model LeaveBalance {
+  id             String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String  @map("school_id") @db.Uuid
+  employeeId     String  @map("employee_id") @db.Uuid
+  year           Int
+  casualEntitled Decimal @map("casual_entitled") @db.Decimal(5, 2) @default(12)
+  casualUsed     Decimal @map("casual_used") @db.Decimal(5, 2) @default(0)
+  sickEntitled   Decimal @map("sick_entitled") @db.Decimal(5, 2) @default(8)
+  sickUsed       Decimal @map("sick_used") @db.Decimal(5, 2) @default(0)
+  earnedEntitled Decimal @map("earned_entitled") @db.Decimal(5, 2) @default(18)
+  earnedUsed     Decimal @map("earned_used") @db.Decimal(5, 2) @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, year])
+  @@map("leave_balances")
+}
+
+model PayrollRun {
+  id                    String         @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String         @map("school_id") @db.Uuid
+  branchId              String?        @map("branch_id") @db.Uuid
+  payrollRunCode        String         @map("payroll_run_code") @db.VarChar(32)
+  payPeriodMonth        Int            @map("pay_period_month")
+  payPeriodYear         Int            @map("pay_period_year")
+  status                PayrollStatus  @default(DRAFT)
+  cutoffDate            DateTime      @map("cutoff_date") @db.Date
+  generatedAt           DateTime?      @map("generated_at") @db.Timestamptz
+  approvedAt            DateTime?      @map("approved_at") @db.Timestamptz
+  approvedBy            String?        @map("approved_by") @db.Uuid
+  paidAt                DateTime?      @map("paid_at") @db.Timestamptz
+  totalGrossCents       Int            @map("total_gross_cents")
+  totalDeductionsCents  Int            @map("total_deductions_cents")
+  totalNetPayCents      Int            @map("total_net_pay_cents")
+  employeeCount         Int            @map("employee_count")
+  holdReason            String?        @map("hold_reason") @db.Text
+  payslips              Payslip[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school    School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch    Branch? @relation(fields: [branchId], references: [id])
+  approver  User?   @relation(fields: [approvedBy], references: [id])
+
+  @@unique([schoolId, payrollRunCode])
+  @@unique([schoolId, payPeriodMonth, payPeriodYear])
+  @@map("payroll_runs")
+}
+
+model Payslip {
+  id                       String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                 String        @map("school_id") @db.Uuid
+  payrollRunId             String        @map("payroll_run_id") @db.Uuid
+  employeeId               String        @map("employee_id") @db.Uuid
+  payPeriodMonth           Int           @map("pay_period_month")
+  payPeriodYear            Int           @map("pay_period_year")
+  basicCents               Int           @map("basic_cents")
+  hraCents                 Int           @map("hra_cents")
+  conveyanceAllowanceCents Int           @map("conveyance_allowance_cents")
+  specialAllowanceCents    Int           @map("special_allowance_cents")
+  medicalAllowanceCents    Int           @map("medical_allowance_cents")
+  otherAllowancesCents     Int           @map("other_allowances_cents") @default(0)
+  grossCents               Int           @map("gross_cents")
+  pfDeductionCents         Int           @map("pf_deduction_cents") @default(0)
+  esiDeductionCents        Int           @map("esi_deduction_cents") @default(0)
+  tdsDeductionCents        Int           @map("tds_deduction_cents") @default(0)
+  professionalTaxCents     Int           @map("professional_tax_cents") @default(0)
+  loanDeductionCents       Int           @map("loan_deduction_cents") @default(0)
+  otherDeductionsCents     Int           @map("other_deductions_cents") @default(0)
+  totalDeductionsCents     Int           @map("total_deductions_cents")
+  netPayCents              Int           @map("net_pay_cents")
+  bankAccountNumber        String?       @map("bank_account_number") @db.VarChar(255)
+  bankIfsc                 String?       @map("bank_ifsc") @db.VarChar(20)
+  utrNumber                String?       @map("utr_number") @db.VarChar(64)
+  paymentDate              DateTime?     @map("payment_date") @db.Timestamptz
+  status                   PayslipStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school     School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([payrollRunId, employeeId])
+  @@index([employeeId])
+  @@map("payslips")
+}
+
+model PerformanceReview {
+  id                            String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                      String        @map("school_id") @db.Uuid
+  branchId                      String?       @map("branch_id") @db.Uuid
+  employeeId                    String        @map("employee_id") @db.Uuid
+  reviewerId                    String        @map("reviewer_id") @db.Uuid
+  hrReviewerId                  String?       @map("hr_reviewer_id") @db.Uuid
+  cycle                         ReviewCycle
+  cycleYear                     Int           @map("cycle_year")
+  status                        ReviewStatus  @default(DRAFT)
+  goals                         ReviewGoal[]
+  competencies                  ReviewCompetency[]
+  selfAssessmentSubmittedAt     DateTime?     @map("self_assessment_submitted_at") @db.Timestamptz
+  managerReviewSubmittedAt      DateTime?     @map("manager_review_submitted_at") @db.Timestamptz
+  hrReviewSubmittedAt           DateTime?     @map("hr_review_submitted_at") @db.Timestamptz
+  completedAt                   DateTime?     @map("completed_at") @db.Timestamptz
+  overallRating                 Int?          @map("overall_rating")
+  promotionRecommended          Boolean       @default(false) @map("promotion_recommended")
+  salaryRevisionPercent         Decimal?      @map("salary_revision_percent") @db.Decimal(5, 2)
+  strengths                     String?       @db.Text
+  improvements                  String?       @db.Text
+  actionPlan                    String?       @map("action_plan") @db.Text
+  employeeAcknowledgedAt        DateTime?     @map("employee_acknowledged_at") @db.Timestamptz
+  employeeFeedback              String?       @map("employee_feedback") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee  Employee @relation("ReviewEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewer  Employee @relation("ReviewReviewer", fields: [reviewerId], references: [id])
+  hrReviewer Employee? @relation("ReviewHr", fields: [hrReviewerId], references: [id])
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, employeeId, cycle, cycleYear])
+  @@index([employeeId])
+  @@map("performance_reviews")
+}
+
+model ReviewGoal {
+  id                String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId          String   @map("school_id") @db.Uuid
+  reviewId          String   @map("review_id") @db.Uuid
+  title             String   @db.VarChar(255)
+  description       String   @db.Text
+  weightPercent     Decimal  @map("weight_percent") @db.Decimal(5, 2)
+  selfRating        Int?     @map("self_rating")
+  managerRating     Int?     @map("manager_rating")
+  finalRating       Int?     @map("final_rating")
+  selfComments      String?  @map("self_comments") @db.Text
+  managerComments   String?  @map("manager_comments") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  review PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  school School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("review_goals")
+}
+
+model ReviewCompetency {
+  id             String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String   @map("school_id") @db.Uuid
+  reviewId       String   @map("review_id") @db.Uuid
+  competency     String   @db.VarChar(100)
+  selfRating     Int?     @map("self_rating")
+  managerRating  Int?     @map("manager_rating")
+  finalRating    Int?     @map("final_rating")
+  comments       String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  review PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  school School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("review_competencies")
+}
+
+model EmployeeAttendance {
+  id           String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId     String   @map("school_id") @db.Uuid
+  branchId     String?  @map("branch_id") @db.Uuid
+  employeeId   String   @map("employee_id") @db.Uuid
+  date         DateTime @db.Date
+  checkInTime  DateTime? @map("check_in_time") @db.Timestamptz
+  checkOutTime DateTime? @map("check_out_time") @db.Timestamptz
+  status       String   @db.VarChar(20) // PRESENT, ABSENT, LATE, HALF_DAY, LEAVE
+  workHours    Decimal? @map("work_hours") @db.Decimal(4, 2)
+  notes        String?  @db.Text
+  source       String   @db.VarChar(20) // BIOMETRIC, MANUAL, SYSTEM
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@index([schoolId, date])
+  @@map("employee_attendances")
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Wave 6 — CRM Module Prisma Models (BTD §4.3 #2)
+// ───────────────────────────────────────────────────────────────────────────
+
+// ─── Enums: CRM ───
+
+enum LeadStatus {
+  NEW
+  ASSIGNED
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  NURTURED
+  CONVERTED
+  LOST
+  DROPPED
+  REACTIVATED
+}
+
+enum LeadSource {
+  WEBSITE
+  WALK_IN
+  REFERRAL
+  DIGITAL_AD
+  SOCIAL_MEDIA
+  PHONE_INQUIRY
+  EMAIL_INQUIRY
+  EVENT
+  PARTNER
+  OTHER
+}
+
+enum LeadPriority {
+  HOT
+  WARM
+  COLD
+}
+
+enum ProgramInterest {
+  PLAYGROUP
+  NURSERY
+  JR_KG
+  SR_KG
+  DAYCARE
+  AFTER_SCHOOL
+  SUMMER_CAMP
+  MULTI
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  COMPLETED
+  ARCHIVED
+  CANCELLED
+}
+
+enum CampaignChannel {
+  WHATSAPP
+  SMS
+  EMAIL
+  PUSH
+  MULTI
+}
+
+enum CampaignAudience {
+  ALL_LEADS
+  NEW_LEADS
+  QUALIFIED_LEADS
+  NURTURED_LEADS
+  ALL_PARENTS
+  PROSPECTIVE_PARENTS
+  CUSTOM_SEGMENT
+}
+
+enum FollowUpType {
+  CALL
+  WHATSAPP
+  EMAIL
+  SMS
+  CAMPUS_VISIT
+  DEMO_CLASS
+  PARENT_MEETING
+  DOCUMENT_COLLECTION
+  OTHER
+}
+
+enum FollowUpStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  MISSED
+}
+
+enum FollowUpOutcome {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  CONVERTED
+  NO_RESPONSE
+  RESCHEDULED
+}
+
+// ─── CRM Models ───
+
+model Lead {
+  id                     String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId               String           @map("school_id") @db.Uuid
+  branchId               String?          @map("branch_id") @db.Uuid
+  leadCode               String           @map("lead_code") @db.VarChar(32)
+  parentFirstName        String           @map("parent_first_name") @db.VarChar(100)
+  parentLastName         String           @map("parent_last_name") @db.VarChar(100)
+  email                  String?          @db.VarChar(255)
+  phone                  String           @db.VarChar(20)
+  alternatePhone         String?          @map("alternate_phone") @db.VarChar(20)
+  childName              String?          @map("child_name") @db.VarChar(100)
+  childDateOfBirth       DateTime?        @map("child_date_of_birth") @db.Date
+  programInterest        ProgramInterest  @map("program_interest")
+  preferredStartDate     DateTime?        @map("preferred_start_date") @db.Date
+  source                 LeadSource
+  sourceDetails          String?          @map("source_details") @db.Text
+  campaignId             String?          @map("campaign_id") @db.Uuid
+  status                 LeadStatus       @default(NEW)
+  priority               LeadPriority     @default(WARM)
+  assignedCounsellorId   String?          @map("assigned_counsellor_id") @db.Uuid
+  previousCounsellorId   String?          @map("previous_counsellor_id") @db.Uuid
+  assignedAt             DateTime?        @map("assigned_at") @db.Timestamptz
+  firstContactedAt       DateTime?        @map("first_contacted_at") @db.Timestamptz
+  lastContactedAt        DateTime?        @map("last_contacted_at") @db.Timestamptz
+  contactCount           Int              @default(0) @map("contact_count")
+  qualificationScore     Int?             @map("qualification_score")
+  qualificationNotes     String?          @map("qualification_notes") @db.Text
+  convertedAt            DateTime?        @map("converted_at") @db.Timestamptz
+  convertedApplicationId String?          @map("converted_application_id") @db.Uuid
+  convertedStudentId     String?          @map("converted_student_id") @db.Uuid
+  lostReason             String?          @map("lost_reason") @db.Text
+  lostAt                 DateTime?        @map("lost_at") @db.Timestamptz
+  budgetCents            Int?             @map("budget_cents")
+  location               String?          @db.VarChar(255)
+  notes                  String?          @db.Text
+  tags                   String[]         @default([])
+  followUpCount          Int              @default(0) @map("follow_up_count")
+  followUps              FollowUp[]
+  activities             LeadActivity[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school              School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch              Branch?   @relation(fields: [branchId], references: [id])
+  campaign            Campaign? @relation(fields: [campaignId], references: [id])
+  assignedCounsellor  User?     @relation("LeadAssignedCounsellor", fields: [assignedCounsellorId], references: [id])
+  previousCounsellor  User?     @relation("LeadPreviousCounsellor", fields: [previousCounsellorId], references: [id])
+
+  @@unique([schoolId, leadCode])
+  @@index([schoolId, status])
+  @@index([schoolId, source])
+  @@index([assignedCounsellorId])
+  @@index([campaignId])
+  @@map("leads")
+}
+
+model Campaign {
+  id                     String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId               String           @map("school_id") @db.Uuid
+  branchId               String?          @map("branch_id") @db.Uuid
+  campaignCode           String           @map("campaign_code") @db.VarChar(32)
+  name                   String           @db.VarChar(200)
+  description            String?          @db.Text
+  channel                CampaignChannel
+  audience               CampaignAudience
+  customSegmentQuery     String?          @map("custom_segment_query") @db.Text
+  status                 CampaignStatus   @default(DRAFT)
+  budgetCents            Int              @map("budget_cents")
+  spentCents             Int              @default(0) @map("spent_cents")
+  audienceSize           Int              @default(0) @map("audience_size")
+  sentCount              Int              @default(0) @map("sent_count")
+  deliveredCount         Int              @default(0) @map("delivered_count")
+  openedCount            Int              @default(0) @map("opened_count")
+  clickedCount           Int              @default(0) @map("clicked_count")
+  convertedCount         Int              @default(0) @map("converted_count")
+  templateId             String?          @map("template_id") @db.Uuid
+  messageContent         String?          @map("message_content") @db.Text
+  scheduledAt            DateTime?        @map("scheduled_at") @db.Timestamptz
+  launchedAt             DateTime?        @map("launched_at") @db.Timestamptz
+  completedAt            DateTime?        @map("completed_at") @db.Timestamptz
+  cancelledAt            DateTime?        @map("cancelled_at") @db.Timestamptz
+  cancellationReason     String?          @map("cancellation_reason") @db.Text
+  attributedRevenueCents Int              @default(0) @map("attributed_revenue_cents")
+  leads                  Lead[]
+  followUps              FollowUp[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id])
+
+  @@unique([schoolId, campaignCode])
+  @@index([schoolId, status])
+  @@map("campaigns")
+}
+
+model FollowUp {
+  id                    String          @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String          @map("school_id") @db.Uuid
+  branchId              String?         @map("branch_id") @db.Uuid
+  leadId                String          @map("lead_id") @db.Uuid
+  campaignId            String?         @map("campaign_id") @db.Uuid
+  counsellorId          String          @map("counsellor_id") @db.Uuid
+  type                  FollowUpType
+  status                FollowUpStatus  @default(SCHEDULED)
+  scheduledAt           DateTime        @map("scheduled_at") @db.Timestamptz
+  durationMinutes       Int?            @map("duration_minutes")
+  outcome               FollowUpOutcome?
+  outcomeNotes          String?         @map("outcome_notes") @db.Text
+  startedAt             DateTime?       @map("started_at") @db.Timestamptz
+  completedAt           DateTime?       @map("completed_at") @db.Timestamptz
+  cancelledAt           DateTime?       @map("cancelled_at") @db.Timestamptz
+  cancellationReason    String?         @map("cancellation_reason") @db.Text
+  missedAt              DateTime?       @map("missed_at") @db.Timestamptz
+  rescheduledTo         DateTime?       @map("rescheduled_to") @db.Timestamptz
+  rescheduledFollowUpId String?         @map("rescheduled_follow_up_id") @db.Uuid
+  reminderSentCount     Int             @default(0) @map("reminder_sent_count")
+  lastReminderSentAt    DateTime?       @map("last_reminder_sent_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  lead        Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  counsellor  User   @relation(fields: [counsellorId], references: [id])
+  campaign    Campaign? @relation(fields: [campaignId], references: [id])
+  school      School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([counsellorId, status])
+  @@index([schoolId, scheduledAt])
+  @@map("follow_ups")
+}
+
+model LeadTag {
+  id        String @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId  String @map("school_id") @db.Uuid
+  leadId    String @map("lead_id") @db.Uuid
+  tag       String @db.VarChar(50)
+  color     String? @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, tag])
+  @@index([schoolId, tag])
+  @@map("lead_tags")
+}
+
+model LeadActivity {
+  id          String @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String @map("school_id") @db.Uuid
+  leadId      String @map("lead_id") @db.Uuid
+  activityType String @map("activity_type") @db.VarChar(50)
+  description String @db.Text
+  performedById String? @map("performed_by_id") @db.Uuid
+  metadata    Json?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_activities")
+}
+
+model CampaignTemplate {
+  id            String @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String @map("school_id") @db.Uuid
+  name          String @db.VarChar(200)
+  channel       CampaignChannel
+  subject       String? @db.VarChar(255)
+  body          String @db.Text
+  placeholders  String[] @default([])
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, channel])
+  @@map("campaign_templates")
+}
+
+model CampaignAudienceSegment {
+  id           String @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId     String @map("school_id") @db.Uuid
+  name         String @db.VarChar(200)
+  description  String? @db.Text
+  filterQuery  String @map("filter_query") @db.Text
+  audienceSize Int    @default(0) @map("audience_size")
+  lastComputedAt DateTime? @map("last_computed_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, name])
+  @@map("campaign_audience_segments")
+}
+
+model CounsellorTarget {
+  id              String @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String @map("school_id") @db.Uuid
+  counsellorId    String @map("counsellor_id") @db.Uuid
+  periodMonth     Int    @map("period_month")
+  periodYear      Int    @map("period_year")
+  leadTarget      Int    @map("lead_target")
+  conversionTarget Int   @map("conversion_target")
+  revenueTargetCents Int @map("revenue_target_cents")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  counsellor User   @relation(fields: [counsellorId], references: [id])
+  school     School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([counsellorId, periodMonth, periodYear])
+  @@map("counsellor_targets")
+}
+

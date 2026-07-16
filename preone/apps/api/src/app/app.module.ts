@@ -31,6 +31,7 @@ import { CacheModule } from '../infrastructure/cache/cache.module';
 import { EventBusModule } from '../infrastructure/event-bus/event-bus.module';
 import { HealthModule } from '../infrastructure/health/health.module';
 import { PrismaModule } from '../infrastructure/prisma/prisma.module';
+import { RealtimeModule } from '../infrastructure/realtime';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { S3Module } from '../infrastructure/s3/s3.module';
 
@@ -142,6 +143,7 @@ import type { AppConfig } from '../config/env/app-config.type';
     S3Module,
     HealthModule,
     AuditModule,
+    RealtimeModule,
 
     // 6. Business modules (14 bounded contexts) — added progressively
     IdentityModule,

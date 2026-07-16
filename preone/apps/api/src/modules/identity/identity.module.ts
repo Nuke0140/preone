@@ -69,6 +69,9 @@ import {
   OutboxPublisher,
 } from './infrastructure/jobs/outbox-publisher';
 import {
+  SagaRetryWorker,
+} from './infrastructure/jobs/saga-retry.worker';
+import {
   PrismaBranchRepository,
 } from './infrastructure/repositories/prisma-branch.repository';
 import {
@@ -125,6 +128,8 @@ import {
 
     // ─── Infrastructure ───
     OutboxPublisher,
+    // Wave 10b — SagaRetryWorker drains FAILED outbox rows with backoff
+    SagaRetryWorker,
     { provide: PrismaOutboxRepository, useFactory: (prisma: PrismaService) => new PrismaOutboxRepository(prisma), inject: [PrismaService] },
 
     // ─── Repository ports → concrete implementations ───

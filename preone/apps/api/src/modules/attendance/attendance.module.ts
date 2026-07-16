@@ -39,6 +39,7 @@ import {
   ListAttendanceQueryHandler, ListIncidentsQueryHandler,
 } from './application/handlers/attendance-query-handlers';
 import { AttendanceService } from './application/services/attendance.service';
+import { AttendanceEventTranslator } from './application/services/attendance-event-translator.service';
 import {
   AttendanceController, DailyLogsController, DailyReportsController,
   IncidentsController, MedicineAuthorizationsController,

@@ -41,6 +41,8 @@ import { StudentModule } from '../modules/student/student.module';
 import { AcademicsModule } from '../modules/academics/academics.module';
 import { AdmissionsModule } from '../modules/admissions/admissions.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
+import { CommunicationModule } from '../modules/communication/communication.module';
+import { FinanceModule } from '../modules/finance/finance.module';
 
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -135,9 +137,9 @@ import type { AppConfig } from '../config/env/app-config.type';
     AcademicsModule,
     AdmissionsModule,
     AttendanceModule,
+    CommunicationModule,
+    FinanceModule,
     // CrmModule,
-    // CommunicationModule,
-    // FinanceModule,
     // InventoryModule,
     // HrModule,
     // AdministrationModule,

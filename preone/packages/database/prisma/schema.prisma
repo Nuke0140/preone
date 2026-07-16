@@ -234,6 +234,39 @@ model School {
   attendanceSummaries    AttendanceSummary[]
   applicationDocuments   ApplicationDocument[]
 
+  // ─── Wave 5 back-relations (Communication) ───
+  commTemplates            CommunicationTemplate[]
+  notifications            Notification[]
+  notificationRecipients   NotificationRecipient[]
+  announcements            Announcement[]
+  announcementRecipients   AnnouncementRecipient[]
+  conversations            Conversation[]
+  conversationParticipants ConversationParticipant[]
+  messages                 Message[]
+  commDeliveryLogs         CommunicationDeliveryLog[]
+  commProviderConfigs      CommunicationProviderConfig[]
+
+  // ─── Wave 5 back-relations (Finance) ───
+  feePlans            FeePlan[]
+  feePlanInstallments FeePlanInstallment[]
+  feeConcessions      FeeConcession[]
+  feeConcessionRules  FeeConcessionRule[]
+  studentFeePlans     StudentFeePlan[]
+  invoices            Invoice[]
+  invoiceLineItems    InvoiceLineItem[]
+  invoiceAdjustments  InvoiceAdjustment[]
+  payments            Payment[]
+  paymentAllocations  PaymentAllocation[]
+  refunds             Refund[]
+  refundAllocations   RefundAllocation[]
+  ledgerAccounts      LedgerAccount[]
+  ledgerEntries       LedgerEntry[]
+  lateFeeRules        LateFeeRule[]
+  scholarships        Scholarship[]
+  scholarshipAwards   ScholarshipAward[]
+  gstConfigs          GstConfig[]
+  messageReadReceipts MessageReadReceipt[]
+
   @@index([status])
   @@index([tier])
   @@index([createdAt])
@@ -291,6 +324,15 @@ model Branch {
   waitingListEntries   WaitingList[]
   dailyReportTemplates DailyReportTemplate[]
 
+  // ─── Wave 5 back-relations (Communication + Finance) ───
+  commTemplates  CommunicationTemplate[]
+  announcements  Announcement[]
+  conversations  Conversation[]
+  feePlans       FeePlan[]
+  feeConcessions FeeConcession[]
+  gstConfigs     GstConfig[]
+  notifications  Notification[]
+
   @@unique([schoolId, code])
   @@index([schoolId, isActive])
   @@index([city, state])
@@ -347,6 +389,13 @@ model User {
   // ─── Wave 3 back-relations ───
   guardian   Guardian? @relation(fields: [guardianId], references: [id])
   guardianId String?   @db.Uuid
+
+  // ─── Wave 5 back-relations (Communication) ───
+  notificationRecipients   NotificationRecipient[]
+  announcementRecipients   AnnouncementRecipient[]
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]
+  messageReadReceipts      MessageReadReceipt[]
 
   @@unique([schoolId, email])
   @@index([schoolId, status])
@@ -714,6 +763,10 @@ model Classroom {
   attendanceBulk  AttendanceBulk[]
   incidentReports IncidentReport[]
   dailyReports    DailyReport[]
+
+  // ─── Wave 5 back-relations (Communication) ───
+  announcements Announcement[]
+  conversations Conversation[]
 
   @@unique([branchId, code])
   @@index([branchId, isActive])
@@ -1084,6 +1137,17 @@ model Student {
   dailyReports           DailyReport[]
   attendanceSummaries    AttendanceSummary[]
 
+  // ─── Wave 5 back-relations (Communication) ───
+  notificationRecipients NotificationRecipient[]
+  announcementRecipients AnnouncementRecipient[]
+  scholarshipAwards      ScholarshipAward[]
+
+  // ─── Wave 5 back-relations (Finance) ───
+  studentFeePlans StudentFeePlan[]
+  invoices        Invoice[]
+  payments        Payment[]
+  refunds         Refund[]
+
   @@index([schoolId, branchId, status])
   @@index([branchId, currentSectionId])
   @@index([admissionNumber])
@@ -1163,6 +1227,10 @@ model Guardian {
   school       School            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   studentLinks StudentGuardian[]
   users        User[]
+
+  // ─── Wave 5 back-relations (Communication) ───
+  notificationRecipients NotificationRecipient[]
+  announcementRecipients AnnouncementRecipient[]
 
   @@index([schoolId, phone])
   @@index([schoolId, email])
@@ -1586,6 +1654,10 @@ model AcademicSession {
   attendances         Attendance[]
   attendanceBulkLogs  AttendanceBulk[]
   attendanceSummaries AttendanceSummary[]
+
+  // ─── Wave 5 back-relations (Finance) ───
+  feePlans        FeePlan[]
+  studentFeePlans StudentFeePlan[]
 
   @@unique([schoolId, code])
   @@index([schoolId, status])
@@ -2603,6 +2675,7 @@ model FeePlanQuote {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  feePlan     FeePlan?    @relation(fields: [feePlanId], references: [id], onDelete: SetNull)
   school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
@@ -3221,4 +3294,1133 @@ model AttendanceSummary {
 
   @@unique([studentId, academicSessionId, monthYear])
   @@map("attendance_summaries")
+}
+
+// ═════════════════════════════════════════════════════════════════
+// WAVE 5 — COMMUNICATION MODULE (BTD §4.3 #7)
+// Announcements, Chat, Notifications — ~50 APIs
+// ═════════════════════════════════════════════════════════════════
+
+enum NotificationChannel {
+  SMS
+  EMAIL
+  PUSH
+  WHATSAPP
+  IN_APP
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  CANCELLED
+}
+
+enum AnnouncementAudience {
+  ALL_SCHOOL
+  BRANCH
+  CLASSROOM
+  GRADE_LEVEL
+  STAFF_ONLY
+  PARENTS_ONLY
+  SPECIFIC_USERS
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+  CLASSROOM
+  BROADCAST
+}
+
+enum ConversationParticipantRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  RECALLED
+}
+
+enum CommunicationProviderType {
+  SMS_GUPSHUP
+  SMS_MSG91
+  EMAIL_SES
+  EMAIL_SENDGRID
+  PUSH_FCM
+  PUSH_APNS
+  WHATSAPP_GUPSHUP
+  WHATSAPP_INTERAKT
+}
+
+enum CommunicationTemplateType {
+  NOTIFICATION
+  ANNOUNCEMENT
+  TRANSACTIONAL
+  MARKETING
+  OTP
+  RECEIPT
+}
+
+enum DeliveryLogStatus {
+  ACCEPTED
+  SENT
+  DELIVERED
+  FAILED
+  REJECTED
+  BOUNCED
+}
+
+enum CommTriggerEvent {
+  ADMISSION_APPROVED
+  ADMISSION_CANCELLED
+  APPLICATION_SUBMITTED
+  APPLICATION_REJECTED
+  SEAT_OFFERED
+  ATTENDANCE_MARKED
+  INCIDENT_REPORTED
+  DAILY_REPORT_SENT
+  LATE_PICKUP
+  FEE_INVOICE_GENERATED
+  FEE_PAYMENT_RECEIVED
+  FEE_REFUND_PROCESSED
+  FEE_LATE_FEE_CHARGED
+  MANUAL
+}
+
+// ─── Communication: Templates ───
+
+model CommunicationTemplate {
+  id           String                    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId     String                    @map("school_id") @db.Uuid
+  branchId     String?                   @map("branch_id") @db.Uuid
+  templateCode String                    @map("template_code") @db.VarChar(64)
+  name         String                    @db.VarChar(160)
+  channel      NotificationChannel
+  type         CommunicationTemplateType @default(TRANSACTIONAL)
+  triggerEvent CommTriggerEvent?         @map("trigger_event")
+  locale       String                    @default("en-IN") @db.VarChar(16)
+
+  subject            String? @db.VarChar(255)
+  body               String  @db.Text
+  variablesSchema    Json    @default("{}") @map("variables_schema")
+  providerTemplateId String? @map("provider_template_id") @db.VarChar(128)
+  isApproved         Boolean @default(false) @map("is_approved")
+  isActive           Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch        Branch?        @relation(fields: [branchId], references: [id])
+  notifications Notification[]
+
+  @@unique([schoolId, templateCode, channel, locale])
+  @@index([triggerEvent, channel])
+  @@index([schoolId, isActive])
+  @@map("communication_templates")
+}
+
+// ─── Communication: Notifications ───
+
+model Notification {
+  id                  String               @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId            String               @map("school_id") @db.Uuid
+  branchId            String?              @map("branch_id") @db.Uuid
+  templateId          String?              @map("template_id") @db.Uuid
+  triggerEvent        CommTriggerEvent?    @map("trigger_event")
+  sourceAggregateType String?              @map("source_aggregate_type") @db.VarChar(40)
+  sourceAggregateId   String?              @map("source_aggregate_id") @db.Uuid
+  channel             NotificationChannel
+  priority            NotificationPriority @default(NORMAL)
+  subject             String?              @db.VarChar(255)
+  body                String               @db.Text
+  variables           Json                 @default("{}")
+  scheduledAt         DateTime?            @map("scheduled_at") @db.Timestamptz
+  sentAt              DateTime?            @map("sent_at") @db.Timestamptz
+  status              NotificationStatus   @default(QUEUED)
+  failureReason       String?              @map("failure_reason") @db.Text
+  retryCount          Int                  @default(0) @map("retry_count")
+  maxRetries          Int                  @default(3) @map("max_retries")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school                    School                     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch                    Branch?                    @relation(fields: [branchId], references: [id])
+  template                  CommunicationTemplate?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  recipients                NotificationRecipient[]
+  communicationDeliveryLogs CommunicationDeliveryLog[]
+
+  @@index([status, scheduledAt])
+  @@index([triggerEvent, status])
+  @@index([schoolId, channel, status])
+  @@index([sourceAggregateType, sourceAggregateId])
+  @@map("notifications")
+}
+
+model NotificationRecipient {
+  id                   String             @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String             @map("school_id") @db.Uuid
+  notificationId       String             @map("notification_id") @db.Uuid
+  userId               String?            @map("user_id") @db.Uuid
+  studentId            String?            @map("student_id") @db.Uuid
+  guardianId           String?            @map("guardian_id") @db.Uuid
+  recipientName        String?            @map("recipient_name") @db.VarChar(160)
+  recipientEmail       String?            @map("recipient_email") @db.Citext
+  recipientPhone       String?            @map("recipient_phone") @db.VarChar(16)
+  recipientDeviceToken String?            @map("recipient_device_token") @db.VarChar(255)
+  status               NotificationStatus @default(QUEUED)
+  providerMessageId    String?            @map("provider_message_id") @db.VarChar(128)
+  sentAt               DateTime?          @map("sent_at") @db.Timestamptz
+  deliveredAt          DateTime?          @map("delivered_at") @db.Timestamptz
+  readAt               DateTime?          @map("read_at") @db.Timestamptz
+  failureReason        String?            @map("failure_reason") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  student      Student?     @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  guardian     Guardian?    @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+
+  @@index([notificationId])
+  @@index([userId, status])
+  @@index([guardianId])
+  @@map("notification_recipients")
+}
+
+// ─── Communication: Announcements ───
+
+model Announcement {
+  id                      String               @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                String               @map("school_id") @db.Uuid
+  branchId                String?              @map("branch_id") @db.Uuid
+  classroomId             String?              @map("classroom_id") @db.Uuid
+  title                   String               @db.VarChar(255)
+  body                    String               @db.Text
+  audience                AnnouncementAudience
+  status                  AnnouncementStatus   @default(DRAFT)
+  priority                NotificationPriority @default(NORMAL)
+  attachments             Json                 @default("[]")
+  authorId                String               @map("author_id") @db.Uuid
+  publishedAt             DateTime?            @map("published_at") @db.Timestamptz
+  scheduledAt             DateTime?            @map("scheduled_at") @db.Timestamptz
+  expiresAt               DateTime?            @map("expires_at") @db.Timestamptz
+  acknowledgementRequired Boolean              @default(false) @map("acknowledgement_required")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school     School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch     Branch?                 @relation(fields: [branchId], references: [id])
+  classroom  Classroom?              @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  recipients AnnouncementRecipient[]
+
+  @@index([schoolId, status, publishedAt])
+  @@index([branchId, status])
+  @@index([audience, status])
+  @@map("announcements")
+}
+
+model AnnouncementRecipient {
+  id                  String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId            String    @map("school_id") @db.Uuid
+  announcementId      String    @map("announcement_id") @db.Uuid
+  userId              String    @map("user_id") @db.Uuid
+  guardianId          String?   @map("guardian_id") @db.Uuid
+  studentId           String?   @map("student_id") @db.Uuid
+  deliveredAt         DateTime? @map("delivered_at") @db.Timestamptz
+  readAt              DateTime? @map("read_at") @db.Timestamptz
+  acknowledgedAt      DateTime? @map("acknowledged_at") @db.Timestamptz
+  acknowledgementNote String?   @map("acknowledgement_note") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guardian     Guardian?    @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  student      Student?     @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  @@unique([announcementId, userId])
+  @@index([userId, readAt])
+  @@map("announcement_recipients")
+}
+
+// ─── Communication: Chat ───
+
+model Conversation {
+  id                 String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId           String           @map("school_id") @db.Uuid
+  branchId           String?          @map("branch_id") @db.Uuid
+  classroomId        String?          @map("classroom_id") @db.Uuid
+  type               ConversationType
+  title              String?          @db.VarChar(160)
+  avatarUrl          String?          @map("avatar_url") @db.VarChar(512)
+  lastMessageAt      DateTime         @map("last_message_at") @db.Timestamptz
+  lastMessagePreview String?          @map("last_message_preview") @db.VarChar(255)
+  isActive           Boolean          @default(true) @map("is_active")
+  createdBy          String           @map("created_by") @db.Uuid
+  metadata           Json             @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school       School                    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch       Branch?                   @relation(fields: [branchId], references: [id])
+  classroom    Classroom?                @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([schoolId, isActive])
+  @@index([classroomId])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id                String                      @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId          String                      @map("school_id") @db.Uuid
+  conversationId    String                      @map("conversation_id") @db.Uuid
+  userId            String                      @map("user_id") @db.Uuid
+  role              ConversationParticipantRole @default(MEMBER)
+  lastReadAt        DateTime?                   @map("last_read_at") @db.Timestamptz
+  lastReadMessageId String?                     @map("last_read_message_id") @db.Uuid
+  mutedUntil        DateTime?                   @map("muted_until") @db.Timestamptz
+  isActive          Boolean                     @default(true) @map("is_active")
+  joinedAt          DateTime                    @default(now()) @map("joined_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId, isActive])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String        @map("school_id") @db.Uuid
+  conversationId String        @map("conversation_id") @db.Uuid
+  senderId       String        @map("sender_id") @db.Uuid
+  body           String        @db.Text
+  attachments    Json          @default("[]")
+  replyToId      String?       @map("reply_to_id") @db.Uuid
+  status         MessageStatus @default(SENT)
+  editedAt       DateTime?     @map("edited_at") @db.Timestamptz
+  recalledAt     DateTime?     @map("recalled_at") @db.Timestamptz
+  metadata       Json          @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  conversation Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  school       School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  sender       User                 @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  replyTo      Message?             @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      Message[]            @relation("MessageReply")
+  readReceipts MessageReadReceipt[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model MessageReadReceipt {
+  id        String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId  String   @map("school_id") @db.Uuid
+  messageId String   @map("message_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  readAt    DateTime @map("read_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_read_receipts")
+}
+
+// ─── Communication: Provider + Delivery logs ───
+
+model CommunicationProviderConfig {
+  id              String                    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String                    @map("school_id") @db.Uuid
+  providerType    CommunicationProviderType
+  displayName     String                    @map("display_name") @db.VarChar(120)
+  apiKey          String                    @map("api_key") @db.Text // PII-encrypted via pii_encrypt
+  apiSecret       String?                   @map("api_secret") @db.Text // PII-encrypted
+  senderId        String?                   @map("sender_id") @db.VarChar(64)
+  webhookUrl      String?                   @map("webhook_url") @db.VarChar(512)
+  webhookSecret   String?                   @map("webhook_secret") @db.VarChar(255)
+  dailyQuotaSms   Int                       @default(0) @map("daily_quota_sms")
+  dailyQuotaEmail Int                       @default(0) @map("daily_quota_email")
+  isPrimary       Boolean                   @default(false) @map("is_primary")
+  isActive        Boolean                   @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, providerType])
+  @@index([schoolId, isActive])
+  @@map("communication_provider_configs")
+}
+
+model CommunicationDeliveryLog {
+  id                String                    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId          String                    @map("school_id") @db.Uuid
+  notificationId    String?                   @map("notification_id") @db.Uuid
+  recipientId       String?                   @map("recipient_id") @db.Uuid
+  providerType      CommunicationProviderType
+  providerMessageId String?                   @map("provider_message_id") @db.VarChar(128)
+  channel           NotificationChannel
+  status            DeliveryLogStatus
+  errorCode         String?                   @map("error_code") @db.VarChar(64)
+  errorMessage      String?                   @map("error_message") @db.Text
+  providerResponse  Json                      @default("{}") @map("provider_response")
+  attemptedAt       DateTime                  @map("attempted_at") @db.Timestamptz
+  deliveredAt       DateTime?                 @map("delivered_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  school       School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  notification Notification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+
+  @@index([notificationId])
+  @@index([providerType, status])
+  @@index([schoolId, attemptedAt])
+  @@map("communication_delivery_logs")
+}
+
+// ═════════════════════════════════════════════════════════════════
+// WAVE 5 — FINANCE MODULE (BTD §4.3 #8)
+// Fees, Invoices, Payments, Ledger, GST — ~80 APIs
+// ═════════════════════════════════════════════════════════════════
+
+enum FeePlanFrequency {
+  ONE_TIME
+  ANNUAL
+  QUARTERLY
+  MONTHLY
+  TERM_WISE
+}
+
+enum FeePlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum StudentFeePlanStatus {
+  ASSIGNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  TRANSFERRED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  VOIDED
+  CANCELLED
+}
+
+enum InvoiceLineItemType {
+  TUITION
+  ADMISSION_FEE
+  SECURITY_DEPOSIT
+  ANNUAL_CHARGE
+  TRANSPORT
+  MEALS
+  EXTRACURRICULAR
+  LATE_FEE
+  CONCESSION
+  SCHOLARSHIP
+  REFUND
+  OTHER
+}
+
+enum InvoiceAdjustmentType {
+  WAIVER
+  DISCOUNT
+  LATE_FEE
+  PENALTY
+  CORRECTION
+  WRITE_OFF
+}
+
+enum PaymentMethod {
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+  UPI
+  CARD
+  NETBANKING
+  WALLET
+  DD
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  DISPUTED
+}
+
+enum PaymentGateway {
+  RAZORPAY
+  CASHFREE
+  PAYU
+  STRIPE
+  MANUAL
+  OFFLINE
+}
+
+enum RefundStatus {
+  REQUESTED
+  APPROVED
+  PROCESSED
+  REJECTED
+  CANCELLED
+}
+
+enum RefundMethod {
+  ORIGINAL_PAYMENT
+  BANK_TRANSFER
+  UPI
+  CHEQUE
+  CASH
+}
+
+enum LedgerEntryType {
+  DEBIT
+  CREDIT
+}
+
+enum LedgerAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum LedgerAccountSubtype {
+  CURRENT_ASSET
+  FIXED_ASSET
+  CURRENT_LIABILITY
+  LONG_TERM_LIABILITY
+  OPERATING_REVENUE
+  OTHER_INCOME
+  OPERATING_EXPENSE
+  OTHER_EXPENSE
+}
+
+enum FeeConcessionType {
+  SIBLING
+  STAFF_CHILD
+  ALUMNI
+  SCHOLARSHIP
+  FINANCIAL_AID
+  EARLY_BIRD
+  ANNUAL_PREPAY
+  PROMOTIONAL
+  CUSTOM
+}
+
+enum ConcessionApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
+}
+
+enum ScholarshipType {
+  MERIT
+  NEED_BASED
+  SPORTS
+  CULTURAL
+  SPECIAL_CATEGORY
+}
+
+enum ScholarshipStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+// ─── Finance: Fee Plans ───
+
+model FeePlan {
+  id                   String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String           @map("school_id") @db.Uuid
+  branchId             String?          @map("branch_id") @db.Uuid
+  academicSessionId    String           @map("academic_session_id") @db.Uuid
+  programType          ProgramType      @map("program_type")
+  name                 String           @db.VarChar(160)
+  code                 String           @db.VarChar(32)
+  description          String?          @db.Text
+  frequency            FeePlanFrequency
+  status               FeePlanStatus    @default(DRAFT)
+  annualFeeCents       Int              @map("annual_fee_cents")
+  securityDepositCents Int              @default(0) @map("security_deposit_cents")
+  admissionFeeCents    Int              @default(0) @map("admission_fee_cents")
+  applicationFeeCents  Int              @default(0) @map("application_fee_cents")
+  lateFeePerDayCents   Int              @default(0) @map("late_fee_per_day_cents")
+  gstApplicable        Boolean          @default(false) @map("gst_applicable")
+  gstRatePercent       Decimal          @default(0) @map("gst_rate_percent") @db.Decimal(5, 2)
+  effectiveFrom        DateTime         @map("effective_from") @db.Timestamptz
+  effectiveUntil       DateTime?        @map("effective_until") @db.Timestamptz
+  metadata             Json             @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?              @relation(fields: [branchId], references: [id])
+  academicSession AcademicSession      @relation(fields: [academicSessionId], references: [id], onDelete: Restrict)
+  installments    FeePlanInstallment[]
+  concessions     FeeConcession[]
+  studentFeePlans StudentFeePlan[]
+  feePlanQuotes   FeePlanQuote[]
+  lateFeeRules    LateFeeRule[]
+
+  @@unique([schoolId, code])
+  @@index([academicSessionId, programType, status])
+  @@index([schoolId, status])
+  @@map("fee_plans")
+}
+
+model FeePlanInstallment {
+  id                String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId          String   @map("school_id") @db.Uuid
+  feePlanId         String   @map("fee_plan_id") @db.Uuid
+  installmentNumber Int      @map("installment_number")
+  label             String   @db.VarChar(64) // "Q1", "Term 1", "April"
+  dueDate           DateTime @map("due_date") @db.Date
+  amountCents       Int      @map("amount_cents")
+  gracePeriodDays   Int      @default(7) @map("grace_period_days")
+  isMandatory       Boolean  @default(true) @map("is_mandatory")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  feePlan  FeePlan   @relation(fields: [feePlanId], references: [id], onDelete: Cascade)
+  school   School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@unique([feePlanId, installmentNumber])
+  @@index([dueDate])
+  @@map("fee_plan_installments")
+}
+
+// ─── Finance: Concessions ───
+
+model FeeConcession {
+  id                 String                   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId           String                   @map("school_id") @db.Uuid
+  feePlanId          String?                  @map("fee_plan_id") @db.Uuid
+  name               String                   @db.VarChar(160)
+  code               String                   @db.VarChar(32)
+  type               FeeConcessionType
+  description        String?                  @db.Text
+  percentageOff      Decimal?                 @map("percentage_off") @db.Decimal(5, 2)
+  flatAmountOffCents Int?                     @map("flat_amount_off_cents")
+  maxConcessionCents Int?                     @map("max_concession_cents")
+  approvalStatus     ConcessionApprovalStatus @default(PENDING)
+  approvedById       String?                  @map("approved_by_id") @db.Uuid
+  approvedAt         DateTime?                @map("approved_at") @db.Timestamptz
+  effectiveFrom      DateTime                 @map("effective_from") @db.Timestamptz
+  effectiveUntil     DateTime?                @map("effective_until") @db.Timestamptz
+  isActive           Boolean                  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  feePlan  FeePlan?            @relation(fields: [feePlanId], references: [id], onDelete: SetNull)
+  school   School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  rules    FeeConcessionRule[]
+  branch   Branch?             @relation(fields: [branchId], references: [id])
+  branchId String?             @db.Uuid
+
+  @@unique([schoolId, code])
+  @@index([type, approvalStatus])
+  @@map("fee_concessions")
+}
+
+model FeeConcessionRule {
+  id                   String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String  @map("school_id") @db.Uuid
+  concessionId         String  @map("concession_id") @db.Uuid
+  ruleKey              String  @map("rule_key") @db.VarChar(64) // SIBLING_COUNT, STAFF_TENURE_YEARS
+  ruleOperator         String  @map("rule_operator") @db.VarChar(8) // GTE, LTE, EQ
+  ruleValue            String  @db.VarChar(64)
+  concessionAppliedPct Decimal @map("concession_applied_pct") @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  concession FeeConcession @relation(fields: [concessionId], references: [id], onDelete: Cascade)
+  school     School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([concessionId, ruleKey])
+  @@map("fee_concession_rules")
+}
+
+// ─── Finance: Student Fee Plans ───
+
+model StudentFeePlan {
+  id                   String               @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String               @map("school_id") @db.Uuid
+  studentId            String               @map("student_id") @db.Uuid
+  feePlanId            String               @map("fee_plan_id") @db.Uuid
+  academicSessionId    String               @map("academic_session_id") @db.Uuid
+  status               StudentFeePlanStatus @default(ASSIGNED)
+  totalPayableCents    Int                  @map("total_payable_cents")
+  totalConcessionCents Int                  @default(0) @map("total_concession_cents")
+  totalPaidCents       Int                  @default(0) @map("total_paid_cents")
+  totalRefundedCents   Int                  @default(0) @map("total_refunded_cents")
+  outstandingCents     Int                  @default(0) @map("outstanding_cents")
+  assignedAt           DateTime             @map("assigned_at") @db.Timestamptz
+  activatedAt          DateTime?            @map("activated_at") @db.Timestamptz
+  completedAt          DateTime?            @map("completed_at") @db.Timestamptz
+  cancelledAt          DateTime?            @map("cancelled_at") @db.Timestamptz
+  cancellationReason   String?              @map("cancellation_reason") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  student           Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  feePlan           FeePlan            @relation(fields: [feePlanId], references: [id], onDelete: Restrict)
+  academicSession   AcademicSession    @relation(fields: [academicSessionId], references: [id], onDelete: Restrict)
+  school            School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  invoices          Invoice[]
+  scholarshipAwards ScholarshipAward[]
+  payments          Payment[]
+
+  @@unique([studentId, academicSessionId])
+  @@index([status])
+  @@index([academicSessionId, status])
+  @@map("student_fee_plans")
+}
+
+// ─── Finance: Invoices ───
+
+model Invoice {
+  id                   String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String        @map("school_id") @db.Uuid
+  invoiceNumber        String        @map("invoice_number") @db.VarChar(20)
+  studentFeePlanId     String?       @map("student_fee_plan_id") @db.Uuid
+  studentId            String        @map("student_id") @db.Uuid
+  feePlanInstallmentId String?       @map("fee_plan_installment_id") @db.Uuid
+  invoiceDate          DateTime      @map("invoice_date") @db.Date
+  dueDate              DateTime      @map("due_date") @db.Date
+  periodStart          DateTime?     @map("period_start") @db.Date
+  periodEnd            DateTime?     @map("period_end") @db.Date
+  status               InvoiceStatus @default(DRAFT)
+  subtotalCents        Int           @map("subtotal_cents")
+  concessionCents      Int           @default(0) @map("concession_cents")
+  taxableAmountCents   Int           @default(0) @map("taxable_amount_cents")
+  gstCents             Int           @default(0) @map("gst_cents")
+  lateFeeCents         Int           @default(0) @map("late_fee_cents")
+  adjustmentCents      Int           @default(0) @map("adjustment_cents")
+  totalCents           Int           @map("total_cents")
+  paidCents            Int           @default(0) @map("paid_cents")
+  refundedCents        Int           @default(0) @map("refunded_cents")
+  outstandingCents     Int           @default(0) @map("outstanding_cents")
+  issuedAt             DateTime?     @map("issued_at") @db.Timestamptz
+  issuedBy             String?       @map("issued_by") @db.Uuid
+  voidedAt             DateTime?     @map("voided_at") @db.Timestamptz
+  voidedReason         String?       @map("voided_reason") @db.Text
+  notes                String?       @db.Text
+  pdfUrl               String?       @map("pdf_url") @db.Text
+  gstInvoiceNumber     String?       @map("gst_invoice_number") @db.VarChar(32)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  student            Student             @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  studentFeePlan     StudentFeePlan?     @relation(fields: [studentFeePlanId], references: [id], onDelete: SetNull)
+  feePlanInstallment FeePlanInstallment? @relation(fields: [feePlanInstallmentId], references: [id], onDelete: SetNull)
+  school             School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  lineItems          InvoiceLineItem[]
+  adjustments        InvoiceAdjustment[]
+  paymentAllocations PaymentAllocation[]
+  refundAllocations  RefundAllocation[]
+
+  @@unique([invoiceNumber])
+  @@index([studentId, status])
+  @@index([dueDate, status])
+  @@index([studentFeePlanId])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id              String              @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String              @map("school_id") @db.Uuid
+  invoiceId       String              @map("invoice_id") @db.Uuid
+  lineItemType    InvoiceLineItemType @map("line_item_type")
+  description     String              @db.VarChar(255)
+  quantity        Decimal             @default(1) @db.Decimal(10, 2)
+  rateCents       Int                 @map("rate_cents")
+  amountCents     Int                 @map("amount_cents")
+  gstRatePercent  Decimal             @default(0) @map("gst_rate_percent") @db.Decimal(5, 2)
+  gstCents        Int                 @default(0) @map("gst_cents")
+  concessionCents Int                 @default(0) @map("concession_cents")
+  metadata        Json                @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
+}
+
+model InvoiceAdjustment {
+  id             String                @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String                @map("school_id") @db.Uuid
+  invoiceId      String                @map("invoice_id") @db.Uuid
+  adjustmentType InvoiceAdjustmentType @map("adjustment_type")
+  amountCents    Int                   @map("amount_cents")
+  description    String                @db.Text
+  appliedById    String                @map("applied_by_id") @db.Uuid
+  appliedAt      DateTime              @map("applied_at") @db.Timestamptz
+  approvedById   String?               @map("approved_by_id") @db.Uuid
+  approvedAt     DateTime?             @map("approved_at") @db.Timestamptz
+  isReversible   Boolean               @default(true) @map("is_reversible")
+  reversedById   String?               @map("reversed_by_id") @db.Uuid
+  reversedAt     DateTime?             @map("reversed_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, adjustmentType])
+  @@map("invoice_adjustments")
+}
+
+// ─── Finance: Payments ───
+
+model Payment {
+  id                   String         @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String         @map("school_id") @db.Uuid
+  paymentNumber        String         @map("payment_number") @db.VarChar(20)
+  studentId            String         @map("student_id") @db.Uuid
+  studentFeePlanId     String?        @map("student_fee_plan_id") @db.Uuid
+  amountCents          Int            @map("amount_cents")
+  amountRefundedCents  Int            @default(0) @map("amount_refunded_cents")
+  method               PaymentMethod
+  gateway              PaymentGateway @default(MANUAL)
+  gatewayTransactionId String?        @map("gateway_transaction_id") @db.VarChar(128)
+  gatewayPaymentId     String?        @map("gateway_payment_id") @db.VarChar(128)
+  status               PaymentStatus  @default(PENDING)
+  paidAt               DateTime?      @map("paid_at") @db.Timestamptz
+  failedAt             DateTime?      @map("failed_at") @db.Timestamptz
+  failureReason        String?        @map("failure_reason") @db.Text
+  receiptNumber        String?        @map("receipt_number") @db.VarChar(20)
+  receiptUrl           String?        @map("receipt_url") @db.Text
+  instrumentNumber     String?        @map("instrument_number") @db.VarChar(64) // cheque/dd no
+  instrumentDate       DateTime?      @map("instrument_date") @db.Date
+  bankName             String?        @map("bank_name") @db.VarChar(64)
+  collectedById        String?        @map("collected_by_id") @db.Uuid
+  notes                String?        @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  student        Student             @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  studentFeePlan StudentFeePlan?     @relation(fields: [studentFeePlanId], references: [id], onDelete: SetNull)
+  school         School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  allocations    PaymentAllocation[]
+  refunds        Refund[]
+
+  @@unique([paymentNumber])
+  @@index([studentId, status])
+  @@index([status, paidAt])
+  @@index([gateway, gatewayTransactionId])
+  @@map("payments")
+}
+
+model PaymentAllocation {
+  id             String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String    @map("school_id") @db.Uuid
+  paymentId      String    @map("payment_id") @db.Uuid
+  invoiceId      String    @map("invoice_id") @db.Uuid
+  allocatedCents Int       @map("allocated_cents")
+  allocatedAt    DateTime  @map("allocated_at") @db.Timestamptz
+  isReversed     Boolean   @default(false) @map("is_reversed")
+  reversedAt     DateTime? @map("reversed_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, invoiceId])
+  @@index([invoiceId])
+  @@map("payment_allocations")
+}
+
+// ─── Finance: Refunds ───
+
+model Refund {
+  id              String       @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String       @map("school_id") @db.Uuid
+  refundNumber    String       @map("refund_number") @db.VarChar(20)
+  paymentId       String       @map("payment_id") @db.Uuid
+  studentId       String       @map("student_id") @db.Uuid
+  amountCents     Int          @map("amount_cents")
+  method          RefundMethod
+  status          RefundStatus @default(REQUESTED)
+  reason          String       @db.Text
+  requestedById   String       @map("requested_by_id") @db.Uuid
+  requestedAt     DateTime     @map("requested_at") @db.Timestamptz
+  approvedById    String?      @map("approved_by_id") @db.Uuid
+  approvedAt      DateTime?    @map("approved_at") @db.Timestamptz
+  processedAt     DateTime?    @map("processed_at") @db.Timestamptz
+  gatewayRefundId String?      @map("gateway_refund_id") @db.VarChar(128)
+  rejectionReason String?      @map("rejection_reason") @db.Text
+  notes           String?      @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  payment     Payment            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  student     Student            @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school      School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  allocations RefundAllocation[]
+
+  @@unique([refundNumber])
+  @@index([status])
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+model RefundAllocation {
+  id             String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String   @map("school_id") @db.Uuid
+  refundId       String   @map("refund_id") @db.Uuid
+  invoiceId      String   @map("invoice_id") @db.Uuid
+  allocatedCents Int      @map("allocated_cents")
+  allocatedAt    DateTime @map("allocated_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  refund  Refund  @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([refundId, invoiceId])
+  @@map("refund_allocations")
+}
+
+// ─── Finance: Ledger ───
+
+model LedgerAccount {
+  id                  String                @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId            String                @map("school_id") @db.Uuid
+  accountCode         String                @map("account_code") @db.VarChar(32)
+  name                String                @db.VarChar(160)
+  type                LedgerAccountType
+  subtype             LedgerAccountSubtype?
+  description         String?               @db.Text
+  isActive            Boolean               @default(true) @map("is_active")
+  openingBalanceCents Int                   @default(0) @map("opening_balance_cents")
+  currentBalanceCents Int                   @default(0) @map("current_balance_cents")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school  School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  entries LedgerEntry[]
+
+  @@unique([schoolId, accountCode])
+  @@index([type, isActive])
+  @@map("ledger_accounts")
+}
+
+model LedgerEntry {
+  id             String          @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String          @map("school_id") @db.Uuid
+  accountId      String          @map("account_id") @db.Uuid
+  entryType      LedgerEntryType @map("entry_type")
+  amountCents    Int             @map("amount_cents")
+  referenceType  String          @map("reference_type") @db.VarChar(40) // Invoice, Payment, Refund
+  referenceId    String          @map("reference_id") @db.Uuid
+  entryDate      DateTime        @map("entry_date") @db.Timestamptz
+  narration      String          @db.Text
+  journalEntryId String          @map("journal_entry_id") @db.Uuid // groups debit+credit
+  isReversed     Boolean         @default(false) @map("is_reversed")
+  reversedAt     DateTime?       @map("reversed_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  account LedgerAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  school  School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, entryDate])
+  @@index([referenceType, referenceId])
+  @@index([journalEntryId])
+  @@map("ledger_entries")
+}
+
+// ─── Finance: Late Fee Rules ───
+
+model LateFeeRule {
+  id                 String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId           String    @map("school_id") @db.Uuid
+  feePlanId          String?   @map("fee_plan_id") @db.Uuid
+  name               String    @db.VarChar(160)
+  gracePeriodDays    Int       @map("grace_period_days")
+  flatLateFeeCents   Int       @default(0) @map("flat_late_fee_cents")
+  perDayLateFeeCents Int       @default(0) @map("per_day_late_fee_cents")
+  maxLateFeeCents    Int?      @map("max_late_fee_cents")
+  applicabilityDays  Int       @default(30) @map("applicability_days")
+  effectiveFrom      DateTime  @map("effective_from") @db.Timestamptz
+  effectiveUntil     DateTime? @map("effective_until") @db.Timestamptz
+  isActive           Boolean   @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  feePlan FeePlan? @relation(fields: [feePlanId], references: [id], onDelete: SetNull)
+  school  School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([feePlanId, isActive])
+  @@map("late_fee_rules")
+}
+
+// ─── Finance: Scholarships ───
+
+model Scholarship {
+  id                  String            @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId            String            @map("school_id") @db.Uuid
+  name                String            @db.VarChar(160)
+  code                String            @db.VarChar(32)
+  type                ScholarshipType
+  description         String?           @db.Text
+  status              ScholarshipStatus @default(DRAFT)
+  totalBudgetCents    Int?              @map("total_budget_cents")
+  awardedCents        Int               @default(0) @map("awarded_cents")
+  maxPerStudentCents  Int?              @map("max_per_student_cents")
+  minCriteriaGpa      Decimal?          @map("min_criteria_gpa") @db.Decimal(4, 2)
+  maxAwards           Int?              @map("max_awards")
+  currentAwards       Int               @default(0) @map("current_awards")
+  applicationDeadline DateTime?         @map("application_deadline") @db.Timestamptz
+  effectiveFrom       DateTime          @map("effective_from") @db.Timestamptz
+  effectiveUntil      DateTime?         @map("effective_until") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  awards ScholarshipAward[]
+
+  @@unique([schoolId, code])
+  @@index([status])
+  @@map("scholarships")
+}
+
+model ScholarshipAward {
+  id               String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId         String    @map("school_id") @db.Uuid
+  scholarshipId    String    @map("scholarship_id") @db.Uuid
+  studentId        String    @map("student_id") @db.Uuid
+  studentFeePlanId String    @map("student_fee_plan_id") @db.Uuid
+  amountCents      Int       @map("amount_cents")
+  percentageOff    Decimal?  @map("percentage_off") @db.Decimal(5, 2)
+  awardedById      String    @map("awarded_by_id") @db.Uuid
+  awardedAt        DateTime  @map("awarded_at") @db.Timestamptz
+  reason           String?   @db.Text
+  isActive         Boolean   @default(true) @map("is_active")
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz
+  revokedReason    String?   @map("revoked_reason") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  scholarship    Scholarship    @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentFeePlan StudentFeePlan @relation(fields: [studentFeePlanId], references: [id], onDelete: Cascade)
+  school         School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([scholarshipId, studentId])
+  @@index([studentFeePlanId])
+  @@map("scholarship_awards")
+}
+
+// ─── Finance: GST Config ───
+
+model GstConfig {
+  id                     String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId               String    @map("school_id") @db.Uuid
+  branchId               String?   @map("branch_id") @db.Uuid
+  gstNumber              String?   @map("gst_number") @db.VarChar(15)
+  stateCode              String    @map("state_code") @db.VarChar(2)
+  defaultRatePercent     Decimal   @map("default_rate_percent") @db.Decimal(5, 2)
+  hsnCode                String?   @map("hsn_code") @db.VarChar(16)
+  isCompositionScheme    Boolean   @default(false) @map("is_composition_scheme")
+  compositionRatePercent Decimal?  @map("composition_rate_percent") @db.Decimal(5, 2)
+  effectiveFrom          DateTime  @map("effective_from") @db.Timestamptz
+  effectiveUntil         DateTime? @map("effective_until") @db.Timestamptz
+  isActive               Boolean   @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id])
+
+  @@unique([schoolId, branchId])
+  @@map("gst_configs")
 }

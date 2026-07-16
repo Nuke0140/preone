@@ -10,12 +10,19 @@
  *   - 3 controllers (Applications, Admissions, WaitingList)
  *   - 22 command handlers + 6 query handlers
  *   - 21 domain events wired via EventBusService
+ *
+ * Wave 4.1 — AdmissionsEventTranslator registered at bootstrap,
+ * emitting 5 integration events (AdmissionApproved.v1 triggers the
+ * BTD §17.3 admission approval saga across Identity + Finance +
+ * Communication).
  */
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@shared/cqrs';
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
+
+import { AdmissionsEventTranslator } from './application/services/admissions-event-translator.service';
 
 import {
   AcceptOfferCommandHandler, AcceptWaitingListSeatCommandHandler,
@@ -53,6 +60,7 @@ import {
   controllers: [ApplicationsController, AdmissionsController, WaitingListController],
   providers: [
     AdmissionsService,
+    AdmissionsEventTranslator,
     // Repositories
     { provide: APPLICATION_REPOSITORY, useClass: PrismaApplicationRepository },
     { provide: ADMISSION_REPOSITORY, useClass: PrismaAdmissionRepository },
@@ -79,4 +87,12 @@ import {
   ],
   exports: [AdmissionsService],
 })
-export class AdmissionsModule {}
+export class AdmissionsModule implements OnModuleInit {
+  constructor(private readonly translator: AdmissionsEventTranslator) {}
+
+  onModuleInit(): void {
+    // Register domain-event → integration-event translations.
+    // Per BTD §14.3 — translations are explicit per event type.
+    this.translator.register();
+  }
+}

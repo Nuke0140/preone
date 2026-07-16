@@ -11,12 +11,19 @@
  *     Incidents, DailyReports)
  *   - 16 command handlers + 6 query handlers
  *   - 21 domain events wired via EventBusService
+ *
+ * Wave 4.1 — AttendanceEventTranslator registered at bootstrap,
+ * emitting 4 integration events (AttendanceMarked.v1, IncidentReported.v1,
+ * DailyReportSent.v1, LatePickupRecorded.v1) that the Communication
+ * module will subscribe to for parent notifications.
  */
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@shared/cqrs';
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
+
+import { AttendanceEventTranslator } from './application/services/attendance-event-translator.service';
 
 import {
   AddDailyReportHighlightCommandHandler, AddIncidentActionCommandHandler,
@@ -56,6 +63,7 @@ import {
   ],
   providers: [
     AttendanceService,
+    AttendanceEventTranslator,
     // Repositories
     { provide: ATTENDANCE_REPOSITORY, useClass: PrismaAttendanceRepository },
     { provide: DAILY_LOG_REPOSITORY, useClass: PrismaDailyLogRepository },
@@ -79,4 +87,12 @@ import {
   ],
   exports: [AttendanceService],
 })
-export class AttendanceModule {}
+export class AttendanceModule implements OnModuleInit {
+  constructor(private readonly translator: AttendanceEventTranslator) {}
+
+  onModuleInit(): void {
+    // Register domain-event → integration-event translations.
+    // Per BTD §14.3 — translations are explicit per event type.
+    this.translator.register();
+  }
+}

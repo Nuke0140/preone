@@ -92,7 +92,7 @@ export class UnitOfWork {
           if (tenant.academicYearId) {
             await tx.$executeRaw`SET LOCAL app.academic_year_id = ${tenant.academicYearId}::uuid`;
           }
-          await tx.$executeRaw`SET LOCAL app.encryption_key = ${process.env.PII_ENCRYPTION_KEY ?? 'dev-key'}`;
+          await tx.$executeRaw`SET LOCAL app.encryption_key = ${this.prisma.getPiiEncryptionKey()}`;
         }
 
         // Outbox helper — wraps the repo, captures events for atomic write

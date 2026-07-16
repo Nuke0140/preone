@@ -33,6 +33,8 @@ export interface TenantContext {
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger(PrismaService.name);
+  /** Cached PII encryption key — validated once at startup. */
+  private piiEncryptionKey: string | undefined;
 
   constructor(private readonly config: ConfigService<AppConfig, true>) {
     super({
@@ -55,6 +57,55 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$executeRaw`SET statement_timeout = ${this.config.get('database.statementTimeout', { infer: true })}`;
     // Note: Prisma 6 removed $use middleware. Slow-query logging now done via
     // Prisma client `log` event handler configured in constructor above.
+
+    // Validate PII encryption key at startup — fail-fast in production.
+    // In non-production environments, fall back to a documented dev-only key
+    // (with a loud warning) so local dev workflows still work.
+    this.piiEncryptionKey = this.resolvePiiEncryptionKey();
+  }
+
+  /**
+   * Resolve the PII encryption key with fail-fast semantics:
+   *   - production: MUST be set via PII_ENCRYPTION_KEY env var. Empty/missing
+   *     is a fatal startup error — never fall back to a default.
+   *   - non-production: falls back to a fixed dev key with a warning, so local
+   *     dev workflows still work without env setup.
+   */
+  private resolvePiiEncryptionKey(): string {
+    const env = this.config.get('app.env', { infer: true }) ?? 'development';
+    const fromEnv = process.env.PII_ENCRYPTION_KEY;
+
+    if (fromEnv && fromEnv.trim().length > 0) {
+      return fromEnv;
+    }
+
+    if (env === 'production') {
+      throw new Error(
+        'FATAL: PII_ENCRYPTION_KEY is not set in production. ' +
+          'The API cannot start without a valid encryption key for PII columns (pgcrypto). ' +
+          'Generate a strong random value with: openssl rand -hex 32',
+      );
+    }
+
+    // Non-production fallback — loudly warned
+    this.logger.warn(
+      'PII_ENCRYPTION_KEY is not set — using insecure dev-only fallback key. ' +
+        'DO NOT use in production. Set PII_ENCRYPTION_KEY env var to override.',
+    );
+    return 'dev-only-insecure-key-do-not-use-in-production';
+  }
+
+  /**
+   * Public accessor for the validated PII encryption key.
+   * Used by UnitOfWork and other callers that need to set the
+   * app.encryption_key session variable outside of withTenant().
+   */
+  getPiiEncryptionKey(): string {
+    if (!this.piiEncryptionKey) {
+      // Should not happen after onModuleInit — defensive fallback
+      this.piiEncryptionKey = this.resolvePiiEncryptionKey();
+    }
+    return this.piiEncryptionKey;
   }
 
   /**
@@ -79,8 +130,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         await tx.$executeRaw`SET LOCAL app.academic_year_id = ${ctx.academicYearId}::uuid`;
       }
       // Also set the encryption key for pgcrypto (PII fields)
-      // The actual key comes from KMS in production — fetched at boot.
-      await tx.$executeRaw`SET LOCAL app.encryption_key = ${process.env.PII_ENCRYPTION_KEY ?? 'dev-key'}`;
+      // Key is resolved + validated once at startup (see resolvePiiEncryptionKey).
+      await tx.$executeRaw`SET LOCAL app.encryption_key = ${this.piiEncryptionKey}`;
 
       return fn(tx);
     });

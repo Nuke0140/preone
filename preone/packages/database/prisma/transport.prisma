@@ -1,0 +1,419 @@
+// PreOne Prisma Schema — Transport domain
+// Transport — vehicles, routes, trips, stops, driver assignments
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 — TRANSPORT MODULE (per user request, BRC §14 Transport Rules)
+// Aggregates: Vehicle, Route, Trip, StudentRouteAssignment
+// ─────────────────────────────────────────────────────────────────────────────
+model Vehicle {
+  id            String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String        @map("school_id") @db.Uuid
+  branchId      String?       @map("branch_id") @db.Uuid
+  vehicleNumber String        @map("vehicle_number") @db.VarChar(16)
+  type          VehicleType   @default(BUS)
+  status        VehicleStatus @default(ACTIVE)
+
+  make              String? @db.VarChar(64)
+  model             String? @db.VarChar(64)
+  yearOfManufacture Int?    @map("year_of_manufacture")
+  color             String? @db.VarChar(32)
+
+  capacity        Int @default(0)
+  registeredSeats Int @default(0) @map("registered_seats")
+
+  // Compliance (per R-TR-001 to R-TR-008)
+  registrationNumber     String?   @map("registration_number") @db.VarChar(20)
+  registrationValidTill  DateTime? @map("registration_valid_till") @db.Date
+  insuranceValidTill     DateTime? @map("insurance_valid_till") @db.Date
+  pollutionCertValidTill DateTime? @map("pollution_cert_valid_till") @db.Date
+  fitnessCertValidTill   DateTime? @map("fitness_cert_valid_till") @db.Date
+  permitValidTill        DateTime? @map("permit_valid_till") @db.Date
+
+  // GPS
+  gpsDeviceId String? @map("gps_device_id") @db.VarChar(64)
+  gpsProvider String? @map("gps_provider") @db.VarChar(64)
+
+  // Driver
+  driverId    String? @map("driver_id") @db.Uuid
+  attendantId String? @map("attendant_id") @db.Uuid
+
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch    Branch?   @relation(fields: [branchId], references: [id])
+  driver    Employee? @relation("VehicleDriver", fields: [driverId], references: [id])
+  attendant Employee? @relation("VehicleAttendant", fields: [attendantId], references: [id])
+  routes    Route[]
+  trips     Trip[]
+
+  @@unique([schoolId, vehicleNumber])
+  @@index([schoolId, status])
+  @@index([driverId])
+  @@map("vehicles")
+}
+
+model Route {
+  id        String      @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId  String      @map("school_id") @db.Uuid
+  branchId  String?     @map("branch_id") @db.Uuid
+  routeCode String      @map("route_code") @db.VarChar(32)
+  name      String      @db.VarChar(160)
+  status    RouteStatus @default(ACTIVE)
+
+  vehicleId String? @map("vehicle_id") @db.Uuid
+
+  // Stops (ordered list)
+  stops Json @default("[]") // [{name, lat, lng, pickupTime, dropoffTime, fareCents}]
+
+  totalDistanceKm      Decimal? @map("total_distance_km") @db.Decimal(8, 2)
+  estimatedDurationMin Int?     @map("estimated_duration_min")
+
+  // Fare
+  fareCents          Int @default(0) @map("fare_cents") // base fare
+  roundTripFareCents Int @default(0) @map("round_trip_fare_cents")
+
+  // Schedule
+  pickupStartTime  String? @map("pickup_start_time") @db.VarChar(8) // HH:MM
+  dropoffStartTime String? @map("dropoff_start_time") @db.VarChar(8)
+
+  enrolledCount Int @default(0) @map("enrolled_count")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school             School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch             Branch?                  @relation(fields: [branchId], references: [id])
+  vehicle            Vehicle?                 @relation(fields: [vehicleId], references: [id])
+  trips              Trip[]
+  studentAssignments StudentRouteAssignment[]
+
+  @@unique([schoolId, routeCode])
+  @@index([schoolId, status])
+  @@index([vehicleId])
+  @@map("transport_routes")
+}
+
+model Trip {
+  // A specific run of a route on a specific date
+  id          String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String  @map("school_id") @db.Uuid
+  branchId    String? @map("branch_id") @db.Uuid
+  routeId     String  @map("route_id") @db.Uuid
+  vehicleId   String  @map("vehicle_id") @db.Uuid
+  driverId    String? @map("driver_id") @db.Uuid
+  attendantId String? @map("attendant_id") @db.Uuid
+
+  tripDate  DateTime      @map("trip_date") @db.Date
+  direction TripDirection
+  status    TripStatus    @default(SCHEDULED)
+
+  scheduledStart DateTime  @map("scheduled_start") @db.Timestamptz
+  scheduledEnd   DateTime  @map("scheduled_end") @db.Timestamptz
+  actualStart    DateTime? @map("actual_start") @db.Timestamptz
+  actualEnd      DateTime? @map("actual_end") @db.Timestamptz
+
+  // GPS trail
+  gpsTrail        Json?    @map("gps_trail")
+  totalDistanceKm Decimal? @map("total_distance_km") @db.Decimal(8, 2)
+
+  // Incident
+  incidentNotes String? @map("incident_notes") @db.Text
+  delayReason   String? @map("delay_reason") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school      School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch?               @relation(fields: [branchId], references: [id])
+  route       Route                 @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle               @relation(fields: [vehicleId], references: [id])
+  driver      Employee?             @relation("TripDriver", fields: [driverId], references: [id])
+  attendant   Employee?             @relation("TripAttendant", fields: [attendantId], references: [id])
+  attendances TransportAttendance[]
+
+  @@unique([routeId, tripDate, direction])
+  @@index([schoolId, tripDate])
+  @@index([vehicleId, tripDate])
+  @@map("trips")
+}
+
+model StudentRouteAssignment {
+  id        String                 @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId  String                 @map("school_id") @db.Uuid
+  branchId  String?                @map("branch_id") @db.Uuid
+  studentId String                 @map("student_id") @db.Uuid
+  routeId   String                 @map("route_id") @db.Uuid
+  status    StudentTransportStatus @default(ENROLLED)
+
+  // Pickup / drop-off stop index (within route.stops JSON)
+  pickupStopIdx  Int? @map("pickup_stop_idx")
+  dropoffStopIdx Int? @map("dropoff_stop_idx")
+
+  // Schedule
+  direction     TripDirection @default(PICKUP) // PICKUP / DROPOFF / BOTH
+  effectiveFrom DateTime      @map("effective_from") @db.Date
+  effectiveTill DateTime?     @map("effective_till") @db.Date
+
+  // Fare
+  fareCents    Int    @default(0) @map("fare_cents")
+  billingCycle String @default("MONTHLY") @map("billing_cycle") @db.VarChar(16)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch  Branch? @relation(fields: [branchId], references: [id])
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  route   Route   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, routeId, direction])
+  @@index([routeId])
+  @@index([studentId])
+  @@map("student_route_assignments")
+}
+
+model TransportAttendance {
+  id        String                    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId  String                    @map("school_id") @db.Uuid
+  branchId  String?                   @map("branch_id") @db.Uuid
+  tripId    String                    @map("trip_id") @db.Uuid
+  studentId String                    @map("student_id") @db.Uuid
+  status    TransportAttendanceStatus @default(ABSENT)
+
+  boardedAt  DateTime? @map("boarded_at") @db.Timestamptz
+  alightedAt DateTime? @map("alighted_at") @db.Timestamptz
+  stopIdx    Int?      @map("stop_idx")
+
+  markedById String?  @map("marked_by_id") @db.Uuid
+  markedAt   DateTime @default(now()) @map("marked_at") @db.Timestamptz
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch   Branch? @relation(fields: [branchId], references: [id])
+  trip     Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  markedBy User?   @relation("TransportAttendanceMarkedBy", fields: [markedById], references: [id])
+
+  @@unique([tripId, studentId])
+  @@index([studentId, markedAt])
+  @@map("transport_attendances")
+}
+
+// MODEL: route_stops (per ERD v3.0, aggregate=Transport)
+model RouteStop {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  routeId           String
+  sequenceNumber    Int
+  name              String
+  address           String?
+  latitude          Decimal?
+  longitude         Decimal?
+  morningPickupTime String
+  eveningDropTime   String
+  isActive          Boolean
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("route_stops")
+}
+
+// MODEL: route_students (per ERD v3.0, aggregate=Transport)
+model RouteStudent {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  studentId         String
+  routeId           String
+  stopId            String
+  academicSessionId String
+  pickupMode        String
+  effectiveFrom     DateTime
+  effectiveUntil    DateTime?
+  isActive          Boolean
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("route_students")
+}
+
+// MODEL: vehicle_documents (per ERD v3.0, aggregate=Transport)
+model VehicleDocument {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  vehicleId      String
+  documentType   String
+  documentNumber String?
+  issuedDate     DateTime?
+  expiryDate     DateTime?
+  fileUrl        String
+  verified       Boolean
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vehicle_documents")
+}
+
+// MODEL: driver_documents (per ERD v3.0, aggregate=Transport)
+model DriverDocument {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  driverId       String
+  documentType   String
+  documentNumber String?
+  issuedDate     DateTime?
+  expiryDate     DateTime?
+  fileUrl        String
+  verified       Boolean
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("driver_documents")
+}
+
+// MODEL: trip_logs (per ERD v3.0, aggregate=Transport)
+model TripLog {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  tripId         String
+  loggedAt       DateTime
+  latitude       Decimal
+  longitude      Decimal
+  speedKmph      Decimal?
+  headingDegrees Int?
+  eventType      String?
+  stopId         String?
+  studentId      String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("trip_logs")
+}
+
+// MODEL: transport_fees (per ERD v3.0, aggregate=Transport)
+model TransportFee {
+  id                  String           @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  studentId           String
+  routeId             String
+  academicSessionId   String
+  annualFeeCents      Int
+  paymentFrequency    FeeHeadFrequency
+  perInstallmentCents Int
+  isActive            Boolean
+  createdAt           DateTime         @default(now())
+  createdBy           String?
+  updatedAt           DateTime         @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int              @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("transport_fees")
+}
+
+// MODEL: pickup_authorization_transports (per ERD v3.0, aggregate=Transport)
+model PickupAuthorizationTransport {
+  id                   String    @id @default(uuid())
+  schoolId             String
+  branchId             String?
+  studentId            String
+  routeId              String
+  authorizedPersonName String
+  relationship         String
+  phone                String?
+  photoUrl             String?
+  grantedByGuardianId  String
+  isActive             Boolean
+  createdAt            DateTime  @default(now())
+  createdBy            String?
+  updatedAt            DateTime  @updatedAt
+  updatedBy            String?
+  deletedAt            DateTime?
+  deletedBy            String?
+  version              Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("pickup_authorization_transports")
+}
+
+// MODEL: transport_route_alternates (per ERD v3.0, aggregate=Transport)
+model TransportRouteAlternate {
+  id                  String    @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  primaryRouteId      String
+  alternateRouteId    String
+  priority            Int
+  createdAt           DateTime  @default(now())
+  createdBy           String?
+  updatedAt           DateTime  @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int       @default(1)
+  academicSessionId   String?
+  academicCalendarId  String?
+  integrationConfigId String?
+  anchor              String?
+  scope               String?
+  actor               String?
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("transport_route_alternates")
+}
+

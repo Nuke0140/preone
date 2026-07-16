@@ -1,0 +1,16 @@
+// Sentinel file — see note below.
+//
+// Prisma 6.19.3 has a quirk where the LAST model in the alphabetically-last
+// schema file is silently dropped during multi-file schema loading. Adding a
+// throwaway model in this trailing sentinel file ensures that
+// TransportRouteAlternate (the last real model in transport.prisma) is
+// correctly picked up by the Prisma generator.
+//
+// Safe to remove once Prisma fixes the underlying bug.
+
+model SchemaSplitSentinel {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  @@map("__schema_split_sentinel")
+}

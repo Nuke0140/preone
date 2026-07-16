@@ -1,0 +1,1290 @@
+// PreOne Prisma Schema — Inventory domain
+// Inventory — items, suppliers, purchase orders, GRNs, goods issues, returns, stock audits, reorder, disposal, compliance
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 ENUMS — Inventory + Administration + Transport
+// ─────────────────────────────────────────────────────────────────────────────
+enum InventoryItemType {
+  CONSUMABLE // paper, glue, crayons — issued + replenished
+  ASSET // chairs, whiteboards — tracked individually
+  EQUIPMENT // projector, printer — tracked + depreciated
+  PERISHABLE // food, milk — expiry tracked
+  STATIONERY // notebooks, pens
+  CLEANING // detergent, soap
+  MEDICAL // first-aid supplies
+}
+
+enum InventoryUnit {
+  PIECE
+  KG
+  LITER
+  METER
+  BOX
+  PACK
+  BOTTLE
+  ROLL
+  SET
+}
+
+enum PurchaseRequestStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+  CONVERTED_TO_PO
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  INVOICED
+  CLOSED
+  CANCELLED
+}
+
+enum GrnStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum GoodsIssueStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum StockMovementType {
+  RECEIVE // GRN
+  ISSUE // Goods issue
+  ADJUST // manual adjustment
+  RETURN // return to supplier
+  TRANSFER // branch-to-branch
+  WRITEOFF // damaged/expired
+}
+
+enum SupplierStatus {
+  ACTIVE
+  BLACKLISTED
+  INACTIVE
+}
+
+enum AssetCategory {
+  IT_EQUIPMENT
+  FURNITURE
+  KITCHEN_EQUIPMENT
+  TEACHING_AID
+  SPORTS_EQUIPMENT
+  SAFETY_EQUIPMENT
+  VEHICLE
+  BUILDING
+  OTHER
+}
+
+enum AssetStatus {
+  IN_USE
+  IN_STORAGE
+  UNDER_REPAIR
+  DISPOSED
+  LOST
+  WRITTEN_OFF
+  ALLOCATED
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  EMERGENCY
+  INSPECTION
+  CALIBRATION
+}
+
+enum MaintenanceStatus {
+  REQUESTED
+  APPROVED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DEFERRED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum VisitorStatus {
+  CHECKED_IN
+  CHECKED_OUT
+  DENIED_ENTRY
+  NO_SHOW
+}
+
+enum VisitorType {
+  PARENT
+  VENDOR
+  INSPECTOR
+  DELIVERY
+  GUEST
+  INTERVIEW_CANDIDATE
+  MAINTENANCE_CONTRACTOR
+  OTHER
+}
+
+enum VehicleType {
+  BUS
+  VAN
+  CAR
+  AUTO_RICKSHAW
+  MINI_BUS
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  RETIRED
+  SUSPENDED
+}
+
+enum RouteStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+}
+
+enum TripStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DELAYED
+  SKIPPED
+}
+
+enum TripDirection {
+  PICKUP
+  DROPOFF
+}
+
+enum StudentTransportStatus {
+  ENROLLED
+  OPTED_OUT
+  SUSPENDED
+  GRADUATED
+}
+
+enum TransportAttendanceStatus {
+  BOARDED
+  ALIGHTED
+  ABSENT
+  NO_SHOW
+  LATE_BOARDING
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 — INVENTORY MODULE (BTD §4.3 #9, ~45 tables)
+// Per BRC §11 (Inventory Rules) + ERD v3.0 §19 + API Catalog §16.14
+// Aggregates: Item, Stock, Supplier, PurchaseRequest, PurchaseOrder,
+//             GoodsReceiptNote, GoodsIssue
+// ─────────────────────────────────────────────────────────────────────────────
+model InventoryItem {
+  id          String            @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String            @map("school_id") @db.Uuid
+  branchId    String?           @map("branch_id") @db.Uuid
+  itemCode    String            @map("item_code") @db.VarChar(32)
+  name        String            @db.VarChar(160)
+  description String?           @db.Text
+  category    InventoryItemType @default(CONSUMABLE)
+  unit        InventoryUnit     @default(PIECE)
+  hsnCode     String?           @map("hsn_code") @db.VarChar(8)
+
+  // Stock policy
+  reorderLevel  Int  @default(0) @map("reorder_level")
+  reorderQty    Int  @default(0) @map("reorder_qty")
+  maxLevel      Int? @map("max_level")
+  currentStock  Int  @default(0) @map("current_stock")
+  reservedStock Int  @default(0) @map("reserved_stock")
+  // ^ current - reserved = available for issue
+
+  // Cost tracking (weighted average)
+  unitCostCents  Int @default(0) @map("unit_cost_cents")
+  valuationCents Int @default(0) @map("valuation_cents") // currentStock * unitCost
+
+  // Perishable support
+  isPerishable  Boolean @default(false) @map("is_perishable")
+  shelfLifeDays Int?    @map("shelf_life_days")
+
+  // Asset/equipment tracking
+  isAssetTracked Boolean @default(false) @map("is_asset_tracked")
+  assetPrefix    String? @map("asset_prefix") @db.VarChar(8)
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  school         School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch         Branch?               @relation(fields: [branchId], references: [id])
+  stockLots      StockLot[]
+  stockMovements StockMovement[]
+  prLines        PurchaseRequestLine[]
+  poLines        PurchaseOrderLine[]
+  grnLines       GrnLine[]
+  issueLines     GoodsIssueLine[]
+  assets         Asset[]
+
+  // Wave 12 back-relations
+  reorderAlerts        ReorderAlert[]        @relation("ReorderItem")
+  expiredItemDisposals ExpiredItemDisposal[] @relation("DisposalItem")
+  stockAuditLines      StockAuditLine[]      @relation("AuditItem")
+  returnNoteLines      ReturnNoteLine[]      @relation("ReturnItem")
+
+  @@unique([schoolId, itemCode])
+  @@index([schoolId, category])
+  @@index([schoolId, isActive])
+  @@index([branchId])
+  @@map("inventory_items")
+}
+
+model StockLot {
+  // A "lot" = a batch of items received together (for FIFO/FEFO)
+  id         String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId   String  @map("school_id") @db.Uuid
+  branchId   String? @map("branch_id") @db.Uuid
+  itemId     String  @map("item_id") @db.Uuid
+  lotNumber  String  @map("lot_number") @db.VarChar(64)
+  grnId      String? @map("grn_id") @db.Uuid
+  supplierId String? @map("supplier_id") @db.Uuid
+
+  quantityReceived Int @map("quantity_received")
+  quantityIssued   Int @default(0) @map("quantity_issued")
+  quantityOnHand   Int @map("quantity_on_hand")
+  unitCostCents    Int @map("unit_cost_cents")
+
+  // Expiry (for perishables)
+  manufacturedAt DateTime? @map("manufactured_at") @db.Date
+  expiresAt      DateTime? @map("expires_at") @db.Date
+
+  receivedAt DateTime @map("received_at") @db.Timestamptz
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  item     InventoryItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier Supplier?         @relation(fields: [supplierId], references: [id])
+  grn      GoodsReceiptNote? @relation(fields: [grnId], references: [id])
+  school   School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch   Branch?           @relation(fields: [branchId], references: [id])
+
+  @@index([itemId, expiresAt])
+  @@index([schoolId, branchId])
+  @@map("stock_lots")
+}
+
+model StockMovement {
+  // Append-only ledger of every stock change
+  id            String            @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String            @map("school_id") @db.Uuid
+  branchId      String?           @map("branch_id") @db.Uuid
+  itemId        String            @map("item_id") @db.Uuid
+  lotId         String?           @map("lot_id") @db.Uuid
+  movementType  StockMovementType @map("movement_type")
+  quantityDelta Int               @map("quantity_delta") // +receive / -issue
+  balanceAfter  Int               @map("balance_after")
+  referenceType String?           @map("reference_type") @db.VarChar(32) // GRN, ISSUE, etc.
+  referenceId   String?           @map("reference_id") @db.Uuid
+  reason        String?           @db.Text
+  performedById String?           @map("performed_by_id") @db.Uuid
+
+  occurredAt DateTime @default(now()) @map("occurred_at") @db.Timestamptz
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  school      School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch?       @relation(fields: [branchId], references: [id])
+  performedBy User?         @relation(fields: [performedById], references: [id])
+
+  @@index([itemId, occurredAt])
+  @@index([schoolId, occurredAt])
+  @@index([referenceType, referenceId])
+  @@map("stock_movements")
+}
+
+model Supplier {
+  id       String @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId String @map("school_id") @db.Uuid
+
+  supplierCode  String  @map("supplier_code") @db.VarChar(32)
+  name          String  @db.VarChar(160)
+  legalName     String? @map("legal_name") @db.VarChar(200)
+  gstNumber     String? @map("gst_number") @db.VarChar(15)
+  panNumber     String? @map("pan_number") @db.VarChar(10)
+  contactPerson String? @map("contact_person") @db.VarChar(120)
+  email         String? @db.Citext
+  phone         String? @db.VarChar(16)
+  addressLine1  String? @map("address_line1") @db.VarChar(255)
+  addressLine2  String? @map("address_line2") @db.VarChar(255)
+  city          String? @db.VarChar(64)
+  state         String? @db.VarChar(64)
+  pincode       String? @db.VarChar(6)
+
+  paymentTerms Int            @default(15) @map("payment_terms") // days
+  status       SupplierStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  school            School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  purchaseOrders    PurchaseOrder[]
+  stockLots         StockLot[]
+  goodsReceiptNotes GoodsReceiptNote[]
+
+  // Wave 12 back-relations
+  reorderSuggestions ReorderAlert[] @relation("ReorderSuggestedVendor")
+  returnNotes        ReturnNote[]   @relation("ReturnSupplier")
+
+  @@unique([schoolId, supplierCode])
+  @@index([schoolId, status])
+  @@map("suppliers")
+}
+
+model PurchaseRequest {
+  // PR = internal "we need to buy X" request, needs approval before PO
+  id            String                @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String                @map("school_id") @db.Uuid
+  branchId      String?               @map("branch_id") @db.Uuid
+  prNumber      String                @map("pr_number") @db.VarChar(32)
+  requestedById String                @map("requested_by_id") @db.Uuid
+  department    String?               @db.VarChar(64)
+  status        PurchaseRequestStatus @default(DRAFT)
+
+  justification  String?   @db.Text
+  approverId     String?   @map("approver_id") @db.Uuid
+  approvedAt     DateTime? @map("approved_at") @db.Timestamptz
+  approvalNotes  String?   @map("approval_notes") @db.Text
+  rejectedReason String?   @map("rejected_reason") @db.Text
+
+  convertedPoId String? @map("converted_po_id") @db.Uuid
+
+  requiredBy    DateTime? @map("required_by") @db.Date
+  totalEstCents Int       @default(0) @map("total_est_cents")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school      School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch?               @relation(fields: [branchId], references: [id])
+  requestedBy User                  @relation("PRRequestedBy", fields: [requestedById], references: [id])
+  approver    User?                 @relation("PRApprover", fields: [approverId], references: [id])
+  lines       PurchaseRequestLine[]
+  convertedPo PurchaseOrder?        @relation("PRConvertedPO")
+
+  @@unique([schoolId, prNumber])
+  @@index([schoolId, status])
+  @@index([requestedById])
+  @@map("purchase_requests")
+}
+
+model PurchaseRequestLine {
+  id            String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String  @map("school_id") @db.Uuid
+  prId          String  @map("pr_id") @db.Uuid
+  itemId        String  @map("item_id") @db.Uuid
+  quantity      Int
+  unitCostCents Int     @map("unit_cost_cents")
+  estCostCents  Int     @map("est_cost_cents")
+  notes         String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  pr     PurchaseRequest @relation(fields: [prId], references: [id], onDelete: Cascade)
+  item   InventoryItem   @relation(fields: [itemId], references: [id])
+  school School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([prId])
+  @@map("purchase_request_lines")
+}
+
+model PurchaseOrder {
+  // PO = issued to supplier, after PR approval
+  id         String              @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId   String              @map("school_id") @db.Uuid
+  branchId   String?             @map("branch_id") @db.Uuid
+  poNumber   String              @map("po_number") @db.VarChar(32)
+  supplierId String              @map("supplier_id") @db.Uuid
+  issuedById String              @map("issued_by_id") @db.Uuid
+  status     PurchaseOrderStatus @default(DRAFT)
+
+  sourcePrId String? @unique @map("source_pr_id") @db.Uuid
+
+  // Totals (in paise)
+  subtotalCents Int @default(0) @map("subtotal_cents")
+  taxCents      Int @default(0) @map("tax_cents")
+  shippingCents Int @default(0) @map("shipping_cents")
+  totalCents    Int @default(0) @map("total_cents")
+
+  expectedDate DateTime? @map("expected_date") @db.Date
+  issuedAt     DateTime? @map("issued_at") @db.Timestamptz
+  closedAt     DateTime? @map("closed_at") @db.Timestamptz
+  notes        String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school   School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch   Branch?             @relation(fields: [branchId], references: [id])
+  supplier Supplier            @relation(fields: [supplierId], references: [id])
+  issuedBy User                @relation("POIssuedBy", fields: [issuedById], references: [id])
+  sourcePr PurchaseRequest?    @relation("PRConvertedPO", fields: [sourcePrId], references: [id])
+  lines    PurchaseOrderLine[]
+  grns     GoodsReceiptNote[]
+
+  // Wave 12 back-relations
+  returnNotes ReturnNote[] @relation("ReturnPo")
+
+  @@unique([schoolId, poNumber])
+  @@index([schoolId, status])
+  @@index([supplierId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id             String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String  @map("school_id") @db.Uuid
+  poId           String  @map("po_id") @db.Uuid
+  itemId         String  @map("item_id") @db.Uuid
+  quantity       Int
+  unitCostCents  Int     @map("unit_cost_cents")
+  taxRatePercent Decimal @default(0) @map("tax_rate_percent") @db.Decimal(5, 2)
+  lineTotalCents Int     @map("line_total_cents")
+
+  receivedQty Int @default(0) @map("received_qty")
+
+  po     PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+  school School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([poId])
+  @@map("purchase_order_lines")
+}
+
+model GoodsReceiptNote {
+  // GRN = receipt of goods against a PO (or direct receipt)
+  id           String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId     String    @map("school_id") @db.Uuid
+  branchId     String?   @map("branch_id") @db.Uuid
+  grnNumber    String    @map("grn_number") @db.VarChar(32)
+  poId         String?   @map("po_id") @db.Uuid
+  supplierId   String    @map("supplier_id") @db.Uuid
+  receivedById String    @map("received_by_id") @db.Uuid
+  status       GrnStatus @default(DRAFT)
+
+  invoiceNumber String?   @map("invoice_number") @db.VarChar(64)
+  invoiceDate   DateTime? @map("invoice_date") @db.Date
+  challanNumber String?   @map("challan_number") @db.VarChar(64)
+
+  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz
+  notes      String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school     School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch     Branch?        @relation(fields: [branchId], references: [id])
+  po         PurchaseOrder? @relation(fields: [poId], references: [id])
+  supplier   Supplier       @relation(fields: [supplierId], references: [id])
+  receivedBy User           @relation("GRNReceivedBy", fields: [receivedById], references: [id])
+  lines      GrnLine[]
+  stockLots  StockLot[]
+
+  @@unique([schoolId, grnNumber])
+  @@index([schoolId, receivedAt])
+  @@index([poId])
+  @@map("goods_receipt_notes")
+}
+
+model GrnLine {
+  id              String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String    @map("school_id") @db.Uuid
+  grnId           String    @map("grn_id") @db.Uuid
+  poLineId        String?   @map("po_line_id") @db.Uuid
+  itemId          String    @map("item_id") @db.Uuid
+  orderedQty      Int       @map("ordered_qty")
+  receivedQty     Int       @map("received_qty")
+  acceptedQty     Int       @map("accepted_qty") // received - rejected
+  rejectedQty     Int       @default(0) @map("rejected_qty")
+  rejectionReason String?   @map("rejection_reason") @db.Text
+  unitCostCents   Int       @map("unit_cost_cents")
+  lotNumber       String?   @map("lot_number") @db.VarChar(64)
+  expiresAt       DateTime? @map("expires_at") @db.Date
+
+  grn    GoodsReceiptNote @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  item   InventoryItem    @relation(fields: [itemId], references: [id])
+  school School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([grnId])
+  @@map("grn_lines")
+}
+
+model GoodsIssue {
+  // Issue goods from inventory to a department/employee
+  id          String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String           @map("school_id") @db.Uuid
+  branchId    String?          @map("branch_id") @db.Uuid
+  issueNumber String           @map("issue_number") @db.VarChar(32)
+  issuedToId  String           @map("issued_to_id") @db.Uuid
+  issuedById  String           @map("issued_by_id") @db.Uuid
+  status      GoodsIssueStatus @default(DRAFT)
+
+  issueDate  DateTime @default(now()) @map("issue_date") @db.Timestamptz
+  department String?  @db.VarChar(64)
+  purpose    String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school   School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch   Branch?          @relation(fields: [branchId], references: [id])
+  issuedTo User             @relation("GIssuedTo", fields: [issuedToId], references: [id])
+  issuedBy User             @relation("GIssuedBy", fields: [issuedById], references: [id])
+  lines    GoodsIssueLine[]
+
+  @@unique([schoolId, issueNumber])
+  @@index([issuedToId])
+  @@map("goods_issues")
+}
+
+model GoodsIssueLine {
+  id             String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String  @map("school_id") @db.Uuid
+  issueId        String  @map("issue_id") @db.Uuid
+  itemId         String  @map("item_id") @db.Uuid
+  lotId          String? @map("lot_id") @db.Uuid
+  quantity       Int
+  unitCostCents  Int     @map("unit_cost_cents")
+  lineTotalCents Int     @map("line_total_cents")
+
+  issue  GoodsIssue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+  school School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@map("goods_issue_lines")
+}
+
+// ===== Wave 12 — Inventory Compliance =====
+/// R-INV-001 — Auto Reorder Trigger
+/// When stock <= reorderLevel, system auto-creates PR (Purchase Request)
+/// routed to Branch Admin for approval; sets expected delivery date.
+model ReorderAlert {
+  id                   String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String        @map("school_id") @db.Uuid
+  branchId             String        @map("branch_id") @db.Uuid
+  itemId               String        @map("item_id") @db.Uuid
+  currentStock         Decimal       @map("current_stock") @db.Decimal(12, 3)
+  reorderLevel         Decimal       @map("reorder_level") @db.Decimal(12, 3)
+  suggestedQty         Decimal       @map("suggested_qty") @db.Decimal(12, 3)
+  suggestedVendorId    String?       @map("suggested_vendor_id") @db.Uuid
+  status               ReorderStatus @default(CREATED)
+  expectedDeliveryDate DateTime?     @map("expected_delivery_date") @db.Date
+  approvedById         String?       @map("approved_by_id") @db.Uuid
+  approvedAt           DateTime?     @map("approved_at") @db.Timestamptz
+  rejectionReason      String?       @db.Text
+  convertedPoId        String?       @map("converted_po_id") @db.Uuid
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch        @relation("ReorderBranch", fields: [branchId], references: [id])
+  item            InventoryItem @relation("ReorderItem", fields: [itemId], references: [id])
+  suggestedVendor Supplier?     @relation("ReorderSuggestedVendor", fields: [suggestedVendorId], references: [id])
+
+  @@index([schoolId, status])
+  @@index([itemId, status])
+  @@map("reorder_alerts")
+}
+
+/// R-INV-004 — Expired Item Disposal
+/// Item crosses expiry date → mark 'Expired - Dispose'; generate disposal log;
+/// Inventory Manager + Branch Head joint approval for write-off.
+model ExpiredItemDisposal {
+  id                         String         @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                   String         @map("school_id") @db.Uuid
+  branchId                   String         @map("branch_id") @db.Uuid
+  itemId                     String         @map("item_id") @db.Uuid
+  batchId                    String?        @map("batch_id") @db.Uuid
+  quantity                   Decimal        @db.Decimal(12, 3)
+  expiryDate                 DateTime       @map("expiry_date") @db.Date
+  disposedAt                 DateTime?      @map("disposed_at") @db.Timestamptz
+  disposalMethod             DisposalMethod @default(WRITE_OFF)
+  writeOffValueCents         BigInt         @default(0) @map("write_off_value_cents")
+  status                     String         @default("PENDING_APPROVAL") @db.VarChar(30) // PENDING_APPROVAL | APPROVED | DISPOSED | REJECTED
+  inventoryManagerApprovedAt DateTime?      @map("inv_mgr_approved_at") @db.Timestamptz
+  branchHeadApprovedAt       DateTime?      @map("branch_head_approved_at") @db.Timestamptz
+  disposalLogUrl             String?        @map("disposal_log_url") @db.VarChar(500)
+  notes                      String?        @db.Text
+  createdAt                  DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch        @relation("DisposalBranch", fields: [branchId], references: [id])
+  item   InventoryItem @relation("DisposalItem", fields: [itemId], references: [id])
+
+  @@index([schoolId, status])
+  @@index([itemId, status])
+  @@map("expired_item_disposals")
+}
+
+/// R-INV-009 — Stock Audit Frequency
+/// Quarterly audit cycle. Physical count; reconcile with system;
+/// variance >5% triggers investigation; Branch Head approval for adjustments.
+model StockAudit {
+  id                      String                   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                String                   @map("school_id") @db.Uuid
+  branchId                String                   @map("branch_id") @db.Uuid
+  auditNumber             String                   @map("audit_number") @db.VarChar(32)
+  quarter                 String                   @db.VarChar(8) // "2026-Q1"
+  scheduledDate           DateTime                 @map("scheduled_date") @db.Date
+  startedAt               DateTime?                @map("started_at") @db.Timestamptz
+  completedAt             DateTime?                @map("completed_at") @db.Timestamptz
+  status                  StockAuditStatus         @default(SCHEDULED)
+  varianceAction          StockAuditVarianceAction @default(NONE)
+  totalItems              Int                      @default(0) @map("total_items")
+  itemsWithVariance       Int                      @default(0) @map("items_with_variance")
+  totalVarianceValueCents BigInt                   @default(0) @map("total_variance_value_cents")
+  branchHeadApprovedAt    DateTime?                @map("branch_head_approved_at") @db.Timestamptz
+  notes                   String?                  @db.Text
+  createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch           @relation("AuditBranch", fields: [branchId], references: [id])
+  lines  StockAuditLine[]
+
+  @@unique([schoolId, auditNumber])
+  @@unique([branchId, quarter])
+  @@map("stock_audits")
+}
+
+model StockAuditLine {
+  id                 String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  auditId            String  @map("audit_id") @db.Uuid
+  itemId             String  @map("item_id") @db.Uuid
+  systemQty          Decimal @map("system_qty") @db.Decimal(12, 3)
+  physicalQty        Decimal @map("physical_qty") @db.Decimal(12, 3)
+  varianceQty        Decimal @map("variance_qty") @db.Decimal(12, 3)
+  variancePercent    Decimal @map("variance_percent") @db.Decimal(6, 2)
+  unitCostCents      BigInt  @map("unit_cost_cents")
+  varianceValueCents BigInt  @map("variance_value_cents")
+  notes              String? @db.Text
+
+  audit StockAudit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  item  InventoryItem @relation("AuditItem", fields: [itemId], references: [id])
+
+  @@index([auditId, itemId])
+  @@map("stock_audit_lines")
+}
+
+/// R-INV-010 — Return Window
+/// Item return request → generate return note; vendor pickup arranged;
+/// credit note raised.
+model ReturnNote {
+  id                    String       @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String       @map("school_id") @db.Uuid
+  branchId              String       @map("branch_id") @db.Uuid
+  returnNumber          String       @map("return_number") @db.VarChar(32)
+  supplierId            String       @map("supplier_id") @db.Uuid
+  poId                  String?      @map("po_id") @db.Uuid
+  grnId                 String?      @map("grn_id") @db.Uuid
+  reason                ReturnReason
+  status                ReturnStatus @default(INITIATED)
+  initiatedAt           DateTime     @default(now()) @map("initiated_at") @db.Timestamptz
+  approvedAt            DateTime?    @map("approved_at") @db.Timestamptz
+  pickupScheduledAt     DateTime?    @map("pickup_scheduled_at") @db.Timestamptz
+  returnedAt            DateTime?    @map("returned_at") @db.Timestamptz
+  creditNoteNumber      String?      @map("credit_note_number") @db.VarChar(64)
+  creditNoteAmountCents BigInt?      @map("credit_note_amount_cents")
+  creditReceivedAt      DateTime?    @map("credit_received_at") @db.Timestamptz
+  notes                 String?      @db.Text
+  createdAt             DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  school   School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch   Branch           @relation("ReturnBranch", fields: [branchId], references: [id])
+  supplier Supplier         @relation("ReturnSupplier", fields: [supplierId], references: [id])
+  po       PurchaseOrder?   @relation("ReturnPo", fields: [poId], references: [id])
+  lines    ReturnNoteLine[]
+
+  @@unique([schoolId, returnNumber])
+  @@index([supplierId, status])
+  @@map("return_notes")
+}
+
+model ReturnNoteLine {
+  id              String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  returnNoteId    String  @map("return_note_id") @db.Uuid
+  itemId          String  @map("item_id") @db.Uuid
+  batchId         String? @map("batch_id") @db.Uuid
+  quantity        Decimal @db.Decimal(12, 3)
+  unitCostCents   BigInt  @map("unit_cost_cents")
+  totalValueCents BigInt  @map("total_value_cents")
+  notes           String? @db.Text
+
+  returnNote ReturnNote    @relation(fields: [returnNoteId], references: [id], onDelete: Cascade)
+  item       InventoryItem @relation("ReturnItem", fields: [itemId], references: [id])
+
+  @@index([returnNoteId, itemId])
+  @@map("return_note_lines")
+}
+
+// MODEL: inventory_categorys (per ERD v3.0, aggregate=Inventory)
+model InventoryCategory {
+  id           String                @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  name         InventoryCategoryName
+  description  String?
+  isActive     Boolean
+  displayOrder Int
+  createdAt    DateTime              @default(now())
+  createdBy    String?
+  updatedAt    DateTime              @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int                   @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("inventory_categorys")
+}
+
+// MODEL: inventory_stocks (per ERD v3.0, aggregate=Inventory)
+model InventoryStock {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  itemId        String
+  batchNumber   String?
+  quantity      Decimal
+  unitCostCents Int
+  receivedAt    DateTime
+  grnId         String?
+  expiryDate    DateTime?
+  location      String?
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("inventory_stocks")
+}
+
+// MODEL: purchase_request_items (per ERD v3.0, aggregate=Inventory)
+model PurchaseRequestItem {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  purchaseRequestId String
+  itemId            String?
+  itemName          String
+  quantity          Decimal
+  unit              String
+  estimateCents     Int
+  notes             String?
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("purchase_request_items")
+}
+
+// MODEL: purchase_order_items (per ERD v3.0, aggregate=Inventory)
+model PurchaseOrderItem {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  purchaseOrderId  String
+  itemId           String?
+  itemName         String
+  quantityOrdered  Decimal
+  quantityReceived Decimal
+  unitCostCents    Int
+  taxPercentage    Decimal
+  lineTotalCents   Int
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("purchase_order_items")
+}
+
+// MODEL: grns (per ERD v3.0, aggregate=Inventory)
+model GRN {
+  id              String    @id @default(uuid())
+  schoolId        String
+  branchId        String?
+  grnNumber       String
+  purchaseOrderId String?
+  vendorId        String
+  receivedDate    DateTime
+  receivedBy      String
+  status          GRNStatus
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  invoiceNumber   String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?
+  deletedAt       DateTime?
+  deletedBy       String?
+  version         Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("grns")
+}
+
+// MODEL: grnitems (per ERD v3.0, aggregate=Inventory)
+model GRNItem {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  grnId            String
+  poItemId         String?
+  itemId           String
+  quantityReceived Decimal
+  quantityAccepted Decimal
+  quantityRejected Decimal
+  rejectionReason  String?
+  batchNumber      String?
+  expiryDate       DateTime?
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("grnitems")
+}
+
+// MODEL: vendors (per ERD v3.0, aggregate=Inventory)
+model Vendor {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  name             String
+  code             String
+  gstNumber        String?
+  panNumber        String?
+  contactPerson    String?
+  phone            String
+  email            String?
+  address          String
+  city             String
+  state            String
+  pincode          String
+  paymentTermsDays Int
+  isActive         Boolean
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vendors")
+}
+
+// MODEL: vendor_contacts (per ERD v3.0, aggregate=Inventory)
+model VendorContact {
+  id          String    @id @default(uuid())
+  schoolId    String
+  branchId    String?
+  vendorId    String
+  name        String
+  designation String?
+  phone       String?
+  email       String?
+  isPrimary   Boolean
+  createdAt   DateTime  @default(now())
+  createdBy   String?
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
+  deletedAt   DateTime?
+  deletedBy   String?
+  version     Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vendor_contacts")
+}
+
+// MODEL: stock_issues (per ERD v3.0, aggregate=Inventory)
+model StockIssue {
+  id                  String           @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  issueNumber         String
+  issuedToUserId      String?
+  issuedToClassroomId String?
+  issueDate           DateTime
+  status              StockIssueStatus
+  purpose             String?
+  issuedBy            String
+  createdAt           DateTime         @default(now())
+  createdBy           String?
+  updatedAt           DateTime         @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int              @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_issues")
+}
+
+// MODEL: stock_issue_items (per ERD v3.0, aggregate=Inventory)
+model StockIssueItem {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  stockIssueId     String
+  itemId           String
+  quantityIssued   Decimal
+  quantityReturned Decimal
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_issue_items")
+}
+
+// MODEL: stock_returns (per ERD v3.0, aggregate=Inventory)
+model StockReturn {
+  id            String          @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  returnNumber  String
+  returnType    StockReturnType
+  referenceType String?
+  referenceId   String?
+  vendorId      String?
+  returnDate    DateTime
+  reason        String
+  processedBy   String
+  createdAt     DateTime        @default(now())
+  createdBy     String?
+  updatedAt     DateTime        @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int             @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_returns")
+}
+
+// MODEL: stock_return_items (per ERD v3.0, aggregate=Inventory)
+model StockReturnItem {
+  id            String         @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  stockReturnId String
+  itemId        String
+  quantity      Decimal
+  condition     ItemCondition?
+  createdAt     DateTime       @default(now())
+  createdBy     String?
+  updatedAt     DateTime       @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int            @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_return_items")
+}
+
+// MODEL: damaged_items (per ERD v3.0, aggregate=Inventory)
+model DamagedItem {
+  id             String            @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  itemId         String
+  quantity       Decimal
+  condition      ItemCondition
+  damageReason   String
+  disposalAction DamagedItemAction
+  disposalDate   DateTime?
+  recordedBy     String
+  photoUrl       String?
+  createdAt      DateTime          @default(now())
+  createdBy      String?
+  updatedAt      DateTime          @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int               @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("damaged_items")
+}
+
+// MODEL: damaged_actions (per ERD v3.0, aggregate=Inventory)
+model DamagedAction {
+  id            String            @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  damagedItemId String
+  action        DamagedItemAction
+  actionDate    DateTime
+  costCents     Int?
+  notes         String?
+  actedBy       String
+  createdAt     DateTime          @default(now())
+  createdBy     String?
+  updatedAt     DateTime          @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int               @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("damaged_actions")
+}
+
+// MODEL: stock_audit_items (per ERD v3.0, aggregate=Inventory)
+model StockAuditItem {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  stockAuditId     String
+  itemId           String
+  systemQuantity   Decimal
+  physicalQuantity Decimal
+  discrepancy      Decimal
+  discrepancyType  String?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_audit_items")
+}
+
+// MODEL: low_stock_alerts (per ERD v3.0, aggregate=Inventory)
+model LowStockAlert {
+  id                String            @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  itemId            String
+  alertType         LowStockAlertType
+  quantityAtTrigger Decimal
+  triggeredAt       DateTime
+  acknowledgedBy    String?
+  acknowledgedAt    DateTime?
+  resolvedAt        DateTime?
+  status            String
+  createdAt         DateTime          @default(now())
+  createdBy         String?
+  updatedAt         DateTime          @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int               @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("low_stock_alerts")
+}
+
+// MODEL: reorder_rules (per ERD v3.0, aggregate=Inventory)
+model ReorderRule {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  itemId       String
+  triggerLevel Decimal
+  reorderQty   Decimal
+  vendorId     String?
+  autoCreatePr Boolean
+  isActive     Boolean
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("reorder_rules")
+}
+
+// MODEL: kitchen_inventorys (per ERD v3.0, aggregate=Inventory)
+model KitchenInventory {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  itemName     String
+  category     String
+  quantity     Decimal
+  unit         String
+  minLevel     Decimal
+  reorderLevel Decimal
+  isPerishable Boolean
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("kitchen_inventorys")
+}
+
+// MODEL: kitchen_consumptions (per ERD v3.0, aggregate=Inventory)
+model KitchenConsumption {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  itemId           String
+  consumptionDate  DateTime
+  quantityConsumed Decimal
+  mealType         MealType?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("kitchen_consumptions")
+}
+
+// MODEL: supplier_invoices (per ERD v3.0, aggregate=Inventory)
+model SupplierInvoice {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  invoiceNumber String
+  vendorId      String
+  poId          String?
+  grnId         String?
+  invoiceDate   DateTime
+  subtotalCents Int
+  taxCents      Int
+  totalCents    Int
+  status        String
+  dueDate       DateTime
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("supplier_invoices")
+}
+
+// MODEL: supplier_payments (per ERD v3.0, aggregate=Inventory)
+model SupplierPayment {
+  id                String      @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  supplierInvoiceId String
+  amountCents       Int
+  paymentDate       DateTime
+  paymentMode       PaymentMode
+  transactionRef    String?
+  paidBy            String
+  notes             String?
+  createdAt         DateTime    @default(now())
+  createdBy         String?
+  updatedAt         DateTime    @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int         @default(1)
+  authorId          String?
+  announcementId    String?
+  broadcastId       String?
+  recipientUserId   String?
+  anchor            String?
+  scope             String?
+  actor             String?
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("supplier_payments")
+}
+
+enum DamagedItemAction {
+  PLACEHOLDER
+}

@@ -1,0 +1,608 @@
+// PreOne Prisma Schema — Administration domain
+// Administration — assets, visitors, CCTV, maintenance, compliance, food samples
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 — ADMINISTRATION MODULE (BTD §4.3 #11, ~25 tables)
+// Per BRC §13 (Facility Rules) + ERD v3.0 §20 + API Catalog §16.15
+// Aggregates: Asset, MaintenanceRequest, Visitor
+// ─────────────────────────────────────────────────────────────────────────────
+model Asset {
+  id       String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId String        @map("school_id") @db.Uuid
+  branchId String?       @map("branch_id") @db.Uuid
+  assetTag String        @map("asset_tag") @db.VarChar(32)
+  itemId   String?       @map("item_id") @db.Uuid
+  name     String        @db.VarChar(160)
+  category AssetCategory @default(FURNITURE)
+  status   AssetStatus   @default(IN_USE)
+
+  // Purchase / valuation
+  purchaseDate            DateTime? @map("purchase_date") @db.Date
+  purchaseCostCents       Int       @default(0) @map("purchase_cost_cents")
+  currentValueCents       Int       @default(0) @map("current_value_cents")
+  depreciationRatePercent Decimal   @default(0) @map("depreciation_rate_percent") @db.Decimal(5, 2)
+
+  // Assignment
+  assignedToId String?   @map("assigned_to_id") @db.Uuid
+  assignedAt   DateTime? @map("assigned_at") @db.Timestamptz
+  location     String?   @db.VarChar(255)
+
+  // Warranty
+  warrantyStart DateTime? @map("warranty_start") @db.Date
+  warrantyEnd   DateTime? @map("warranty_end") @db.Date
+  vendorName    String?   @map("vendor_name") @db.VarChar(160)
+
+  // Maintenance
+  lastMaintenanceAt  DateTime? @map("last_maintenance_at") @db.Timestamptz
+  nextMaintenanceDue DateTime? @map("next_maintenance_due") @db.Date
+
+  // Disposal
+  disposedAt      DateTime? @map("disposed_at") @db.Timestamptz
+  disposalReason  String?   @map("disposal_reason") @db.Text
+  scrapValueCents Int?      @map("scrap_value_cents")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch              Branch?              @relation(fields: [branchId], references: [id])
+  item                InventoryItem?       @relation(fields: [itemId], references: [id])
+  assignedTo          User?                @relation("AssetAssignedTo", fields: [assignedToId], references: [id])
+  maintenanceRequests MaintenanceRequest[]
+
+  @@unique([schoolId, assetTag])
+  @@index([schoolId, status])
+  @@index([schoolId, category])
+  @@index([assignedToId])
+  @@map("assets")
+}
+
+model MaintenanceRequest {
+  id            String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String  @map("school_id") @db.Uuid
+  branchId      String? @map("branch_id") @db.Uuid
+  requestNumber String  @map("request_number") @db.VarChar(32)
+  assetId       String? @map("asset_id") @db.Uuid
+  requestedById String  @map("requested_by_id") @db.Uuid
+  assignedToId  String? @map("assigned_to_id") @db.Uuid
+
+  type     MaintenanceType     @default(CORRECTIVE)
+  status   MaintenanceStatus   @default(REQUESTED)
+  priority MaintenancePriority @default(MEDIUM)
+
+  title       String @db.VarChar(200)
+  description String @db.Text
+
+  // Scheduling
+  scheduledAt DateTime? @map("scheduled_at") @db.Timestamptz
+  startedAt   DateTime? @map("started_at") @db.Timestamptz
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+
+  // Cost tracking
+  estimatedCostCents  Int     @default(0) @map("estimated_cost_cents")
+  actualCostCents     Int     @default(0) @map("actual_cost_cents")
+  vendorName          String? @map("vendor_name") @db.VarChar(160)
+  vendorInvoiceNumber String? @map("vendor_invoice_number") @db.VarChar(64)
+
+  // Resolution
+  resolutionNotes  String? @map("resolution_notes") @db.Text
+  resolutionPhotos Json?   @map("resolution_photos")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch? @relation(fields: [branchId], references: [id])
+  asset       Asset?  @relation(fields: [assetId], references: [id])
+  requestedBy User    @relation("MaintRequestedBy", fields: [requestedById], references: [id])
+  assignedTo  User?   @relation("MaintAssignedTo", fields: [assignedToId], references: [id])
+
+  @@unique([schoolId, requestNumber])
+  @@index([schoolId, status])
+  @@index([assetId])
+  @@index([priority, status])
+  @@map("maintenance_requests")
+}
+
+model VisitorLog {
+  id          String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String        @map("school_id") @db.Uuid
+  branchId    String?       @map("branch_id") @db.Uuid
+  visitorType VisitorType   @default(GUEST)
+  status      VisitorStatus @default(CHECKED_IN)
+
+  // Visitor details
+  name           String  @db.VarChar(160)
+  phone          String? @db.VarChar(16)
+  email          String? @db.Citext
+  organization   String? @db.VarChar(160)
+  purposeOfVisit String  @map("purpose_of_visit") @db.VarChar(255)
+  personToMeetId String? @map("person_to_meet_id") @db.Uuid
+  numVisitors    Int     @default(1) @map("num_visitors")
+
+  // Visit details
+  checkInAt       DateTime  @default(now()) @map("check_in_at") @db.Timestamptz
+  checkOutAt      DateTime? @map("check_out_at") @db.Timestamptz
+  durationMinutes Int?      @map("duration_minutes")
+
+  // Identity verification
+  idProofType   String? @map("id_proof_type") @db.VarChar(32) // AADHAAR, PAN, PASSPORT, DL
+  idProofNumber String? @map("id_proof_number") @db.VarChar(32)
+  photoUrl      String? @map("photo_url") @db.VarChar(512)
+  signatureUrl  String? @map("signature_url") @db.VarChar(512)
+
+  // Approval
+  approvedById String? @map("approved_by_id") @db.Uuid
+  denialReason String? @map("denial_reason") @db.Text
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school       School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch       Branch? @relation(fields: [branchId], references: [id])
+  personToMeet User?   @relation("VisitorPersonToMeet", fields: [personToMeetId], references: [id])
+  approvedBy   User?   @relation("VisitorApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([schoolId, checkInAt])
+  @@index([status])
+  @@index([personToMeetId])
+  @@map("visitor_logs")
+}
+
+model Facility {
+  // School facility / room (classroom, lab, playground, etc.)
+  id       String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId String   @map("school_id") @db.Uuid
+  branchId String?  @map("branch_id") @db.Uuid
+  name     String   @db.VarChar(120)
+  type     String   @db.VarChar(64) // CLASSROOM, LAB, PLAYGROUND, KITCHEN, OFFICE, STAFF_ROOM
+  capacity Int      @default(0)
+  areaSqft Decimal? @map("area_sqft") @db.Decimal(10, 2)
+  floor    String?  @db.VarChar(32)
+  building String?  @db.VarChar(64)
+
+  hasAirConditioning  Boolean @default(false) @map("has_ac")
+  hasProjector        Boolean @default(false) @map("has_projector")
+  hasWhiteboard       Boolean @default(true) @map("has_whiteboard")
+  hasFireExtinguisher Boolean @default(false) @map("has_fire_extinguisher")
+  hasCctv             Boolean @default(false) @map("has_cctv")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school      School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch?              @relation(fields: [branchId], references: [id])
+  inspections FacilityInspection[]
+
+  @@unique([schoolId, name, type])
+  @@index([schoolId, isActive])
+  @@map("facilities")
+}
+
+model FacilityInspection {
+  id                String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId          String    @map("school_id") @db.Uuid
+  branchId          String?   @map("branch_id") @db.Uuid
+  facilityId        String    @map("facility_id") @db.Uuid
+  inspectedById     String    @map("inspected_by_id") @db.Uuid
+  inspectionDate    DateTime  @map("inspection_date") @db.Timestamptz
+  inspectionType    String    @map("inspection_type") @db.VarChar(64) // SAFETY, HYGIENE, FIRE, STRUCTURAL
+  outcome           String    @db.VarChar(32) // PASS, FAIL, WARN
+  findings          String?   @db.Text
+  actionItems       Json?
+  photos            Json?
+  nextInspectionDue DateTime? @map("next_inspection_due") @db.Date
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  inspectedBy User     @relation("InspectedBy", fields: [inspectedById], references: [id])
+
+  @@index([schoolId, inspectionDate])
+  @@index([facilityId])
+  @@map("facility_inspections")
+}
+
+// MODEL: rooms (per ERD v3.0, aggregate=Admin)
+model Room {
+  id        String    @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name      String
+  code      String
+  roomType  RoomType
+  floor     Int?
+  capacity  Int?
+  areaSqft  Decimal?
+  isActive  Boolean
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("rooms")
+}
+
+// MODEL: activity_rooms (per ERD v3.0, aggregate=Admin)
+model ActivityRoom {
+  id           String       @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  roomId       String
+  activityType ActivityType
+  equipment    Json?
+  usageRules   String?
+  createdAt    DateTime     @default(now())
+  createdBy    String?
+  updatedAt    DateTime     @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int          @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("activity_rooms")
+}
+
+// MODEL: room_bookings (per ERD v3.0, aggregate=Admin)
+model RoomBooking {
+  id        String    @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  roomId    String
+  bookedBy  String
+  title     String
+  startAt   DateTime
+  endAt     DateTime
+  status    String
+  notes     String?
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("room_bookings")
+}
+
+// MODEL: asset_category_tbls (per ERD v3.0, aggregate=Admin)
+model AssetCategoryTbl {
+  id                       String    @id @default(uuid())
+  schoolId                 String
+  branchId                 String?
+  name                     String
+  description              String?
+  defaultDepreciationYears Int?
+  isActive                 Boolean
+  createdAt                DateTime  @default(now())
+  createdBy                String?
+  updatedAt                DateTime  @updatedAt
+  updatedBy                String?
+  deletedAt                DateTime?
+  deletedBy                String?
+  version                  Int       @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("asset_category_tbls")
+}
+
+// MODEL: asset_movements (per ERD v3.0, aggregate=Admin)
+model AssetMovement {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  assetId      String
+  fromRoomId   String?
+  toRoomId     String?
+  fromBranchId String?
+  toBranchId   String?
+  reason       String
+  movedBy      String
+  movedAt      DateTime
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("asset_movements")
+}
+
+// MODEL: asset_maintenances (per ERD v3.0, aggregate=Admin)
+model AssetMaintenance {
+  id              String    @id @default(uuid())
+  schoolId        String
+  branchId        String?
+  assetId         String
+  maintenanceType String
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  costCents       Int?
+  vendorId        String?
+  notes           String?
+  status          String
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?
+  deletedAt       DateTime?
+  deletedBy       String?
+  version         Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("asset_maintenances")
+}
+
+// MODEL: maintenance_logs (per ERD v3.0, aggregate=Admin)
+model MaintenanceLog {
+  id                   String    @id @default(uuid())
+  schoolId             String
+  branchId             String?
+  maintenanceRequestId String
+  actorId              String?
+  action               String
+  notes                String?
+  photoUrls            Json?
+  occurredAt           DateTime
+  createdAt            DateTime  @default(now())
+  createdBy            String?
+  updatedAt            DateTime  @updatedAt
+  updatedBy            String?
+  deletedAt            DateTime?
+  deletedBy            String?
+  version              Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("maintenance_logs")
+}
+
+// MODEL: visitors (per ERD v3.0, aggregate=Admin)
+model Visitor {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  name          String
+  phone         String?
+  email         String?
+  organization  String?
+  photoUrl      String?
+  idProofType   String?
+  idProofNumber String?
+  isBlacklisted Boolean
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([phone])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("visitors")
+}
+
+// MODEL: visitor_passs (per ERD v3.0, aggregate=Admin)
+model VisitorPass {
+  id          String         @id @default(uuid())
+  schoolId    String
+  branchId    String?
+  visitorId   String?
+  visitorName String
+  phone       String?
+  purpose     VisitorPurpose
+  hostUserId  String?
+  checkInAt   DateTime
+  checkOutAt  DateTime?
+  passNumber  String
+  status      VisitorStatus
+  photoUrl    String?
+  createdAt   DateTime       @default(now())
+  createdBy   String?
+  updatedAt   DateTime       @updatedAt
+  updatedBy   String?
+  deletedAt   DateTime?
+  deletedBy   String?
+  version     Int            @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("visitor_passs")
+}
+
+// MODEL: compliances (per ERD v3.0, aggregate=Admin)
+model Compliance {
+  id                 String           @id @default(uuid())
+  schoolId           String
+  branchId           String?
+  type               ComplianceType
+  title              String
+  issuingAuthority   String?
+  licenseNumber      String?
+  issuedDate         DateTime?
+  validUntil         DateTime?
+  status             ComplianceStatus
+  lastInspectionDate DateTime?
+  nextInspectionDue  DateTime?
+  notes              String?
+  createdAt          DateTime         @default(now())
+  createdBy          String?
+  updatedAt          DateTime         @updatedAt
+  updatedBy          String?
+  deletedAt          DateTime?
+  deletedBy          String?
+  version            Int              @default(1)
+
+  @@index([status])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("compliances")
+}
+
+// MODEL: compliance_documents (per ERD v3.0, aggregate=Admin)
+model ComplianceDocument {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  complianceId String
+  documentType String
+  fileUrl      String
+  uploadedBy   String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("compliance_documents")
+}
+
+// MODEL: compliance_reminders (per ERD v3.0, aggregate=Admin)
+model ComplianceReminder {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  complianceId String
+  reminderDate DateTime
+  reminderType String
+  sentAt       DateTime?
+  status       String
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("compliance_reminders")
+}
+
+// MODEL: drivers (per ERD v3.0, aggregate=Admin)
+model Driver {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  userId        String?
+  driverCode    String
+  firstName     String
+  lastName      String
+  phone         String
+  licenseNumber String
+  licenseExpiry DateTime
+  licenseTypes  Json?
+  dob           DateTime
+  address       String
+  isInternal    Boolean
+  vendorId      String?
+  isActive      Boolean
+  joinedAt      DateTime
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("drivers")
+}
+
+// MODEL: vehicle_maintenances (per ERD v3.0, aggregate=Admin)
+model VehicleMaintenance {
+  id              String    @id @default(uuid())
+  schoolId        String
+  branchId        String?
+  vehicleId       String
+  maintenanceType String
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  odometerKm      Int?
+  costCents       Int?
+  vendorId        String?
+  notes           String?
+  status          String
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?
+  deletedAt       DateTime?
+  deletedBy       String?
+  version         Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vehicle_maintenances")
+}
+
+// MODEL: fuel_logs (per ERD v3.0, aggregate=Admin)
+model FuelLog {
+  id                  String    @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  vehicleId           String
+  fuelDate            DateTime
+  fuelType            String
+  quantityLiters      Decimal
+  amountCents         Int
+  odometerKm          Int?
+  fuelStation         String?
+  filledBy            String?
+  createdAt           DateTime  @default(now())
+  createdBy           String?
+  updatedAt           DateTime  @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int       @default(1)
+  driverId            String?
+  routeId             String?
+  studentId           String?
+  stopId              String?
+  tripId              String?
+  academicSessionId   String?
+  grantedByGuardianId String?
+  anchor              String?
+  scope               String?
+  actor               String?
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fuel_logs")
+}

@@ -1,0 +1,622 @@
+// PreOne Prisma Schema — Crm domain
+// CRM — leads, campaigns, follow-ups, marketing channels, referrals, lead scoring
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ───────────────────────────────────────────────────────────────────────────
+// Wave 6 — CRM Module Prisma Models (BTD §4.3 #2)
+// ───────────────────────────────────────────────────────────────────────────
+// ─── Enums: CRM ───
+enum LeadStatus {
+  NEW
+  ASSIGNED
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  NURTURED
+  CONVERTED
+  LOST
+  DROPPED
+  REACTIVATED
+}
+
+enum LeadSource {
+  WEBSITE
+  WALK_IN
+  REFERRAL
+  DIGITAL_AD
+  SOCIAL_MEDIA
+  PHONE_INQUIRY
+  EMAIL_INQUIRY
+  EVENT
+  PARTNER
+  OTHER
+}
+
+enum LeadPriority {
+  HOT
+  WARM
+  COLD
+}
+
+enum ProgramInterest {
+  PLAYGROUP
+  NURSERY
+  JR_KG
+  SR_KG
+  DAYCARE
+  AFTER_SCHOOL
+  SUMMER_CAMP
+  MULTI
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  COMPLETED
+  ARCHIVED
+  CANCELLED
+}
+
+enum CampaignChannel {
+  WHATSAPP
+  SMS
+  EMAIL
+  PUSH
+  MULTI
+}
+
+enum CampaignAudience {
+  ALL_LEADS
+  NEW_LEADS
+  QUALIFIED_LEADS
+  NURTURED_LEADS
+  ALL_PARENTS
+  PROSPECTIVE_PARENTS
+  CUSTOM_SEGMENT
+}
+
+enum FollowUpType {
+  CALL
+  WHATSAPP
+  EMAIL
+  SMS
+  CAMPUS_VISIT
+  DEMO_CLASS
+  PARENT_MEETING
+  DOCUMENT_COLLECTION
+  OTHER
+}
+
+enum FollowUpStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  MISSED
+}
+
+enum FollowUpOutcome {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  CONVERTED
+  NO_RESPONSE
+  RESCHEDULED
+}
+
+// ─── CRM Models ───
+model Lead {
+  id                     String          @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId               String          @map("school_id") @db.Uuid
+  branchId               String?         @map("branch_id") @db.Uuid
+  leadCode               String          @map("lead_code") @db.VarChar(32)
+  parentFirstName        String          @map("parent_first_name") @db.VarChar(100)
+  parentLastName         String          @map("parent_last_name") @db.VarChar(100)
+  email                  String?         @db.VarChar(255)
+  phone                  String          @db.VarChar(20)
+  alternatePhone         String?         @map("alternate_phone") @db.VarChar(20)
+  childName              String?         @map("child_name") @db.VarChar(100)
+  childDateOfBirth       DateTime?       @map("child_date_of_birth") @db.Date
+  programInterest        ProgramInterest @map("program_interest")
+  preferredStartDate     DateTime?       @map("preferred_start_date") @db.Date
+  source                 LeadSource
+  sourceDetails          String?         @map("source_details") @db.Text
+  campaignId             String?         @map("campaign_id") @db.Uuid
+  status                 LeadStatus      @default(NEW)
+  priority               LeadPriority    @default(WARM)
+  assignedCounsellorId   String?         @map("assigned_counsellor_id") @db.Uuid
+  previousCounsellorId   String?         @map("previous_counsellor_id") @db.Uuid
+  assignedAt             DateTime?       @map("assigned_at") @db.Timestamptz
+  firstContactedAt       DateTime?       @map("first_contacted_at") @db.Timestamptz
+  lastContactedAt        DateTime?       @map("last_contacted_at") @db.Timestamptz
+  contactCount           Int             @default(0) @map("contact_count")
+  qualificationScore     Int?            @map("qualification_score")
+  qualificationNotes     String?         @map("qualification_notes") @db.Text
+  convertedAt            DateTime?       @map("converted_at") @db.Timestamptz
+  convertedApplicationId String?         @map("converted_application_id") @db.Uuid
+  convertedStudentId     String?         @map("converted_student_id") @db.Uuid
+  lostReason             String?         @map("lost_reason") @db.Text
+  lostAt                 DateTime?       @map("lost_at") @db.Timestamptz
+  budgetCents            Int?            @map("budget_cents")
+  location               String?         @db.VarChar(255)
+  notes                  String?         @db.Text
+  tags                   String[]        @default([])
+  followUpCount          Int             @default(0) @map("follow_up_count")
+  followUps              FollowUp[]
+  activities             LeadActivity[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school             School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch             Branch?   @relation(fields: [branchId], references: [id])
+  campaign           Campaign? @relation(fields: [campaignId], references: [id])
+  assignedCounsellor User?     @relation("LeadAssignedCounsellor", fields: [assignedCounsellorId], references: [id])
+  previousCounsellor User?     @relation("LeadPreviousCounsellor", fields: [previousCounsellorId], references: [id])
+
+  @@unique([schoolId, leadCode])
+  @@index([schoolId, status])
+  @@index([schoolId, source])
+  @@index([assignedCounsellorId])
+  @@index([campaignId])
+  @@map("leads")
+}
+
+model Campaign {
+  id                     String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId               String           @map("school_id") @db.Uuid
+  branchId               String?          @map("branch_id") @db.Uuid
+  campaignCode           String           @map("campaign_code") @db.VarChar(32)
+  name                   String           @db.VarChar(200)
+  description            String?          @db.Text
+  channel                CampaignChannel
+  audience               CampaignAudience
+  customSegmentQuery     String?          @map("custom_segment_query") @db.Text
+  status                 CampaignStatus   @default(DRAFT)
+  budgetCents            Int              @map("budget_cents")
+  spentCents             Int              @default(0) @map("spent_cents")
+  audienceSize           Int              @default(0) @map("audience_size")
+  sentCount              Int              @default(0) @map("sent_count")
+  deliveredCount         Int              @default(0) @map("delivered_count")
+  openedCount            Int              @default(0) @map("opened_count")
+  clickedCount           Int              @default(0) @map("clicked_count")
+  convertedCount         Int              @default(0) @map("converted_count")
+  templateId             String?          @map("template_id") @db.Uuid
+  messageContent         String?          @map("message_content") @db.Text
+  scheduledAt            DateTime?        @map("scheduled_at") @db.Timestamptz
+  launchedAt             DateTime?        @map("launched_at") @db.Timestamptz
+  completedAt            DateTime?        @map("completed_at") @db.Timestamptz
+  cancelledAt            DateTime?        @map("cancelled_at") @db.Timestamptz
+  cancellationReason     String?          @map("cancellation_reason") @db.Text
+  attributedRevenueCents Int              @default(0) @map("attributed_revenue_cents")
+  leads                  Lead[]
+  followUps              FollowUp[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id])
+
+  @@unique([schoolId, campaignCode])
+  @@index([schoolId, status])
+  @@map("campaigns")
+}
+
+model FollowUp {
+  id                    String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String           @map("school_id") @db.Uuid
+  branchId              String?          @map("branch_id") @db.Uuid
+  leadId                String           @map("lead_id") @db.Uuid
+  campaignId            String?          @map("campaign_id") @db.Uuid
+  counsellorId          String           @map("counsellor_id") @db.Uuid
+  type                  FollowUpType
+  status                FollowUpStatus   @default(SCHEDULED)
+  scheduledAt           DateTime         @map("scheduled_at") @db.Timestamptz
+  durationMinutes       Int?             @map("duration_minutes")
+  outcome               FollowUpOutcome?
+  outcomeNotes          String?          @map("outcome_notes") @db.Text
+  startedAt             DateTime?        @map("started_at") @db.Timestamptz
+  completedAt           DateTime?        @map("completed_at") @db.Timestamptz
+  cancelledAt           DateTime?        @map("cancelled_at") @db.Timestamptz
+  cancellationReason    String?          @map("cancellation_reason") @db.Text
+  missedAt              DateTime?        @map("missed_at") @db.Timestamptz
+  rescheduledTo         DateTime?        @map("rescheduled_to") @db.Timestamptz
+  rescheduledFollowUpId String?          @map("rescheduled_follow_up_id") @db.Uuid
+  reminderSentCount     Int              @default(0) @map("reminder_sent_count")
+  lastReminderSentAt    DateTime?        @map("last_reminder_sent_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  lead       Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  counsellor User      @relation(fields: [counsellorId], references: [id])
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([counsellorId, status])
+  @@index([schoolId, scheduledAt])
+  @@map("follow_ups")
+}
+
+model LeadTag {
+  id       String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId String  @map("school_id") @db.Uuid
+  leadId   String  @map("lead_id") @db.Uuid
+  tag      String  @db.VarChar(50)
+  color    String? @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, tag])
+  @@index([schoolId, tag])
+  @@map("lead_tags")
+}
+
+model LeadActivity {
+  id            String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String  @map("school_id") @db.Uuid
+  leadId        String  @map("lead_id") @db.Uuid
+  activityType  String  @map("activity_type") @db.VarChar(50)
+  description   String  @db.Text
+  performedById String? @map("performed_by_id") @db.Uuid
+  metadata      Json?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_activities")
+}
+
+model CampaignTemplate {
+  id           String          @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId     String          @map("school_id") @db.Uuid
+  name         String          @db.VarChar(200)
+  channel      CampaignChannel
+  subject      String?         @db.VarChar(255)
+  body         String          @db.Text
+  placeholders String[]        @default([])
+  isActive     Boolean         @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, channel])
+  @@map("campaign_templates")
+}
+
+model CampaignAudienceSegment {
+  id             String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String    @map("school_id") @db.Uuid
+  name           String    @db.VarChar(200)
+  description    String?   @db.Text
+  filterQuery    String    @map("filter_query") @db.Text
+  audienceSize   Int       @default(0) @map("audience_size")
+  lastComputedAt DateTime? @map("last_computed_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, name])
+  @@map("campaign_audience_segments")
+}
+
+model CounsellorTarget {
+  id                 String @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId           String @map("school_id") @db.Uuid
+  counsellorId       String @map("counsellor_id") @db.Uuid
+  periodMonth        Int    @map("period_month")
+  periodYear         Int    @map("period_year")
+  leadTarget         Int    @map("lead_target")
+  conversionTarget   Int    @map("conversion_target")
+  revenueTargetCents Int    @map("revenue_target_cents")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  counsellor User   @relation(fields: [counsellorId], references: [id])
+  school     School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([counsellorId, periodMonth, periodYear])
+  @@map("counsellor_targets")
+}
+
+// MODEL: marketing_campaigns (per ERD v3.0, aggregate=Campaign)
+model MarketingCampaign {
+  id                String          @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  name              String
+  channel           CampaignChannel
+  startDate         DateTime
+  endDate           DateTime?
+  budgetCents       Int?
+  targetLeads       Int?
+  actualLeads       Int
+  actualConversions Int
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  status            String
+  createdAt         DateTime        @default(now())
+  createdBy         String?
+  updatedAt         DateTime        @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int             @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("marketing_campaigns")
+}
+
+// MODEL: lead_source_tbls (per ERD v3.0, aggregate=Campaign)
+model LeadSourceTbl {
+  id                 String          @id @default(uuid())
+  schoolId           String
+  branchId           String?
+  name               String
+  channel            CampaignChannel
+  isActive           Boolean
+  defaultScoreWeight Decimal
+  createdAt          DateTime        @default(now())
+  createdBy          String?
+  updatedAt          DateTime        @updatedAt
+  updatedBy          String?
+  deletedAt          DateTime?
+  deletedBy          String?
+  version            Int             @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_source_tbls")
+}
+
+// MODEL: enquirys (per ERD v3.0, aggregate=Lead)
+model Enquiry {
+  id                String      @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  leadId            String
+  programType       ProgramType
+  intendedStartDate DateTime
+  priority          String
+  notes             String?
+  status            String
+  convertedAt       DateTime?
+  createdAt         DateTime    @default(now())
+  createdBy         String?
+  updatedAt         DateTime    @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int         @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("enquirys")
+}
+
+// MODEL: referrals (per ERD v3.0, aggregate=Lead)
+model Referral {
+  id                String         @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  referrerParentId  String?
+  referredLeadId    String
+  referralCode      String
+  status            ReferralStatus
+  rewardType        String?
+  rewardAmountCents Int?
+  rewardedAt        DateTime?
+  qualifiedAt       DateTime?
+  createdAt         DateTime       @default(now())
+  createdBy         String?
+  updatedAt         DateTime       @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int            @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("referrals")
+}
+
+// MODEL: referral_rewards (per ERD v3.0, aggregate=Lead)
+model ReferralReward {
+  id              String    @id @default(uuid())
+  schoolId        String
+  branchId        String?
+  referralId      String
+  recipient       String
+  rewardType      String
+  amountCents     Int
+  invoiceCreditId String?
+  issuedAt        DateTime
+  redeemedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?
+  deletedAt       DateTime?
+  deletedBy       String?
+  version         Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("referral_rewards")
+}
+
+// MODEL: whats_app_opt_ins (per ERD v3.0, aggregate=Lead)
+model WhatsAppOptIn {
+  id         String    @id @default(uuid())
+  schoolId   String
+  branchId   String?
+  phone      String
+  source     String
+  optedInAt  DateTime
+  optedOutAt DateTime?
+  templateId String?
+  createdAt  DateTime  @default(now())
+  createdBy  String?
+  updatedAt  DateTime  @updatedAt
+  updatedBy  String?
+  deletedAt  DateTime?
+  deletedBy  String?
+  version    Int       @default(1)
+
+  @@index([phone])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("whats_app_opt_ins")
+}
+
+// MODEL: email_subscriptions (per ERD v3.0, aggregate=Lead)
+model EmailSubscription {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  email          String
+  subscribedAt   DateTime
+  unsubscribedAt DateTime?
+  source         String
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([email])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("email_subscriptions")
+}
+
+// MODEL: lead_scores (per ERD v3.0, aggregate=Lead)
+model LeadScore {
+  id                       String        @id @default(uuid())
+  schoolId                 String
+  branchId                 String?
+  leadId                   String
+  scoreValue               Int
+  scoreTier                LeadScoreTier
+  sourceWeight             Decimal
+  engagementScore          Int
+  recencyScore             Int
+  profileCompletenessScore Int
+  computedAt               DateTime
+  createdAt                DateTime      @default(now())
+  createdBy                String?
+  updatedAt                DateTime      @updatedAt
+  updatedBy                String?
+  deletedAt                DateTime?
+  deletedBy                String?
+  version                  Int           @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_scores")
+}
+
+// MODEL: lead_conversions (per ERD v3.0, aggregate=Lead)
+model LeadConversion {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  leadId        String
+  fromStage     String
+  toStage       String
+  convertedAt   DateTime
+  durationHours Decimal
+  convertedBy   String?
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_conversions")
+}
+
+// MODEL: lead_assignments (per ERD v3.0, aggregate=Lead)
+model LeadAssignment {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  leadId       String
+  assignedTo   String
+  assignedBy   String?
+  strategy     String
+  assignedAt   DateTime
+  unassignedAt DateTime?
+  reason       String?
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_assignments")
+}
+
+// MODEL: marketing_channels (per ERD v3.0, aggregate=Campaign)
+model MarketingChannel {
+  id                String          @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  name              String
+  channel           CampaignChannel
+  providerConfig    Json?
+  rateLimitPerMin   Int
+  isActive          Boolean
+  createdAt         DateTime        @default(now())
+  createdBy         String?
+  updatedAt         DateTime        @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int             @default(1)
+  leadId            String?
+  academicSessionId String?
+  applicationId     String?
+  verifiedBy        String?
+  counsellorId      String?
+  approverId        String?
+  studentId         String?
+  classroomId       String?
+  feePlanId         String?
+  anchor            String?
+  scope             String?
+  actor             String?
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("marketing_channels")
+}

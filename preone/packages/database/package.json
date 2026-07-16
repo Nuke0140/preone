@@ -2,18 +2,20 @@
   "name": "@preone/database",
   "version": "1.0.0",
   "private": true,
-  "description": "PreOne Prisma schema — 307 models across 15 domains (ERD v3.0)",
+  "description": "PreOne Prisma schema — 392 models across 16 multi-file domain schemas (Wave 14)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "generate": "prisma generate",
-    "migrate:dev": "prisma migrate dev --create-only",
-    "migrate:deploy": "prisma migrate deploy",
-    "migrate:status": "prisma migrate status",
-    "migrate:reset": "prisma migrate reset --force",
+    "generate": "prisma generate --schema prisma",
+    "validate": "prisma validate --schema prisma",
+    "format": "prisma format --schema prisma",
+    "migrate:dev": "prisma migrate dev --create-only --schema prisma",
+    "migrate:deploy": "prisma migrate deploy --schema prisma",
+    "migrate:status": "prisma migrate status --schema prisma",
+    "migrate:reset": "prisma migrate reset --force --schema prisma",
     "seed": "tsx prisma/seeds/index.ts",
-    "studio": "prisma studio",
+    "studio": "prisma studio --schema prisma",
     "lint": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
@@ -25,6 +27,7 @@
     "typescript": "^5.6.2"
   },
   "prisma": {
-    "seed": "tsx prisma/seeds/index.ts"
+    "seed": "tsx prisma/seeds/index.ts",
+    "schema": "prisma"
   }
 }

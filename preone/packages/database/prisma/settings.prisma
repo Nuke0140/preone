@@ -1,0 +1,333 @@
+// PreOne Prisma Schema — Settings domain
+// Settings — system config, calendar events, user preferences
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 8 — SETTINGS MODULE (BTD §4.3 #13, ~20 APIs)
+// Per BRC §15 (Settings Rules) + ERD v3.0 §22 + API Catalog §16.16
+// Aggregates: SystemConfig, UserPreference, CalendarEvent
+// ─────────────────────────────────────────────────────────────────────────────
+enum ConfigScope {
+  PLATFORM
+  SCHOOL
+  BRANCH
+  USER
+}
+
+enum CalendarEventType {
+  HOLIDAY
+  EVENT
+  EXAM
+  PTM
+  SPORTS_DAY
+  CULTURAL_DAY
+  FIELD_TRIP
+  STAFF_MEETING
+  GOVERNMENT_HOLIDAY
+  OTHER
+}
+
+enum CalendarEventVisibility {
+  PUBLIC
+  STAFF_ONLY
+  ADMIN_ONLY
+  PARENTS_ONLY
+}
+
+model SystemConfig {
+  id          String      @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String?     @map("school_id") @db.Uuid
+  branchId    String?     @map("branch_id") @db.Uuid
+  scope       ConfigScope @default(SCHOOL)
+  key         String      @db.VarChar(120)
+  value       Json
+  description String?     @db.Text
+  isEncrypted Boolean     @default(false) @map("is_encrypted")
+  changedBy   String?     @map("changed_by") @db.Uuid
+  changedAt   DateTime    @default(now()) @map("changed_at") @db.Timestamptz
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime?   @map("deleted_at") @db.Timestamptz
+
+  school School? @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id])
+
+  @@unique([scope, schoolId, branchId, key])
+  @@index([schoolId, scope])
+  @@map("system_configs")
+}
+
+model UserPreference {
+  id        String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  schoolId  String   @map("school_id") @db.Uuid
+  category  String   @db.VarChar(64) // NOTIFICATION, DISPLAY, LANGUAGE, etc.
+  key       String   @db.VarChar(120)
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schoolId, category, key])
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model CalendarEvent {
+  id                String                  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId          String                  @map("school_id") @db.Uuid
+  branchId          String?                 @map("branch_id") @db.Uuid
+  academicSessionId String?                 @map("academic_session_id") @db.Uuid
+  title             String                  @db.VarChar(200)
+  description       String?                 @db.Text
+  type              CalendarEventType       @default(EVENT)
+  visibility        CalendarEventVisibility @default(PUBLIC)
+  startDate         DateTime                @map("start_date") @db.Timestamptz
+  endDate           DateTime                @map("end_date") @db.Timestamptz
+  isFullDay         Boolean                 @default(true) @map("is_full_day")
+  location          String?                 @db.VarChar(255)
+  organizerId       String?                 @map("organizer_id") @db.Uuid
+  isCancelled       Boolean                 @default(false) @map("is_cancelled")
+  isRecurring       Boolean                 @default(false) @map("is_recurring")
+  recurrenceRule    String?                 @map("recurrence_rule") @db.VarChar(255) // RRULE per iCalendar
+  metadata          Json?
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?          @relation(fields: [branchId], references: [id])
+  academicSession AcademicSession? @relation("CalendarEventSession", fields: [academicSessionId], references: [id])
+  organizer       User?            @relation("CalendarEventOrganizer", fields: [organizerId], references: [id])
+
+  @@index([schoolId, startDate])
+  @@index([branchId, startDate])
+  @@index([academicSessionId])
+  @@map("calendar_events")
+}
+
+// MODEL: academic_calendars (per ERD v3.0, aggregate=Settings)
+model AcademicCalendar {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  academicSessionId String
+  name              String
+  isPublished       Boolean
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("academic_calendars")
+}
+
+// MODEL: working_days (per ERD v3.0, aggregate=Settings)
+model WorkingDay {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  academicSessionId String?
+  dayOfWeek         Int
+  isWorking         Boolean
+  startTime         String?
+  endTime           String?
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("working_days")
+}
+
+// MODEL: report_configs (per ERD v3.0, aggregate=Settings)
+model ReportConfig {
+  id         String         @id @default(uuid())
+  schoolId   String
+  branchId   String?
+  name       String
+  type       String
+  schedule   ReportSchedule
+  format     ReportFormat
+  recipients Json?
+  filters    Json?
+  lastRunAt  DateTime?
+  isActive   Boolean
+  createdAt  DateTime       @default(now())
+  createdBy  String?
+  updatedAt  DateTime       @updatedAt
+  updatedBy  String?
+  deletedAt  DateTime?
+  deletedBy  String?
+  version    Int            @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("report_configs")
+}
+
+// MODEL: integration_configs (per ERD v3.0, aggregate=Settings)
+model IntegrationConfig {
+  id              String            @id @default(uuid())
+  schoolId        String
+  branchId        String?
+  type            IntegrationType
+  name            String
+  configEncrypted Bytes
+  isActive        Boolean
+  lastSyncAt      DateTime?
+  syncStatus      IntegrationStatus
+  lastError       String?
+  createdAt       DateTime          @default(now())
+  createdBy       String?
+  updatedAt       DateTime          @updatedAt
+  updatedBy       String?
+  deletedAt       DateTime?
+  deletedBy       String?
+  version         Int               @default(1)
+
+  @@index([type])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("integration_configs")
+}
+
+// MODEL: integration_sync_logs (per ERD v3.0, aggregate=Settings)
+model IntegrationSyncLog {
+  id                  String    @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  integrationConfigId String
+  startedAt           DateTime
+  completedAt         DateTime?
+  recordsProcessed    Int
+  recordsSucceeded    Int
+  recordsFailed       Int
+  status              String
+  errorMessage        String?
+  payloadSample       Json?
+  createdAt           DateTime  @default(now())
+  createdBy           String?
+  updatedAt           DateTime  @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("integration_sync_logs")
+}
+
+// MODEL: schedule_jobs (per ERD v3.0, aggregate=Settings)
+model ScheduleJob {
+  id                      String    @id @default(uuid())
+  schoolId                String
+  branchId                String?
+  name                    String
+  taskType                String
+  cronExpression          String
+  parameters              Json?
+  lastRunAt               DateTime?
+  nextRunAt               DateTime?
+  isActive                Boolean
+  concurrentRunPrevention Boolean
+  createdAt               DateTime  @default(now())
+  createdBy               String?
+  updatedAt               DateTime  @updatedAt
+  updatedBy               String?
+  deletedAt               DateTime?
+  deletedBy               String?
+  version                 Int       @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("schedule_jobs")
+}
+
+// MODEL: system_settings (per ERD v3.0, aggregate=Settings)
+model SystemSetting {
+  id          String    @id @default(uuid())
+  schoolId    String
+  branchId    String?
+  key         String
+  value       String
+  description String?
+  isEditable  Boolean
+  isSensitive Boolean
+  category    String
+  createdAt   DateTime  @default(now())
+  createdBy   String?
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
+  deletedAt   DateTime?
+  deletedBy   String?
+  version     Int       @default(1)
+
+  @@index([key])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("system_settings")
+}
+
+// MODEL: system_feature_flags (per ERD v3.0, aggregate=Settings)
+model SystemFeatureFlag {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  flagKey        String
+  isEnabled      Boolean
+  overrideReason String?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("system_feature_flags")
+}
+
+// MODEL: locale_resources (per ERD v3.0, aggregate=Settings)
+model LocaleResource {
+  id         String    @id @default(uuid())
+  schoolId   String
+  branchId   String?
+  locale     String
+  namespace  String
+  key        String
+  value      String
+  createdAt  DateTime  @default(now())
+  createdBy  String?
+  updatedAt  DateTime  @updatedAt
+  updatedBy  String?
+  deletedAt  DateTime?
+  deletedBy  String?
+  version    Int       @default(1)
+  uploadedBy String?
+  anchor     String?
+  scope      String?
+  actor      String?
+
+  @@index([locale, namespace, key])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("locale_resources")
+}

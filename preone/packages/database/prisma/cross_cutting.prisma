@@ -1,0 +1,733 @@
+// PreOne Prisma Schema — Cross-Cutting domain
+// Cross-Cutting — audit log, outbox, attachments, approvals, shared enums, compliance enums
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+enum DocumentType {
+  BIRTH_CERTIFICATE
+  AADHAAR
+  PASSPORT
+  TRANSFER_CERTIFICATE
+  PREVIOUS_REPORT_CARD
+  MEDICAL_CERTIFICATE
+  PROOF_OF_ADDRESS
+  CASTE_CERTIFICATE
+  INCOME_CERTIFICATE
+  PHOTO
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  UPLOADED
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+// ===== Wave 12 — Compliance enums =====
+enum ComplianceCategory {
+  FIRE_NOC // R-CMP-007 — Fire NOC Renewal
+  FIRE_EXTINGUISHER // R-CMP-014 — Fire Extinguisher Inspection
+  FIRE_DRILL // R-CMP-013 — Quarterly Fire Drill
+  FSSAI_LICENSE // R-CMP-017 — FSSAI Kitchen License
+  CCTV_RETENTION // R-CMP-005 — CCTV Retention Period
+  POSH_TRAINING // R-CMP-011 — POSH Training for All Staff
+  FOOD_HANDLER_MEDICAL // R-CMP-018 + R-HR-011 — Food Handler Medical Certificate
+  ICC_CONSTITUTION // R-HR-009 — ICC annual constitution
+  STAFF_BG_VERIFICATION // R-HR-002 — Background verification
+}
+
+enum ComplianceStatus {
+  PENDING // not yet started / no record
+  ACTIVE // current and within validity
+  EXPIRING_SOON // within 30 days of expiry
+  EXPIRED // past expiry date
+  OVERDUE // missed renewal
+  WAIVED // formally waived with reason
+}
+
+enum DisposalMethod {
+  SALE // sell to third party
+  SCRAP // discard as scrap
+  DONATION // donate to NGO/school
+  WRITE_OFF // accounting write-off only (no physical disposal)
+}
+
+enum DepreciationMethod {
+  STRAIGHT_LINE // (cost - salvage) / useful_life
+  DECLINING_BALANCE // 2x straight-line rate on remaining book value
+  UNITS_OF_PRODUCTION // per unit of usage
+}
+
+enum ReorderStatus {
+  CREATED // PR created, awaiting approval
+  APPROVED // Branch Admin approved
+  REJECTED // Branch Admin rejected
+  CONVERTED // converted to PurchaseOrder
+  CANCELLED // cancelled
+}
+
+enum StockAuditStatus {
+  SCHEDULED // audit scheduled
+  IN_PROGRESS // physical count underway
+  RECONCILING // system vs physical reconciliation
+  COMPLETED // finalized
+  ADJUSTED // adjustments applied with Branch Head approval
+}
+
+enum StockAuditVarianceAction {
+  NONE // within 5% tolerance
+  INVESTIGATION // >5% variance — investigation triggered
+  ADJUSTMENT_APPLIED // adjustment approved by Branch Head
+}
+
+enum ReturnReason {
+  DAMAGED // item received damaged
+  EXPIRED // item expired on receipt
+  WRONG_ITEM // wrong item shipped
+  QUALITY_ISSUE // quality below standard
+  EXCESS_QUANTITY // over-shipped
+  RECALL // vendor recall
+  OTHER
+}
+
+enum ReturnStatus {
+  INITIATED // return note created
+  APPROVED // approved by Inventory Manager
+  PICKUP_SCHEDULED // vendor pickup scheduled
+  RETURNED // item handed over to vendor
+  CREDIT_RECEIVED // credit note received
+  CANCELLED
+}
+
+enum TrainingType {
+  POSH // R-HR-010 — Sexual Harassment Prevention
+  FOOD_HANDLER_MEDICAL // R-HR-011 — Food handler medical (overlap with ComplianceItem)
+  FIRE_SAFETY // Fire safety training
+  FIRST_AID // Pediatric first aid
+  CHILD_SAFEGUARDING // Child protection policy
+  GENERAL_INDUCTION // New staff induction
+  OTHER
+}
+
+enum TrainingStatus {
+  ASSIGNED // training assigned, not started
+  IN_PROGRESS // staff started the module
+  COMPLETED // quiz passed (>=80% for POSH)
+  FAILED // quiz failed
+  EXPIRED // certificate expired (validity period passed)
+  BLOCKED // payroll blocked due to non-completion (R-HR-010)
+}
+
+enum IccMemberRole {
+  CHAIRPERSON // senior woman employee — mandatory
+  MEMBER // regular member
+  EXTERNAL_MEMBER // external NGO/representative (mandatory)
+}
+
+enum PositionStatus {
+  OPEN // position approved, hiring started
+  ON_HOLD // hiring paused
+  FILLED // employee onboarded
+  CANCELLED // position withdrawn
+}
+
+enum SalaryRevisionStatus {
+  PENDING // awaiting approver
+  APPROVED // approved
+  REJECTED // rejected
+  EFFECTIVE // salary change applied
+}
+
+enum SubstituteStatus {
+  ASSIGNED // substitute assigned
+  DECLINED // substitute declined
+  COMPLETED // assignment completed
+  CANCELLED // original teacher returned
+}
+
+// ===== Wave 12 — Administration / Facility Compliance =====
+/// ComplianceItem — generic renewable compliance tracker.
+/// Covers: R-CMP-005 (CCTV retention), R-CMP-007 (Fire NOC), R-CMP-013 (Fire Drill),
+/// R-CMP-014 (Fire Extinguisher), R-CMP-017 (FSSAI License), R-CMP-018 (Food Handler Medical),
+/// R-HR-009 (ICC constitution).
+model ComplianceItem {
+  id                String             @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId          String             @map("school_id") @db.Uuid
+  branchId          String?            @map("branch_id") @db.Uuid // null = school-wide
+  category          ComplianceCategory
+  title             String             @db.VarChar(200)
+  issuingAuthority  String?            @map("issuing_authority") @db.VarChar(200)
+  certificateNumber String?            @map("certificate_number") @db.VarChar(100)
+  certificateUrl    String?            @map("certificate_url") @db.VarChar(500)
+  issuedAt          DateTime?          @map("issued_at") @db.Date
+  validFrom         DateTime           @map("valid_from") @db.Date
+  validUntil        DateTime           @map("valid_until") @db.Date
+  status            ComplianceStatus   @default(PENDING)
+  renewalWindowDays Int                @default(30) @map("renewal_window_days")
+  reminderSentAt    DateTime?          @map("reminder_sent_at") @db.Timestamptz
+  overdueMarkedAt   DateTime?          @map("overdue_marked_at") @db.Timestamptz
+  waivedReason      String?            @map("waived_reason") @db.Text
+  notes             String?            @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch? @relation("ComplianceBranch", fields: [branchId], references: [id])
+
+  @@index([schoolId, category, status])
+  @@index([validUntil])
+  @@map("compliance_items")
+}
+
+/// R-OPS-018 — Food Sample Retention
+/// Food samples must be retained for 24 hours post-serving for lab testing in
+/// case of food poisoning incident.
+model FoodSampleRetention {
+  id                    String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String    @map("school_id") @db.Uuid
+  branchId              String    @map("branch_id") @db.Uuid
+  mealType              String    @map("meal_type") @db.VarChar(20) // BREAKFAST | LUNCH | SNACK
+  mealDate              DateTime  @map("meal_date") @db.Date
+  sampleCollectedAt     DateTime  @map("sample_collected_at") @db.Timestamptz
+  storedAt              DateTime  @map("stored_at") @db.Timestamptz
+  storageLocation       String    @map("storage_location") @db.VarChar(100)
+  retentionUntil        DateTime  @map("retention_until") @db.Timestamptz
+  disposedAt            DateTime? @map("disposed_at") @db.Timestamptz
+  disposalMethod        String?   @map("disposal_method") @db.VarChar(20)
+  labTestRequestedAt    DateTime? @map("lab_test_requested_at") @db.Timestamptz
+  labTestResult         String?   @map("lab_test_result") @db.Text
+  collectedByEmployeeId String?   @map("collected_by_employee_id") @db.Uuid
+  notes                 String?   @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch    @relation("FoodSampleBranch", fields: [branchId], references: [id])
+  collectedBy Employee? @relation("FoodSampleCollectedBy", fields: [collectedByEmployeeId], references: [id])
+
+  @@unique([branchId, mealType, mealDate])
+  @@index([retentionUntil])
+  @@map("food_sample_retentions")
+}
+
+/// R-OPS-020 — CCTV Coverage and Retention
+/// Registry of CCTV cameras + retention enforcement (>=30 days, per R-CMP-005).
+model CctvCoverage {
+  id                    String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String    @map("school_id") @db.Uuid
+  branchId              String    @map("branch_id") @db.Uuid
+  cameraId              String    @map("camera_id") @db.VarChar(32)
+  location              String    @db.VarChar(200)
+  coverageZone          String    @map("coverage_zone") @db.VarChar(100) // ENTRANCE | CLASSROOM | PLAY_AREA | KITCHEN | CORRIDOR
+  installedAt           DateTime  @map("installed_at") @db.Date
+  isActive              Boolean   @default(true) @map("is_active")
+  retentionDays         Int       @default(30) @map("retention_days")
+  storageEndpoint       String?   @map("storage_endpoint") @db.VarChar(500)
+  lastHealthCheckAt     DateTime? @map("last_health_check_at") @db.Timestamptz
+  lastHealthCheckStatus String?   @map("last_health_check_status") @db.VarChar(20) // OK | DEGRADED | OFFLINE
+  notes                 String?   @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch @relation("CctvBranch", fields: [branchId], references: [id])
+
+  @@unique([branchId, cameraId])
+  @@index([schoolId, isActive])
+  @@map("cctv_coverages")
+}
+
+// MODEL: file_uploads (per ERD v3.0, aggregate=Shared)
+model FileUpload {
+  id              String    @id @default(uuid())
+  schoolId        String
+  branchId        String?
+  fileName        String
+  fileSizeBytes   BigInt
+  mimeType        String
+  fileHash        String
+  storageUrl      String
+  storageProvider String
+  storageBucket   String?
+  storageKey      String?
+  category        String
+  uploadedBy      String?
+  thumbnailUrl    String?
+  isPublic        Boolean
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?
+  deletedAt       DateTime?
+  deletedBy       String?
+  version         Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("file_uploads")
+}
+
+// MODEL: file_storages (per ERD v3.0, aggregate=Shared)
+model FileStorage {
+  id                   String    @id @default(uuid())
+  schoolId             String
+  branchId             String?
+  provider             String
+  bucketName           String
+  credentialsEncrypted Bytes
+  region               String?
+  isDefault            Boolean
+  isActive             Boolean
+  createdAt            DateTime  @default(now())
+  createdBy            String?
+  updatedAt            DateTime  @updatedAt
+  updatedBy            String?
+  deletedAt            DateTime?
+  deletedBy            String?
+  version              Int       @default(1)
+
+  @@index([provider])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("file_storages")
+}
+
+// MODEL: email_queues (per ERD v3.0, aggregate=Shared)
+model EmailQueue {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  recipientEmail String
+  recipientName  String?
+  subject        String
+  bodyHtml       String
+  attachmentUrls Json?
+  provider       String
+  priority       Int
+  scheduledAt    DateTime?
+  attemptedAt    DateTime?
+  attempts       Int
+  status         String
+  referenceType  String?
+  referenceId    String?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("email_queues")
+}
+
+// MODEL: smsqueues (per ERD v3.0, aggregate=Shared)
+model SMSQueue {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  recipientPhone String
+  message        String
+  templateId     String?
+  dltTemplateId  String?
+  senderId       String?
+  provider       String
+  priority       Int
+  scheduledAt    DateTime?
+  attemptedAt    DateTime?
+  attempts       Int
+  status         String
+  referenceType  String?
+  referenceId    String?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("smsqueues")
+}
+
+// MODEL: whats_app_queues (per ERD v3.0, aggregate=Shared)
+model WhatsAppQueue {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  recipientPhone    String
+  templateName      String?
+  templateLanguage  String?
+  templateVariables Json?
+  bodyText          String?
+  mediaUrls         Json?
+  provider          String
+  priority          Int
+  scheduledAt       DateTime?
+  attemptedAt       DateTime?
+  attempts          Int
+  status            String
+  referenceType     String?
+  referenceId       String?
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("whats_app_queues")
+}
+
+// MODEL: job_queues (per ERD v3.0, aggregate=Shared)
+model JobQueue {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  jobType      String
+  payload      Json
+  result       Json?
+  priority     Int
+  scheduledAt  DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  workerId     String?
+  attemptedAt  DateTime?
+  attempts     Int
+  status       JobStatus
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("job_queues")
+}
+
+// MODEL: webhook_outboxs (per ERD v3.0, aggregate=Shared)
+model WebhookOutbox {
+  id                 String    @id @default(uuid())
+  schoolId           String
+  branchId           String?
+  eventType          String
+  targetUrl          String
+  payload            Json
+  signature          String?
+  headers            Json?
+  attemptedAt        DateTime?
+  attempts           Int
+  nextRetryAt        DateTime?
+  status             String
+  responseStatusCode Int?
+  responseBody       String?
+  createdAt          DateTime  @default(now())
+  createdBy          String?
+  updatedAt          DateTime  @updatedAt
+  updatedBy          String?
+  deletedAt          DateTime?
+  deletedBy          String?
+  version            Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("webhook_outboxs")
+}
+
+// MODEL: event_stores (per ERD v3.0, aggregate=Shared)
+model EventStore {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  aggregateType String
+  aggregateId   String
+  eventType     String
+  eventVersion  Int
+  payload       Json
+  metadata      Json?
+  actorId       String?
+  occurredAt    DateTime
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("event_stores")
+}
+
+// MODEL: snapshots (per ERD v3.0, aggregate=Shared)
+model Snapshot {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  aggregateType String
+  aggregateId   String
+  state         Json
+  takenAt       DateTime
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("snapshots")
+}
+
+// MODEL: locks (per ERD v3.0, aggregate=Shared)
+model Lock {
+  id         String    @id @default(uuid())
+  schoolId   String
+  branchId   String?
+  lockKey    String
+  holderId   String
+  acquiredAt DateTime
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  createdBy  String?
+  updatedAt  DateTime  @updatedAt
+  updatedBy  String?
+  deletedAt  DateTime?
+  deletedBy  String?
+  version    Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("locks")
+}
+
+// MODEL: sequence_counters (per ERD v3.0, aggregate=Shared)
+model SequenceCounter {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  counterKey    String
+  currentValue  Int
+  paddingLength Int
+  prefix        String?
+  suffix        String?
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("sequence_counters")
+}
+
+// MODEL: system_health_checks (per ERD v3.0, aggregate=Shared)
+model SystemHealthCheck {
+  id        String    @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  component String
+  status    String
+  latencyMs Int?
+  details   Json?
+  checkedAt DateTime
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("system_health_checks")
+}
+
+enum ComplianceType {
+  PLACEHOLDER
+}
+
+enum ConsentType {
+  PLACEHOLDER
+}
+
+enum EmailStatus {
+  PLACEHOLDER
+}
+
+enum EmergencyType {
+  PLACEHOLDER
+}
+
+enum EventStatus {
+  PLACEHOLDER
+}
+
+enum EventType {
+  PLACEHOLDER
+}
+
+enum ExitType {
+  PLACEHOLDER
+}
+
+enum ExpenseStatus {
+  PLACEHOLDER
+}
+
+enum FeeHeadFrequency {
+  PLACEHOLDER
+}
+
+enum FeeHeadType {
+  PLACEHOLDER
+}
+
+enum FinancialReportType {
+  PLACEHOLDER
+}
+
+enum GRNStatus {
+  PLACEHOLDER
+}
+
+enum IncomeStatus {
+  PLACEHOLDER
+}
+
+enum IntegrationStatus {
+  PLACEHOLDER
+}
+
+enum InventoryCategoryName {
+  PLACEHOLDER
+}
+
+enum ItemCondition {
+  PLACEHOLDER
+}
+
+enum JobApplicationStatus {
+  PLACEHOLDER
+}
+
+enum JobStatus {
+  PLACEHOLDER
+}
+
+enum LeadScoreTier {
+  PLACEHOLDER
+}
+
+enum LowStockAlertType {
+  PLACEHOLDER
+}
+
+enum MealAmountEaten {
+  PLACEHOLDER
+}
+
+enum Mood {
+  PLACEHOLDER
+}
+
+enum PaymentMode {
+  PLACEHOLDER
+}
+
+enum PenaltyType {
+  PLACEHOLDER
+}
+
+enum PromotionStatus {
+  PLACEHOLDER
+}
+
+enum RSVPResponse {
+  PLACEHOLDER
+}
+
+enum ReferralStatus {
+  PLACEHOLDER
+}
+
+enum ReportSchedule {
+  PLACEHOLDER
+}
+
+enum ReviewPeriod {
+  PLACEHOLDER
+}
+
+enum RoomType {
+  PLACEHOLDER
+}
+
+enum SMSStatus {
+  PLACEHOLDER
+}
+
+enum StaffDepartment {
+  PLACEHOLDER
+}
+
+enum StaffDesignation {
+  PLACEHOLDER
+}
+
+enum StaffStatus {
+  PLACEHOLDER
+}
+
+enum StockIssueStatus {
+  PLACEHOLDER
+}
+
+enum StockReturnType {
+  PLACEHOLDER
+}
+
+enum ToiletType {
+  PLACEHOLDER
+}
+
+enum TransferReason {
+  PLACEHOLDER
+}
+
+enum TriggerEvent {
+  PLACEHOLDER
+}
+
+enum VisitorPurpose {
+  PLACEHOLDER
+}
+
+enum WhatsAppStatus {
+  PLACEHOLDER
+}
+
+enum WriteOffReason {
+  PLACEHOLDER
+}

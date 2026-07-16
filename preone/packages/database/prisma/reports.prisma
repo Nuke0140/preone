@@ -1,0 +1,178 @@
+// PreOne Prisma Schema — Reports domain
+// Reports — report definitions, executions, schedules, snapshots
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 8 — REPORTS MODULE (BTD §4.3 #12, ~30 APIs)
+// Per BRC §16 (Reporting Rules) + ERD v3.0 §23 + API Catalog §16.17
+// Aggregates: ReportDefinition, ReportExecution, SavedReport
+// ─────────────────────────────────────────────────────────────────────────────
+enum ReportCategory {
+  ADMISSIONS
+  ATTENDANCE
+  FINANCE
+  ACADEMICS
+  HR
+  INVENTORY
+  TRANSPORT
+  CRM
+  ADMINISTRATION
+  COMMUNICATION
+  COMPLIANCE
+  PLATFORM
+}
+
+enum ReportFormat {
+  PDF
+  XLSX
+  CSV
+  JSON
+  HTML
+}
+
+enum ReportStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ReportScheduleFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM
+}
+
+model ReportDefinition {
+  id             String         @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String?        @map("school_id") @db.Uuid
+  key            String         @db.VarChar(80)
+  name           String         @db.VarChar(200)
+  description    String?        @db.Text
+  category       ReportCategory
+  dataSource     String         @map("data_source") @db.VarChar(120) // view name or service
+  queryTemplate  String         @map("query_template") @db.Text // SQL or builder spec
+  parameters     Json? // JSON schema for parameter validation
+  defaultFormat  ReportFormat   @default(PDF) @map("default_format")
+  allowedFormats ReportFormat[] @default([PDF]) @map("allowed_formats")
+  isSystem       Boolean        @default(false) @map("is_system")
+  isActive       Boolean        @default(true) @map("is_active")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt      DateTime?      @map("deleted_at") @db.Timestamptz
+
+  school        School?              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  executions    ReportExecution[]
+  subscriptions ReportSubscription[]
+  savedReports  SavedReport[]
+
+  @@unique([schoolId, key])
+  @@index([category])
+  @@map("report_definitions")
+}
+
+model ReportExecution {
+  id            String       @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String       @map("school_id") @db.Uuid
+  branchId      String?      @map("branch_id") @db.Uuid
+  reportDefId   String       @map("report_def_id") @db.Uuid
+  requestedById String       @map("requested_by_id") @db.Uuid
+  status        ReportStatus @default(QUEUED)
+  format        ReportFormat @default(PDF)
+
+  parameters      Json?
+  resultUrl       String? @map("result_url") @db.VarChar(512)
+  resultSizeBytes Int?    @map("result_size_bytes")
+  rowCount        Int?    @map("row_count")
+
+  errorMessage String?   @map("error_message") @db.Text
+  startedAt    DateTime? @map("started_at") @db.Timestamptz
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz
+  durationMs   Int?      @map("duration_ms")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school      School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch?          @relation(fields: [branchId], references: [id])
+  reportDef   ReportDefinition @relation(fields: [reportDefId], references: [id], onDelete: Cascade)
+  requestedBy User             @relation("ReportRequestedBy", fields: [requestedById], references: [id])
+
+  @@index([schoolId, createdAt])
+  @@index([reportDefId])
+  @@index([status])
+  @@map("report_executions")
+}
+
+model SavedReport {
+  id             String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String    @map("school_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  reportDefId    String    @map("report_def_id") @db.Uuid
+  name           String    @db.VarChar(200)
+  parameters     Json?
+  isPinned       Boolean   @default(false) @map("is_pinned")
+  lastExecutedAt DateTime? @map("last_executed_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  school    School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user      User             @relation("SavedReportOwner", fields: [userId], references: [id], onDelete: Cascade)
+  reportDef ReportDefinition @relation(fields: [reportDefId], references: [id])
+
+  @@unique([userId, schoolId, name])
+  @@index([userId])
+  @@map("saved_reports")
+}
+
+model ReportSubscription {
+  id             String                  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String                  @map("school_id") @db.Uuid
+  reportDefId    String                  @map("report_def_id") @db.Uuid
+  userId         String                  @map("user_id") @db.Uuid
+  frequency      ReportScheduleFrequency
+  cronExpression String?                 @map("cron_expression") @db.VarChar(80)
+  parameters     Json?
+  channels       String[]                @default([]) // EMAIL, WHATSAPP, IN_APP
+  nextRunAt      DateTime                @map("next_run_at") @db.Timestamptz
+  lastRunAt      DateTime?               @map("last_run_at") @db.Timestamptz
+  isActive       Boolean                 @default(true) @map("is_active")
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  school    School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  reportDef ReportDefinition @relation(fields: [reportDefId], references: [id], onDelete: Cascade)
+  user      User             @relation("ReportSubscriber", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reportDefId])
+  @@index([nextRunAt])
+  @@index([schoolId, isActive])
+  @@map("report_subscriptions")
+}
+
+model DashboardWidget {
+  id         String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId   String   @map("school_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  widgetKey  String   @map("widget_key") @db.VarChar(80)
+  title      String   @db.VarChar(200)
+  dataSource String   @map("data_source") @db.VarChar(120)
+  config     Json?
+  position   Int      @default(0)
+  isVisible  Boolean  @default(true) @map("is_visible")
+  refreshSec Int      @default(300) @map("refresh_sec")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation("DashboardWidgetOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, widgetKey])
+  @@index([userId, isVisible])
+  @@map("dashboard_widgets")
+}

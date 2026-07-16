@@ -1,0 +1,412 @@
+// PreOne Prisma Schema — Student domain
+// Student Lifecycle — students, guardians, medical, immunization, classroom assignments, promotions, transfers
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WAVE 3 — Student Lifecycle + Academics (per ERD v3.0 §14 + §15)
+// 22 student tables + 27 academics tables = 49 new models
+// ═══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────
+// ENUMS — Student Lifecycle (per ERD §14)
+// ─────────────────────────────────────────────
+enum StudentStatus {
+  PROSPECT // Admitted but not yet enrolled
+  ACTIVE // Currently enrolled
+  INACTIVE // Temporarily withdrawn
+  TRANSFERRED // Moved to another branch/school
+  GRADUATED // Completed preschool
+  WITHDRAWN // Permanently withdrawn
+  EXPELLED // Removed for disciplinary reasons
+}
+
+// (Gender enum already defined in Core (Auth & Org) section above.)
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+  UNKNOWN
+}
+
+enum GuardianRelation {
+  FATHER
+  MOTHER
+  GRANDFATHER
+  GRANDMOTHER
+  LEGAL_GUARDIAN
+  BROTHER
+  SISTER
+  UNCLE
+  AUNT
+  OTHER
+}
+
+enum GuardianStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum MedicalAlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum ImmunizationStatus {
+  COMPLETED
+  PARTIAL
+  PENDING
+  EXEMPTED
+}
+
+enum AllergySeverity {
+  MILD
+  MODERATE
+  SEVERE
+  LIFE_THREATENING
+}
+
+enum StudentNoteType {
+  ACADEMIC
+  BEHAVIORAL
+  HEALTH
+  GENERAL
+  INCIDENT
+  ACHIEVEMENT
+}
+
+enum StudentFlagSeverity {
+  INFO
+  WARNING
+  ALERT
+}
+
+enum StudentActivityAction {
+  CREATED
+  UPDATED
+  ENROLLED
+  PROMOTED
+  TRANSFERRED
+  WITHDRAWN
+  REACTIVATED
+  STATUS_CHANGED
+  GUARDIAN_ADDED
+  GUARDIAN_REMOVED
+  DOCUMENT_UPLOADED
+  MEDICAL_UPDATED
+  NOTE_ADDED
+  FLAG_ADDED
+  FLAG_REMOVED
+}
+
+enum SiblingRelationType {
+  SIBLING
+  HALF_SIBLING
+  STEP_SIBLING
+  FOSTER_SIBLING
+  COUSIN_SAME_HOUSEHOLD
+}
+
+// MODEL: student_medical_records (per ERD v3.0, aggregate=Student)
+model StudentMedicalRecord {
+  id                           String      @id @default(uuid())
+  schoolId                     String
+  branchId                     String?
+  studentId                    String
+  bloodGroup                   BloodGroup?
+  heightCm                     Decimal?
+  weightKg                     Decimal?
+  bmi                          Decimal?
+  pediatricianName             String?
+  pediatricianPhone            String?
+  hospitalName                 String?
+  emergencyContactName         String
+  emergencyContactPhone        String
+  emergencyContactRelationship String?
+  medicalConditions            Json?
+  allergies                    Json?
+  medications                  Json?
+  dietaryRestrictions          Json?
+  notes                        String?
+  createdAt                    DateTime    @default(now())
+  createdBy                    String?
+  updatedAt                    DateTime    @updatedAt
+  updatedBy                    String?
+  deletedAt                    DateTime?
+  deletedBy                    String?
+  version                      Int         @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_medical_records")
+}
+
+// MODEL: immunization_records (per ERD v3.0, aggregate=Student)
+model ImmunizationRecord {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  studentId        String
+  vaccineName      String
+  doseNumber       Int
+  administeredDate DateTime
+  administeredBy   String?
+  certificateUrl   String?
+  nextDueDate      DateTime?
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("immunization_records")
+}
+
+// MODEL: student_passports (per ERD v3.0, aggregate=Student)
+model StudentPassport {
+  id                      String    @id @default(uuid())
+  schoolId                String
+  branchId                String?
+  studentId               String
+  passportNumberEncrypted Bytes
+  passportNumberMasked    String
+  issuingCountry          String
+  issueDate               DateTime
+  expiryDate              DateTime
+  fileUrl                 String?
+  createdAt               DateTime  @default(now())
+  createdBy               String?
+  updatedAt               DateTime  @updatedAt
+  updatedBy               String?
+  deletedAt               DateTime?
+  deletedBy               String?
+  version                 Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_passports")
+}
+
+// MODEL: classroom_assignments (per ERD v3.0, aggregate=Classroom)
+model ClassroomAssignment {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  studentId         String
+  classroomId       String
+  sectionId         String?
+  academicSessionId String
+  assignedAt        DateTime
+  unassignedAt      DateTime?
+  rollNumber        Int?
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("classroom_assignments")
+}
+
+// MODEL: promotions (per ERD v3.0, aggregate=Student)
+model Promotion {
+  id                String          @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  studentId         String
+  academicSessionId String
+  fromClassroomId   String?
+  toClassroomId     String?
+  fromProgram       ProgramType?
+  toProgram         ProgramType?
+  status            PromotionStatus
+  remarks           String?
+  promotedBy        String?
+  promotedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  createdBy         String?
+  updatedAt         DateTime        @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int             @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("promotions")
+}
+
+// MODEL: graduations (per ERD v3.0, aggregate=Student)
+model Graduation {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  studentId         String
+  academicSessionId String
+  ceremonyDate      DateTime
+  certificateNumber String
+  certificateUrl    String?
+  honors            String?
+  photos            Json?
+  graduatedAt       DateTime
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("graduations")
+}
+
+// MODEL: transfers (per ERD v3.0, aggregate=Student)
+model Transfer {
+  id                     String         @id @default(uuid())
+  schoolId               String
+  branchId               String?
+  studentId              String
+  transferType           String
+  fromBranchId           String
+  toBranchId             String?
+  toSchoolName           String?
+  reason                 TransferReason
+  transferCertificateUrl String?
+  requestedAt            DateTime
+  approvedAt             DateTime?
+  completedAt            DateTime?
+  createdAt              DateTime       @default(now())
+  createdBy              String?
+  updatedAt              DateTime       @updatedAt
+  updatedBy              String?
+  deletedAt              DateTime?
+  deletedBy              String?
+  version                Int            @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("transfers")
+}
+
+// MODEL: archives (per ERD v3.0, aggregate=Student)
+model Archive {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  studentId      String
+  archivedAt     DateTime
+  archiveReason  String
+  dataMinimized  Boolean
+  minimizedAt    DateTime?
+  retentionUntil DateTime
+  archivedBy     String?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("archives")
+}
+
+// MODEL: student_historys (per ERD v3.0, aggregate=Student)
+model StudentHistory {
+  id         String    @id @default(uuid())
+  schoolId   String
+  branchId   String?
+  studentId  String
+  event      String
+  snapshot   Json
+  occurredAt DateTime
+  actorId    String?
+  createdAt  DateTime  @default(now())
+  createdBy  String?
+  updatedAt  DateTime  @updatedAt
+  updatedBy  String?
+  deletedAt  DateTime?
+  deletedBy  String?
+  version    Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_historys")
+}
+
+// MODEL: student_consents (per ERD v3.0, aggregate=Student)
+model StudentConsent {
+  id          String      @id @default(uuid())
+  schoolId    String
+  branchId    String?
+  studentId   String
+  guardianId  String
+  consentType ConsentType
+  granted     Boolean
+  grantedAt   DateTime?
+  revokedAt   DateTime?
+  validUntil  DateTime?
+  evidenceUrl String?
+  createdAt   DateTime    @default(now())
+  createdBy   String?
+  updatedAt   DateTime    @updatedAt
+  updatedBy   String?
+  deletedAt   DateTime?
+  deletedBy   String?
+  version     Int         @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_consents")
+}
+
+// MODEL: sibling_links (per ERD v3.0, aggregate=Student)
+model SiblingLink {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  studentId         String
+  siblingStudentId  String
+  relationship      String
+  verified          Boolean
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+  programId         String?
+  academicSessionId String?
+  classroomId       String?
+  curriculumId      String?
+  lessonPlanId      String?
+  observerId        String?
+  observationId     String?
+  portfolioId       String?
+  anchor            String?
+  scope             String?
+  actor             String?
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("sibling_links")
+}

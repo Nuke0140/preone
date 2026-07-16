@@ -1,0 +1,1392 @@
+// PreOne Prisma Schema — Hr domain
+// Human Resources — employees, positions, leaves, payroll, salary revisions, performance reviews, training, ICC, substitutes, compliance
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ───────────────────────────────────────────────────────────────────────────
+// Wave 6 — HR Module Prisma Models (BTD §4.3 #10, BRC §6, ERD HR 31 tables)
+// ───────────────────────────────────────────────────────────────────────────
+// ─── Enums: HR ───
+enum EmployeeStatus {
+  PROSPECTIVE
+  ONBOARDED
+  ACTIVE
+  ON_LEAVE
+  SUSPENDED
+  RESIGNED
+  EXITED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  CONSULTANT
+  INTERN
+}
+
+enum StaffRole {
+  PRINCIPAL
+  COORDINATOR
+  CLASS_TEACHER
+  ACTIVITY_TEACHER
+  RECEPTION_ADMISSION
+  ACCOUNTS
+  INVENTORY_STORE_KEEPER
+  TRANSPORT_MANAGER
+  HR
+  ADMIN_STAFF
+  FACILITY
+}
+
+enum BgvStatus {
+  PENDING
+  IN_PROGRESS
+  CLEARED
+  FAILED
+}
+
+enum LeaveType {
+  CASUAL
+  SICK
+  EARNED
+  MATERNITY
+  PATERNITY
+  UNPAID
+  SABBATICAL
+  COMP_OFF
+}
+
+enum LeaveStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  TAKEN
+  CANCELLED
+}
+
+enum LeaveDayType {
+  FULL
+  FIRST_HALF
+  SECOND_HALF
+  FIRST_QUARTER
+  LAST_QUARTER
+}
+
+enum PayrollStatus {
+  DRAFT
+  GENERATED
+  APPROVED
+  PAID
+  ARCHIVED
+  ON_HOLD
+}
+
+enum PayslipStatus {
+  PENDING
+  PAID
+  ON_HOLD
+  REVERSED
+}
+
+enum ReviewCycle {
+  Q1
+  Q2
+  Q3
+  Q4
+  ANNUAL
+  PROBATION_END
+}
+
+enum ReviewStatus {
+  DRAFT
+  SELF_ASSESSMENT
+  MANAGER_REVIEW
+  HR_REVIEW
+  COMPLETED
+  ARCHIVED
+  CANCELLED
+}
+
+// ─── HR Models ───
+model Employee {
+  id                     String                  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId               String                  @map("school_id") @db.Uuid
+  branchId               String?                 @map("branch_id") @db.Uuid
+  employeeCode           String                  @map("employee_code") @db.VarChar(32)
+  userId                 String?                 @unique @map("user_id") @db.Uuid
+  firstName              String                  @map("first_name") @db.VarChar(100)
+  lastName               String                  @map("last_name") @db.VarChar(100)
+  displayName            String?                 @map("display_name") @db.VarChar(200)
+  email                  String                  @db.VarChar(255)
+  phone                  String                  @db.VarChar(20)
+  dateOfBirth            DateTime?               @map("date_of_birth") @db.Date
+  gender                 String?                 @db.VarChar(10)
+  role                   StaffRole
+  designation            String                  @db.VarChar(100)
+  employmentType         EmploymentType          @map("employment_type")
+  status                 EmployeeStatus          @default(PROSPECTIVE)
+  dateOfJoining          DateTime                @map("date_of_joining") @db.Date
+  probationEndDate       DateTime?               @map("probation_end_date") @db.Date
+  qualifications         EmployeeQualification[]
+  documents              EmployeeDocument[]
+  bgvStatus              BgvStatus               @default(PENDING) @map("bgv_status")
+  bgvInitiatedAt         DateTime?               @map("bgv_initiated_at") @db.Timestamptz
+  bgvClearedAt           DateTime?               @map("bgv_cleared_at") @db.Timestamptz
+  bgvVendor              String?                 @map("bgv_vendor") @db.VarChar(100)
+  bgvReportUrl           String?                 @map("bgv_report_url") @db.Text
+  salaryCents            Int                     @map("salary_cents")
+  bankAccountNumber      String?                 @map("bank_account_number") @db.VarChar(255)
+  bankIfsc               String?                 @map("bank_ifsc") @db.VarChar(20)
+  panNumber              String?                 @map("pan_number") @db.VarChar(255)
+  aadhaarNumber          String?                 @map("aadhaar_number") @db.VarChar(255)
+  emergencyContactName   String?                 @map("emergency_contact_name") @db.VarChar(100)
+  emergencyContactPhone  String?                 @map("emergency_contact_phone") @db.VarChar(20)
+  reportingManagerId     String?                 @map("reporting_manager_id") @db.Uuid
+  handoverCompleted      Boolean                 @default(false) @map("handover_completed")
+  resignationDate        DateTime?               @map("resignation_date") @db.Date
+  lastWorkingDate        DateTime?               @map("last_working_date") @db.Date
+  exitReason             String?                 @map("exit_reason") @db.Text
+  exitInterviewConducted Boolean                 @default(false) @map("exit_interview_conducted")
+  leaves                 LeaveRequest[]
+  substituteFor          LeaveRequest[]          @relation("SubstituteFor")
+  leaveBalances          LeaveBalance[]
+  payrolls               Payslip[]
+  employeeAttendances    EmployeeAttendance[]
+  reviewsAsEmployee      PerformanceReview[]     @relation("ReviewEmployee")
+  reviewsAsReviewer      PerformanceReview[]     @relation("ReviewReviewer")
+  reviewsAsHr            PerformanceReview[]     @relation("ReviewHr")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
+
+  // ─── Wave 7 back-relations (Transport) ───
+  vehiclesAsDriver    Vehicle[] @relation("VehicleDriver")
+  vehiclesAsAttendant Vehicle[] @relation("VehicleAttendant")
+  tripsAsDriver       Trip[]    @relation("TripDriver")
+  tripsAsAttendant    Trip[]    @relation("TripAttendant")
+
+  // Wave 12 back-relations
+  substituteForAbsences SubstituteAssignment[] @relation("SubstituteForAbsent")
+  substituteAssignments SubstituteAssignment[] @relation("SubstituteAssigned")
+  iccMemberships        IccCommitteeMember[]   @relation("IccMember")
+  trainings             TrainingRecord[]       @relation("EmployeeTrainings")
+  filledPositions       PositionOpening[]      @relation("PositionFilledBy")
+  salaryRevisions       SalaryRevision[]       @relation("EmployeeSalaryRevisions")
+  foodSamplesCollected  FoodSampleRetention[]  @relation("FoodSampleCollectedBy")
+
+  @@unique([schoolId, employeeCode])
+  @@index([schoolId, status])
+  @@index([schoolId, role])
+  @@index([userId])
+  @@map("employees")
+}
+
+model EmployeeQualification {
+  id            String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String  @map("school_id") @db.Uuid
+  employeeId    String  @map("employee_id") @db.Uuid
+  degree        String  @db.VarChar(100)
+  institution   String  @db.VarChar(200)
+  yearOfPassing Int     @map("year_of_passing")
+  isVerified    Boolean @default(false) @map("is_verified")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("employee_qualifications")
+}
+
+model EmployeeDocument {
+  id           String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId     String    @map("school_id") @db.Uuid
+  employeeId   String    @map("employee_id") @db.Uuid
+  documentType String    @map("document_type") @db.VarChar(50)
+  fileName     String    @map("file_name") @db.VarChar(255)
+  fileUrl      String    @map("file_url") @db.Text
+  uploadedAt   DateTime  @map("uploaded_at") @db.Timestamptz
+  verifiedAt   DateTime? @map("verified_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("employee_documents")
+}
+
+model LeaveRequest {
+  id                   String       @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String       @map("school_id") @db.Uuid
+  branchId             String?      @map("branch_id") @db.Uuid
+  employeeId           String       @map("employee_id") @db.Uuid
+  leaveType            LeaveType    @map("leave_type")
+  status               LeaveStatus  @default(PENDING)
+  fromDate             DateTime     @map("from_date") @db.Date
+  toDate               DateTime     @map("to_date") @db.Date
+  dayType              LeaveDayType @map("day_type")
+  totalDays            Decimal      @map("total_days") @db.Decimal(5, 2)
+  reason               String       @db.Text
+  appliedAt            DateTime     @map("applied_at") @db.Timestamptz
+  approverId           String?      @map("approver_id") @db.Uuid
+  approvedAt           DateTime?    @map("approved_at") @db.Timestamptz
+  approvalNotes        String?      @map("approval_notes") @db.Text
+  rejectionReason      String?      @map("rejection_reason") @db.Text
+  substituteEmployeeId String?      @map("substitute_employee_id") @db.Uuid
+  isCriticalPeriod     Boolean      @default(false) @map("is_critical_period")
+  attachmentUrl        String?      @map("attachment_url") @db.Text
+  cancelledAt          DateTime?    @map("cancelled_at") @db.Timestamptz
+  cancellationReason   String?      @map("cancellation_reason") @db.Text
+  takenAt              DateTime?    @map("taken_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  approver   User?     @relation("LeaveApprover", fields: [approverId], references: [id])
+  substitute Employee? @relation("SubstituteFor", fields: [substituteEmployeeId], references: [id])
+
+  @@index([schoolId, status])
+  @@index([employeeId])
+  @@index([schoolId, fromDate, toDate])
+  @@map("leave_requests")
+}
+
+model LeaveBalance {
+  id             String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId       String  @map("school_id") @db.Uuid
+  employeeId     String  @map("employee_id") @db.Uuid
+  year           Int
+  casualEntitled Decimal @default(12) @map("casual_entitled") @db.Decimal(5, 2)
+  casualUsed     Decimal @default(0) @map("casual_used") @db.Decimal(5, 2)
+  sickEntitled   Decimal @default(8) @map("sick_entitled") @db.Decimal(5, 2)
+  sickUsed       Decimal @default(0) @map("sick_used") @db.Decimal(5, 2)
+  earnedEntitled Decimal @default(18) @map("earned_entitled") @db.Decimal(5, 2)
+  earnedUsed     Decimal @default(0) @map("earned_used") @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, year])
+  @@map("leave_balances")
+}
+
+model PayrollRun {
+  id                   String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId             String        @map("school_id") @db.Uuid
+  branchId             String?       @map("branch_id") @db.Uuid
+  payrollRunCode       String        @map("payroll_run_code") @db.VarChar(32)
+  payPeriodMonth       Int           @map("pay_period_month")
+  payPeriodYear        Int           @map("pay_period_year")
+  status               PayrollStatus @default(DRAFT)
+  cutoffDate           DateTime      @map("cutoff_date") @db.Date
+  generatedAt          DateTime?     @map("generated_at") @db.Timestamptz
+  approvedAt           DateTime?     @map("approved_at") @db.Timestamptz
+  approvedBy           String?       @map("approved_by") @db.Uuid
+  paidAt               DateTime?     @map("paid_at") @db.Timestamptz
+  totalGrossCents      Int           @map("total_gross_cents")
+  totalDeductionsCents Int           @map("total_deductions_cents")
+  totalNetPayCents     Int           @map("total_net_pay_cents")
+  employeeCount        Int           @map("employee_count")
+  holdReason           String?       @map("hold_reason") @db.Text
+  payslips             Payslip[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch   Branch? @relation(fields: [branchId], references: [id])
+  approver User?   @relation(fields: [approvedBy], references: [id])
+
+  @@unique([schoolId, payrollRunCode])
+  @@unique([schoolId, payPeriodMonth, payPeriodYear])
+  @@map("payroll_runs")
+}
+
+model Payslip {
+  id                       String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                 String        @map("school_id") @db.Uuid
+  payrollRunId             String        @map("payroll_run_id") @db.Uuid
+  employeeId               String        @map("employee_id") @db.Uuid
+  payPeriodMonth           Int           @map("pay_period_month")
+  payPeriodYear            Int           @map("pay_period_year")
+  basicCents               Int           @map("basic_cents")
+  hraCents                 Int           @map("hra_cents")
+  conveyanceAllowanceCents Int           @map("conveyance_allowance_cents")
+  specialAllowanceCents    Int           @map("special_allowance_cents")
+  medicalAllowanceCents    Int           @map("medical_allowance_cents")
+  otherAllowancesCents     Int           @default(0) @map("other_allowances_cents")
+  grossCents               Int           @map("gross_cents")
+  pfDeductionCents         Int           @default(0) @map("pf_deduction_cents")
+  esiDeductionCents        Int           @default(0) @map("esi_deduction_cents")
+  tdsDeductionCents        Int           @default(0) @map("tds_deduction_cents")
+  professionalTaxCents     Int           @default(0) @map("professional_tax_cents")
+  loanDeductionCents       Int           @default(0) @map("loan_deduction_cents")
+  otherDeductionsCents     Int           @default(0) @map("other_deductions_cents")
+  totalDeductionsCents     Int           @map("total_deductions_cents")
+  netPayCents              Int           @map("net_pay_cents")
+  bankAccountNumber        String?       @map("bank_account_number") @db.VarChar(255)
+  bankIfsc                 String?       @map("bank_ifsc") @db.VarChar(20)
+  utrNumber                String?       @map("utr_number") @db.VarChar(64)
+  paymentDate              DateTime?     @map("payment_date") @db.Timestamptz
+  status                   PayslipStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school     School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([payrollRunId, employeeId])
+  @@index([employeeId])
+  @@map("payslips")
+}
+
+model PerformanceReview {
+  id                        String             @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                  String             @map("school_id") @db.Uuid
+  branchId                  String?            @map("branch_id") @db.Uuid
+  employeeId                String             @map("employee_id") @db.Uuid
+  reviewerId                String             @map("reviewer_id") @db.Uuid
+  hrReviewerId              String?            @map("hr_reviewer_id") @db.Uuid
+  cycle                     ReviewCycle
+  cycleYear                 Int                @map("cycle_year")
+  status                    ReviewStatus       @default(DRAFT)
+  goals                     ReviewGoal[]
+  competencies              ReviewCompetency[]
+  selfAssessmentSubmittedAt DateTime?          @map("self_assessment_submitted_at") @db.Timestamptz
+  managerReviewSubmittedAt  DateTime?          @map("manager_review_submitted_at") @db.Timestamptz
+  hrReviewSubmittedAt       DateTime?          @map("hr_review_submitted_at") @db.Timestamptz
+  completedAt               DateTime?          @map("completed_at") @db.Timestamptz
+  overallRating             Int?               @map("overall_rating")
+  promotionRecommended      Boolean            @default(false) @map("promotion_recommended")
+  salaryRevisionPercent     Decimal?           @map("salary_revision_percent") @db.Decimal(5, 2)
+  strengths                 String?            @db.Text
+  improvements              String?            @db.Text
+  actionPlan                String?            @map("action_plan") @db.Text
+  employeeAcknowledgedAt    DateTime?          @map("employee_acknowledged_at") @db.Timestamptz
+  employeeFeedback          String?            @map("employee_feedback") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee   Employee  @relation("ReviewEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewer   Employee  @relation("ReviewReviewer", fields: [reviewerId], references: [id])
+  hrReviewer Employee? @relation("ReviewHr", fields: [hrReviewerId], references: [id])
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, employeeId, cycle, cycleYear])
+  @@index([employeeId])
+  @@map("performance_reviews")
+}
+
+model ReviewGoal {
+  id              String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String  @map("school_id") @db.Uuid
+  reviewId        String  @map("review_id") @db.Uuid
+  title           String  @db.VarChar(255)
+  description     String  @db.Text
+  weightPercent   Decimal @map("weight_percent") @db.Decimal(5, 2)
+  selfRating      Int?    @map("self_rating")
+  managerRating   Int?    @map("manager_rating")
+  finalRating     Int?    @map("final_rating")
+  selfComments    String? @map("self_comments") @db.Text
+  managerComments String? @map("manager_comments") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  review PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  school School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("review_goals")
+}
+
+model ReviewCompetency {
+  id            String  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String  @map("school_id") @db.Uuid
+  reviewId      String  @map("review_id") @db.Uuid
+  competency    String  @db.VarChar(100)
+  selfRating    Int?    @map("self_rating")
+  managerRating Int?    @map("manager_rating")
+  finalRating   Int?    @map("final_rating")
+  comments      String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  review PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  school School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("review_competencies")
+}
+
+model EmployeeAttendance {
+  id           String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId     String    @map("school_id") @db.Uuid
+  branchId     String?   @map("branch_id") @db.Uuid
+  employeeId   String    @map("employee_id") @db.Uuid
+  date         DateTime  @db.Date
+  checkInTime  DateTime? @map("check_in_time") @db.Timestamptz
+  checkOutTime DateTime? @map("check_out_time") @db.Timestamptz
+  status       String    @db.VarChar(20) // PRESENT, ABSENT, LATE, HALF_DAY, LEAVE
+  workHours    Decimal?  @map("work_hours") @db.Decimal(4, 2)
+  notes        String?   @db.Text
+  source       String    @db.VarChar(20) // BIOMETRIC, MANUAL, SYSTEM
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@index([schoolId, date])
+  @@map("employee_attendances")
+}
+
+// ===== Wave 12 — HR Compliance =====
+/// R-HR-005 — Substitute Teacher Assignment
+/// When teacher is absent (approved leave or unplanned), auto-assign from
+/// substitute pool; if unavailable, Coordinator covers; parent notification
+/// if delay >30 min.
+model SubstituteAssignment {
+  id                             String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId                       String           @map("school_id") @db.Uuid
+  branchId                       String           @map("branch_id") @db.Uuid
+  absentEmployeeId               String           @map("absent_employee_id") @db.Uuid
+  substituteEmployeeId           String?          @map("substitute_employee_id") @db.Uuid
+  sectionId                      String           @map("section_id") @db.Uuid
+  date                           DateTime         @db.Date
+  startTime                      DateTime         @map("start_time") @db.Timestamptz
+  endTime                        DateTime?        @map("end_time") @db.Timestamptz
+  status                         SubstituteStatus @default(ASSIGNED)
+  assignmentReason               String           @map("assignment_reason") @db.VarChar(100) // APPROVED_LEAVE | UNPLANNED_ABSENCE | EMERGENCY
+  fallbackStrategy               String?          @map("fallback_strategy") @db.VarChar(50) // COORDINATOR_COVERS | CLASS_MERGED
+  parentNotifiedAt               DateTime?        @map("parent_notified_at") @db.Timestamptz
+  parentNotificationDelayMinutes Int?             @map("parent_notification_delay_minutes")
+  notes                          String?          @db.Text
+  createdAt                      DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                      DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  school             School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch             Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  absentEmployee     Employee  @relation("SubstituteForAbsent", fields: [absentEmployeeId], references: [id])
+  substituteEmployee Employee? @relation("SubstituteAssigned", fields: [substituteEmployeeId], references: [id])
+
+  @@unique([branchId, sectionId, date])
+  @@index([schoolId, date])
+  @@index([absentEmployeeId, date])
+  @@map("substitute_assignments")
+}
+
+/// R-HR-009 — Internal Complaints Committee (ICC)
+/// Annual ICC constitution (April). Mandatory: chairperson (senior woman),
+/// 2+ members, 1+ external member (NGO/representative).
+model IccCommittee {
+  id               String    @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId         String    @map("school_id") @db.Uuid
+  branchId         String?   @map("branch_id") @db.Uuid // null = school-wide
+  constitutionDate DateTime  @map("constitution_date") @db.Date // April 1 of FY
+  fiscalYear       String    @map("fiscal_year") @db.VarChar(9) // "2026-2027"
+  status           String    @default("ACTIVE") @db.VarChar(20) // ACTIVE | DISSOLVED
+  publishedAt      DateTime? @map("published_at") @db.Timestamptz // notice board + handbook
+  dissolvedAt      DateTime? @map("dissolved_at") @db.Timestamptz
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  school  School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch  Branch?              @relation("IccBranch", fields: [branchId], references: [id])
+  members IccCommitteeMember[]
+
+  @@unique([schoolId, fiscalYear, branchId])
+  @@map("icc_committees")
+}
+
+model IccCommitteeMember {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  committeeId     String        @map("committee_id") @db.Uuid
+  employeeId      String        @map("employee_id") @db.Uuid
+  role            IccMemberRole
+  externalOrgName String?       @map("external_org_name") @db.VarChar(200) // for EXTERNAL_MEMBER
+  appointedAt     DateTime      @map("appointed_at") @db.Date
+  isActive        Boolean       @default(true) @map("is_active")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  committee IccCommittee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  employee  Employee     @relation("IccMember", fields: [employeeId], references: [id])
+
+  @@unique([committeeId, employeeId])
+  @@map("icc_committee_members")
+}
+
+/// R-HR-010 (POSH) + R-HR-011 (Food Handler Medical) — generic training/medical record
+/// Annual training cycle; quiz with 80% pass mark; certificate valid 1 year;
+/// non-completion blocks payroll (R-HR-010).
+model TrainingRecord {
+  id                    String         @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String         @map("school_id") @db.Uuid
+  employeeId            String         @map("employee_id") @db.Uuid
+  trainingType          TrainingType
+  status                TrainingStatus @default(ASSIGNED)
+  assignedAt            DateTime       @map("assigned_at") @db.Timestamptz
+  startedAt             DateTime?      @map("started_at") @db.Timestamptz
+  completedAt           DateTime?      @map("completed_at") @db.Timestamptz
+  certificateNumber     String?        @map("certificate_number") @db.VarChar(100)
+  certificateUrl        String?        @map("certificate_url") @db.VarChar(500)
+  certificateValidUntil DateTime?      @map("certificate_valid_until") @db.Date
+  quizScore             Int?           @map("quiz_score") // 0-100
+  passMark              Int            @default(80) @map("pass_mark")
+  payrollBlockedAt      DateTime?      @map("payroll_blocked_at") @db.Timestamptz // R-HR-010
+  notes                 String?        @db.Text
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  employee Employee @relation("EmployeeTrainings", fields: [employeeId], references: [id])
+
+  @@unique([schoolId, employeeId, trainingType, assignedAt])
+  @@index([schoolId, trainingType, status])
+  @@index([employeeId, status])
+  @@map("training_records")
+}
+
+/// R-APR-010 — New Position Approval
+/// Multi-level approval for creating a new position (Director → Board).
+model PositionOpening {
+  id                    String         @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String         @map("school_id") @db.Uuid
+  branchId              String         @map("branch_id") @db.Uuid
+  positionCode          String         @map("position_code") @db.VarChar(32)
+  role                  String         @db.VarChar(50) // StaffRole enum value
+  designation           String         @db.VarChar(100)
+  employmentType        String         @map("employment_type") @db.VarChar(20)
+  budgetedSalaryCents   BigInt         @map("budgeted_salary_cents")
+  justification         String         @db.Text
+  status                PositionStatus @default(OPEN)
+  approvedByDirectorId  String?        @map("approved_by_director_id") @db.Uuid
+  approvedByDirectorAt  DateTime?      @map("approved_by_director_at") @db.Timestamptz
+  boardApprovalRequired Boolean        @default(false) @map("board_approval_required")
+  boardApprovedAt       DateTime?      @map("board_approved_at") @db.Timestamptz
+  filledAt              DateTime?      @map("filled_at") @db.Timestamptz
+  filledByEmployeeId    String?        @map("filled_by_employee_id") @db.Uuid
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  school             School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch             Branch    @relation("PositionBranch", fields: [branchId], references: [id])
+  approvedByDirector User?     @relation("PositionApprovedBy", fields: [approvedByDirectorId], references: [id])
+  filledByEmployee   Employee? @relation("PositionFilledBy", fields: [filledByEmployeeId], references: [id])
+
+  @@unique([schoolId, positionCode])
+  @@map("position_openings")
+}
+
+/// R-APR-011 — Salary Revision Approval
+/// Approves a salary change (raise/promotion). Requires Director + Board approval
+/// if delta > 25% (configurable per school).
+model SalaryRevision {
+  id                    String               @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId              String               @map("school_id") @db.Uuid
+  employeeId            String               @map("employee_id") @db.Uuid
+  currentSalaryCents    BigInt               @map("current_salary_cents")
+  proposedSalaryCents   BigInt               @map("proposed_salary_cents")
+  deltaPercent          Decimal              @map("delta_percent") @db.Decimal(5, 2)
+  effectiveDate         DateTime             @map("effective_date") @db.Date
+  reason                String               @db.VarChar(200) // ANNUAL_REVIEW | PROMOTION | MARKET_CORRECTION | RETENTION
+  status                SalaryRevisionStatus @default(PENDING)
+  requestedById         String               @map("requested_by_id") @db.Uuid
+  approvedByManagerId   String?              @map("approved_by_manager_id") @db.Uuid
+  approvedByManagerAt   DateTime?            @map("approved_by_manager_at") @db.Timestamptz
+  approvedByDirectorId  String?              @map("approved_by_director_id") @db.Uuid
+  approvedByDirectorAt  DateTime?            @map("approved_by_director_at") @db.Timestamptz
+  boardApprovalRequired Boolean              @default(false) @map("board_approval_required")
+  boardApprovedAt       DateTime?            @map("board_approved_at") @db.Timestamptz
+  rejectionReason       String?              @db.Text
+  appliedAt             DateTime?            @map("applied_at") @db.Timestamptz
+  createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+
+  school             School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  employee           Employee @relation("EmployeeSalaryRevisions", fields: [employeeId], references: [id])
+  requestedBy        User     @relation("SalaryRevisionRequestedBy", fields: [requestedById], references: [id])
+  approvedByManager  User?    @relation("SalaryRevisionManagerApproval", fields: [approvedByManagerId], references: [id])
+  approvedByDirector User?    @relation("SalaryRevisionDirectorApproval", fields: [approvedByDirectorId], references: [id])
+
+  @@index([schoolId, status])
+  @@index([employeeId, status])
+  @@map("salary_revisions")
+}
+
+// MODEL: departments (per ERD v3.0, aggregate=HR)
+model Department {
+  id             String          @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  name           String
+  departmentType StaffDepartment
+  description    String?
+  isActive       Boolean
+  createdAt      DateTime        @default(now())
+  createdBy      String?
+  updatedAt      DateTime        @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int             @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("departments")
+}
+
+// MODEL: designations (per ERD v3.0, aggregate=HR)
+model Designation {
+  id              String           @id @default(uuid())
+  schoolId        String
+  branchId        String?
+  name            String
+  designationType StaffDesignation
+  departmentId    String?
+  grade           String?
+  isActive        Boolean
+  createdAt       DateTime         @default(now())
+  createdBy       String?
+  updatedAt       DateTime         @updatedAt
+  updatedBy       String?
+  deletedAt       DateTime?
+  deletedBy       String?
+  version         Int              @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("designations")
+}
+
+// MODEL: staffs (per ERD v3.0, aggregate=Staff)
+model Staff {
+  id                 String         @id @default(uuid())
+  schoolId           String
+  branchId           String?
+  userId             String?
+  employeeCode       String
+  firstName          String
+  lastName           String
+  dob                DateTime
+  gender             Gender
+  departmentId       String?
+  designationId      String?
+  employmentType     EmploymentType
+  joiningDate        DateTime
+  confirmationDate   DateTime?
+  exitDate           DateTime?
+  exitType           ExitType?
+  exitReason         String?
+  status             StaffStatus
+  qualification      String?
+  experienceYears    Decimal?
+  photoUrl           String?
+  reportingManagerId String?
+  createdAt          DateTime       @default(now())
+  createdBy          String?
+  updatedAt          DateTime       @updatedAt
+  updatedBy          String?
+  deletedAt          DateTime?
+  deletedBy          String?
+  version            Int            @default(1)
+  ref                String?
+
+  @@index([status])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staffs")
+}
+
+// MODEL: staff_profiles (per ERD v3.0, aggregate=Staff)
+model StaffProfile {
+  id                           String      @id @default(uuid())
+  schoolId                     String
+  branchId                     String?
+  staffId                      String
+  addressLine1                 String
+  addressLine2                 String?
+  city                         String
+  state                        String
+  pincode                      String
+  phone                        String
+  altPhone                     String?
+  emergencyContactName         String
+  emergencyContactPhone        String
+  emergencyContactRelationship String?
+  bloodGroup                   BloodGroup?
+  maritalStatus                String?
+  spouseName                   String?
+  childrenCount                Int?
+  aadhaarNumber                String?
+  aadhaarEncrypted             Bytes?
+  panNumber                    String?
+  pfAccountNumber              String?
+  esiNumber                    String?
+  createdAt                    DateTime    @default(now())
+  createdBy                    String?
+  updatedAt                    DateTime    @updatedAt
+  updatedBy                    String?
+  deletedAt                    DateTime?
+  deletedBy                    String?
+  version                      Int         @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_profiles")
+}
+
+// MODEL: staff_documents (per ERD v3.0, aggregate=Staff)
+model StaffDocument {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  staffId      String
+  documentType String
+  fileUrl      String
+  fileHash     String
+  verified     Boolean
+  verifiedBy   String?
+  verifiedAt   DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_documents")
+}
+
+// MODEL: staff_qualifications (per ERD v3.0, aggregate=Staff)
+model StaffQualification {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  staffId        String
+  degree         String
+  institution    String
+  yearPassing    Int
+  percentage     Decimal?
+  certificateUrl String?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_qualifications")
+}
+
+// MODEL: staff_experiences (per ERD v3.0, aggregate=Staff)
+model StaffExperience {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  staffId       String
+  organization  String
+  designation   String
+  startDate     DateTime
+  endDate       DateTime?
+  reasonLeaving String?
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_experiences")
+}
+
+// MODEL: staff_bank_details (per ERD v3.0, aggregate=Staff)
+model StaffBankDetail {
+  id                     String    @id @default(uuid())
+  schoolId               String
+  branchId               String?
+  staffId                String
+  bankName               String
+  branchName             String?
+  accountNumberEncrypted Bytes
+  accountNumberMasked    String
+  ifscCode               String
+  isPrimary              Boolean
+  createdAt              DateTime  @default(now())
+  createdBy              String?
+  updatedAt              DateTime  @updatedAt
+  updatedBy              String?
+  deletedAt              DateTime?
+  deletedBy              String?
+  version                Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_bank_details")
+}
+
+// MODEL: employment_type_tbls (per ERD v3.0, aggregate=HR)
+model EmploymentTypeTbl {
+  id                      String    @id @default(uuid())
+  schoolId                String
+  branchId                String?
+  name                    String
+  code                    String
+  isActive                Boolean
+  defaultNoticePeriodDays Int
+  defaultProbationMonths  Int
+  createdAt               DateTime  @default(now())
+  createdBy               String?
+  updatedAt               DateTime  @updatedAt
+  updatedBy               String?
+  deletedAt               DateTime?
+  deletedBy               String?
+  version                 Int       @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("employment_type_tbls")
+}
+
+// MODEL: payrolls (per ERD v3.0, aggregate=Payroll)
+model Payroll {
+  id                   String        @id @default(uuid())
+  schoolId             String
+  branchId             String?
+  payrollNumber        String
+  periodMonth          Int
+  periodYear           Int
+  totalEarningsCents   Int
+  totalDeductionsCents Int
+  totalNetCents        Int
+  status               PayrollStatus
+  processedBy          String?
+  processedAt          DateTime?
+  paidAt               DateTime?
+  createdAt            DateTime      @default(now())
+  createdBy            String?
+  updatedAt            DateTime      @updatedAt
+  updatedBy            String?
+  deletedAt            DateTime?
+  deletedBy            String?
+  version              Int           @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("payrolls")
+}
+
+// MODEL: payroll_components (per ERD v3.0, aggregate=Payroll)
+model PayrollComponent {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  name              String
+  code              String
+  type              String
+  isTaxable         Boolean
+  isStatutory       Boolean
+  calculationMethod String
+  defaultValue      Decimal?
+  isActive          Boolean
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("payroll_components")
+}
+
+// MODEL: payslip_components (per ERD v3.0, aggregate=Payroll)
+model PayslipComponent {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  payslipId        String
+  componentId      String
+  amountCents      Int
+  calculationBasis Json?
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("payslip_components")
+}
+
+// MODEL: leave_type_tbls (per ERD v3.0, aggregate=HR)
+model LeaveTypeTbl {
+  id                 String    @id @default(uuid())
+  schoolId           String
+  branchId           String?
+  name               String
+  code               String
+  type               LeaveType
+  defaultAnnualQuota Decimal
+  isPaid             Boolean
+  carryForward       Boolean
+  maxCarryForward    Decimal?
+  encashable         Boolean
+  isActive           Boolean
+  createdAt          DateTime  @default(now())
+  createdBy          String?
+  updatedAt          DateTime  @updatedAt
+  updatedBy          String?
+  deletedAt          DateTime?
+  deletedBy          String?
+  version            Int       @default(1)
+
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("leave_type_tbls")
+}
+
+// MODEL: leave_approvals (per ERD v3.0, aggregate=HR)
+model LeaveApproval {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  leaveRequestId String
+  approvalLevel  Int
+  approverId     String
+  decision       String
+  notes          String?
+  decidedAt      DateTime
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("leave_approvals")
+}
+
+// MODEL: attendance_staffs (per ERD v3.0, aggregate=HR)
+model AttendanceStaff {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  staffId        String
+  attendanceDate DateTime
+  status         String
+  checkInAt      DateTime?
+  checkOutAt     DateTime?
+  workHours      Decimal?
+  overtimeHours  Decimal?
+  source         String
+  notes          String?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("attendance_staffs")
+}
+
+// MODEL: staff_shifts (per ERD v3.0, aggregate=HR)
+model StaffShift {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  name         String
+  startTime    String
+  endTime      String
+  graceMinutes Int
+  isActive     Boolean
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_shifts")
+}
+
+// MODEL: shift_assignments (per ERD v3.0, aggregate=HR)
+model ShiftAssignment {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  staffId        String
+  shiftId        String
+  effectiveFrom  DateTime
+  effectiveUntil DateTime?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("shift_assignments")
+}
+
+// MODEL: timesheets (per ERD v3.0, aggregate=HR)
+model Timesheet {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  staffId       String
+  timesheetDate DateTime
+  taskCategory  String?
+  description   String?
+  hoursSpent    Decimal
+  classroomId   String?
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("timesheets")
+}
+
+// MODEL: staff_reviews (per ERD v3.0, aggregate=HR)
+model StaffReview {
+  id               String       @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  staffId          String
+  reviewPeriod     ReviewPeriod
+  periodYear       Int
+  periodIndex      Int
+  reviewerId       String
+  selfRating       Int?
+  reviewerRating   Int?
+  finalRating      Int?
+  strengths        String?
+  areasToImprove   String?
+  goalsNextPeriod  String?
+  reviewerComments String?
+  status           String
+  completedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  createdBy        String?
+  updatedAt        DateTime     @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int          @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_reviews")
+}
+
+// MODEL: review_cycle_tbls (per ERD v3.0, aggregate=HR)
+model ReviewCycleTbl {
+  id                  String       @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  reviewPeriod        ReviewPeriod
+  periodYear          Int
+  periodIndex         Int
+  selfReviewStart     DateTime
+  selfReviewEnd       DateTime
+  reviewerReviewStart DateTime
+  reviewerReviewEnd   DateTime
+  status              String
+  createdAt           DateTime     @default(now())
+  createdBy           String?
+  updatedAt           DateTime     @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int          @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("review_cycle_tbls")
+}
+
+// MODEL: job_openings (per ERD v3.0, aggregate=HR)
+model JobOpening {
+  id                  String         @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  title               String
+  departmentId        String?
+  designationId       String?
+  employmentType      EmploymentType
+  positionsCount      Int
+  description         String
+  requirements        Json?
+  salaryRangeMinCents Int?
+  salaryRangeMaxCents Int?
+  postedAt            DateTime
+  closingDate         DateTime
+  status              String
+  createdAt           DateTime       @default(now())
+  createdBy           String?
+  updatedAt           DateTime       @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int            @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("job_openings")
+}
+
+// MODEL: job_applications (per ERD v3.0, aggregate=HR)
+model JobApplication {
+  id                  String               @id @default(uuid())
+  schoolId            String
+  branchId            String?
+  jobOpeningId        String
+  candidateName       String
+  email               String
+  phone               String
+  resumeUrl           String
+  coverLetter         String?
+  currentCompany      String?
+  currentDesignation  String?
+  experienceYears     Decimal?
+  currentSalaryCents  Int?
+  expectedSalaryCents Int?
+  noticePeriodDays    Int?
+  status              JobApplicationStatus
+  appliedAt           DateTime
+  source              String?
+  createdAt           DateTime             @default(now())
+  createdBy           String?
+  updatedAt           DateTime             @updatedAt
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  version             Int                  @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("job_applications")
+}
+
+// MODEL: interviews (per ERD v3.0, aggregate=HR)
+model Interview {
+  id               String    @id @default(uuid())
+  schoolId         String
+  branchId         String?
+  jobApplicationId String
+  interviewRound   Int
+  interviewType    String
+  scheduledAt      DateTime
+  durationMinutes  Int
+  interviewerId    String
+  location         String?
+  videoLink        String?
+  status           String
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  createdBy        String?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+  version          Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("interviews")
+}
+
+// MODEL: interview_feedbacks (per ERD v3.0, aggregate=HR)
+model InterviewFeedback {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  interviewId    String
+  interviewerId  String
+  rating         Int
+  strengths      String?
+  concerns       String?
+  recommendation String
+  notes          String?
+  submittedAt    DateTime
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("interview_feedbacks")
+}
+
+// MODEL: onboarding_tasks (per ERD v3.0, aggregate=HR)
+model OnboardingTask {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  title          String
+  description    String?
+  taskType       String
+  ownerRole      String?
+  defaultDueDays Int
+  isActive       Boolean
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("onboarding_tasks")
+}
+
+// MODEL: offboarding_tasks (per ERD v3.0, aggregate=HR)
+model OffboardingTask {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  title          String
+  description    String?
+  taskType       String
+  ownerRole      String?
+  defaultDueDays Int
+  isActive       Boolean
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("offboarding_tasks")
+}
+
+// MODEL: exit_interviews (per ERD v3.0, aggregate=HR)
+model ExitInterview {
+  id                String    @id @default(uuid())
+  schoolId          String
+  branchId          String?
+  staffId           String
+  interviewDate     DateTime
+  interviewerId     String
+  primaryReason     String
+  reasonDetails     String?
+  feedbackOnCompany String?
+  feedbackOnManager String?
+  wouldRecommend    Boolean?
+  rehireEligible    Boolean
+  createdAt         DateTime  @default(now())
+  createdBy         String?
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?
+  deletedAt         DateTime?
+  deletedBy         String?
+  version           Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("exit_interviews")
+}
+
+// MODEL: staff_role_assignments (per ERD v3.0, aggregate=HR)
+model StaffRoleAssignment {
+  id                   String    @id @default(uuid())
+  schoolId             String
+  branchId             String?
+  staffId              String
+  role                 String
+  classroomId          String?
+  academicSessionId    String?
+  isPrimary            Boolean
+  createdAt            DateTime  @default(now())
+  createdBy            String?
+  updatedAt            DateTime  @updatedAt
+  updatedBy            String?
+  deletedAt            DateTime?
+  deletedBy            String?
+  version              Int       @default(1)
+  roomId               String?
+  categoryId           String?
+  assetId              String?
+  maintenanceRequestId String?
+  anchor               String?
+  scope                String?
+  actor                String?
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_role_assignments")
+}

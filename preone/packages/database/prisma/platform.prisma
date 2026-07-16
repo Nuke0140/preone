@@ -1,0 +1,317 @@
+// PreOne Prisma Schema — Platform domain
+// Platform Management — subscriptions, billing, integrations, storage usage, backups, tenant provisioning
+// Part of the multi-file Prisma schema (preview feature: prismaSchemaFolder).
+// Do not edit generator/datasource here — those live in the root schema.prisma.
+
+// ─────────────────────────────────────────────
+// ENUMS — Platform Management
+// ─────────────────────────────────────────────
+enum SubscriptionPlan {
+  STARTER
+  GROWTH
+  SCALE
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+}
+
+enum BillingPeriod {
+  MONTHLY
+  ANNUAL
+}
+
+enum BillingStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+enum BackupType {
+  AUTO
+  MANUAL
+  SNAPSHOT
+}
+
+enum IntegrationType {
+  WHATSAPP_BUSINESS
+  RAZORPAY
+  MSG91
+  TWILIO
+  ESSL_BIOMETRIC
+  TALLY
+  ZOHO_BOOKS
+  QUICKBOOKS
+  CUSTOM
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 8 — PLATFORM MODULE EXTENSIONS (BTD §4.3 #14, ~25 APIs)
+// Per BRC §17 (Platform Rules) + ERD v3.0 §24 + API Catalog §16.18
+// Aggregates: TenantProvisioning, SupportTicket
+// (Existing: SchoolSubscription, PlatformBilling, PlatformIntegration, FeatureFlag)
+// ─────────────────────────────────────────────────────────────────────────────
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_USER
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportTicketCategory {
+  BILLING
+  TECHNICAL
+  ONBOARDING
+  FEATURE_REQUEST
+  BUG
+  DATA_MIGRATION
+  OTHER
+}
+
+enum ProvisioningStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+model TenantProvisioning {
+  id            String             @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId      String             @unique @map("school_id") @db.Uuid
+  status        ProvisioningStatus @default(PENDING)
+  plan          String             @db.VarChar(32) // STARTER, GROWTH, ENTERPRISE
+  steps         Json // [{ step, status, startedAt, completedAt, error }]
+  currentStep   String?            @map("current_step") @db.VarChar(80)
+  initiatedById String             @map("initiated_by_id") @db.Uuid
+  completedAt   DateTime?          @map("completed_at") @db.Timestamptz
+  failureReason String?            @map("failure_reason") @db.Text
+  metadata      Json?
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  school      School @relation("TenantProvisioningSchool", fields: [schoolId], references: [id], onDelete: Cascade)
+  initiatedBy User   @relation("ProvisioningInitiatedBy", fields: [initiatedById], references: [id])
+
+  @@index([status])
+  @@map("tenant_provisionings")
+}
+
+model SupportTicket {
+  id                 String                @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId           String                @map("school_id") @db.Uuid
+  raisedById         String                @map("raised_by_id") @db.Uuid
+  assignedToId       String?               @map("assigned_to_id") @db.Uuid
+  ticketNumber       String                @map("ticket_number") @db.VarChar(32)
+  subject            String                @db.VarChar(200)
+  description        String                @db.Text
+  category           SupportTicketCategory @default(OTHER)
+  status             SupportTicketStatus   @default(OPEN)
+  priority           SupportTicketPriority @default(MEDIUM)
+  tags               String[]              @default([])
+  attachments        Json?
+  firstResponseAt    DateTime?             @map("first_response_at") @db.Timestamptz
+  resolvedAt         DateTime?             @map("resolved_at") @db.Timestamptz
+  closedAt           DateTime?             @map("closed_at") @db.Timestamptz
+  satisfactionRating Int?                  @map("satisfaction_rating") // 1-5
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  school     School                 @relation("SupportTicketSchool", fields: [schoolId], references: [id], onDelete: Cascade)
+  raisedBy   User                   @relation("TicketRaisedBy", fields: [raisedById], references: [id])
+  assignedTo User?                  @relation("TicketAssignedTo", fields: [assignedToId], references: [id])
+  comments   SupportTicketComment[]
+
+  @@unique([schoolId, ticketNumber])
+  @@index([schoolId, status])
+  @@index([priority, status])
+  @@map("support_tickets")
+}
+
+model SupportTicketComment {
+  id          String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  ticketId    String   @map("ticket_id") @db.Uuid
+  authorId    String   @map("author_id") @db.Uuid
+  body        String   @db.Text
+  isInternal  Boolean  @default(false) @map("is_internal")
+  attachments Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User          @relation("TicketCommentAuthor", fields: [authorId], references: [id])
+
+  @@index([ticketId, createdAt])
+  @@map("support_ticket_comments")
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// WAVE 13 — DATABASE v3.0 COMPLETION
+// Generated from ERD v3.0 — adds 208 missing models to reach 307-table target
+// Domains: Platform (4) + Cross-Cutting (12) + CRM (11) + Student (11) +
+// Academics (16) + Daily Ops (17) + Inventory (20) + Communication (27) +
+// Finance (29) + HR (28) + Administration (14) + Transport (8) + Settings (9)
+// Note: Models use plain FK columns (no Prisma @relation) to avoid inverse-field
+// churn. Relations can be progressively promoted as modules consume them.
+// ════════════════════════════════════════════════════════════════════════
+// MODEL: storage_usages (per ERD v3.0, aggregate=Tenant)
+model StorageUsage {
+  id             String    @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  month          Int
+  year           Int
+  photosBytes    BigInt
+  documentsBytes BigInt
+  backupsBytes   BigInt
+  totalBytes     BigInt
+  limitBytes     BigInt
+  overageBytes   BigInt
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int       @default(1)
+
+  @@index([month, year])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("storage_usages")
+}
+
+// MODEL: feature_usages (per ERD v3.0, aggregate=Tenant)
+model FeatureUsage {
+  id            String    @id @default(uuid())
+  schoolId      String
+  branchId      String?
+  month         Int
+  year          Int
+  smsSent       Int
+  whatsappSent  Int
+  emailSent     Int
+  pushSent      Int
+  apiCalls      BigInt
+  quotaSms      Int
+  quotaWhatsapp Int
+  quotaEmail    Int
+  quotaApi      BigInt
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String?
+  deletedAt     DateTime?
+  deletedBy     String?
+  version       Int       @default(1)
+
+  @@index([month, year])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("feature_usages")
+}
+
+// MODEL: platform_api_keys (per ERD v3.0, aggregate=Tenant)
+model PlatformApiKey {
+  id          String    @id @default(uuid())
+  schoolId    String
+  branchId    String?
+  name        String
+  keyHash     String
+  keyPrefix   String
+  permissions Json
+  lastUsedAt  DateTime?
+  isActive    Boolean
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  revokedBy   String?
+  createdAt   DateTime  @default(now())
+  createdBy   String?
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
+  deletedAt   DateTime?
+  deletedBy   String?
+  version     Int       @default(1)
+
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("platform_api_keys")
+}
+
+// MODEL: platform_backups (per ERD v3.0, aggregate=Tenant)
+model PlatformBackup {
+  id             String       @id @default(uuid())
+  schoolId       String
+  branchId       String?
+  type           BackupType
+  sizeBytes      BigInt
+  storageUrl     String
+  status         BackupStatus
+  startedAt      DateTime
+  completedAt    DateTime?
+  verifiedAt     DateTime?
+  retentionUntil DateTime
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+  createdBy      String?
+  updatedAt      DateTime     @updatedAt
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+  version        Int          @default(1)
+
+  @@index([status])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("platform_backups")
+}
+
+// MODEL: global_configurations (per ERD v3.0, aggregate=PlatformConfig)
+model GlobalConfiguration {
+  id           String    @id @default(uuid())
+  schoolId     String
+  branchId     String?
+  key          String
+  value        String
+  description  String?
+  isEditable   Boolean
+  isSensitive  Boolean
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+  deletedAt    DateTime?
+  deletedBy    String?
+  version      Int       @default(1)
+  roleId       String?
+  permissionId String?
+  userId       String?
+  anchor       String?
+  scope        String?
+  actor        String?
+
+  @@index([key])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("global_configurations")
+}
+
+enum BackupStatus {
+  PLACEHOLDER
+}

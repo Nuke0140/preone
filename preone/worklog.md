@@ -391,3 +391,49 @@ Stage Summary:
   - packages/database/prisma/migrations/20260716000001_wave_4_1_rls_pii_admissions_attendance.sql
   - packages/database/prisma/migrations/20260716000002_wave_5_rls_pii_communication_finance.sql
 - PR: https://github.com/Nuke0140/preone/pull/7
+
+---
+Task ID: 14
+Agent: Main (Super Z)
+Task: Wave 14 — Split single-file schema.prisma (12,788 lines, 392 models, 215 enums) into domain-wise multi-file Prisma schema using the prismaSchemaFolder preview/GA feature.
+
+Work Log:
+- Inspected baseline: packages/database/prisma/schema.prisma = 12,788 lines, 392 models, 215 enums, single-file. Generator + datasource + all enums + all models in one file.
+- Verified Prisma version: installed 6.19.3 (declared ^6.0.0 in package.json). prismaSchemaFolder is GA in 6.13+ (preview flag deprecated but harmless).
+- Designed split plan: 16 domain files — platform, identity, student, academics, admissions, attendance, communication, finance, hr, crm, inventory, administration, transport, settings, reports, cross_cutting.
+- Wrote Python split script /home/z/my-project/scripts/wave14_split_schema.py:
+  - Parses single-file schema into blocks (generator, datasource, enum, model) with leading comments preserved.
+  - Pre-Wave-13 content: section header (e.g. "WAVE 5 — COMMUNICATION MODULE", "ENUMS — Platform Management", "Wave 12 — HR Compliance") determines domain.
+  - Wave-13 content: aggregate=XXX hint inside `// MODEL: name (per ERD v3.0, aggregate=YYY)` comment is mapped to domain via AGGREGATE_TO_DOMAIN dict.
+  - Shared enums (used by multiple domains) routed via CANONICAL_ENUM_DOMAIN dict to avoid duplicates.
+  - Fails fast if duplicate enum or model names detected across split files.
+- Backed up original schema to /home/z/my-project/scripts/schema.prisma.bak.
+- Ran split script — produced 16 domain files + root schema.prisma (generator + datasource + previewFeatures only).
+- Hit Prisma 6.19.3 bug: when --schema points to a single file, the multi-file feature is silently disabled (only the root file is read, ModelName = {}). Fix: configure package.json#prisma.schema to point at the directory ("prisma") and pass --schema prisma to all CLI commands.
+- Hit second Prisma 6.19.3 bug: the LAST model in the alphabetically-last .prisma file (transport.prisma → TransportRouteAlternate) is silently dropped during generate. Workaround: added zz_sentinel.prisma with a throwaway SchemaSplitSentinel model — the sentinel itself is dropped but all 392 real models are preserved.
+- Updated packages/database/package.json:
+  - Added "schema": "prisma" to prisma config block.
+  - All scripts (generate, validate, format, migrate:*, studio) now pass --schema prisma explicitly for safety.
+  - Added validate and format npm scripts.
+- Verified final state:
+  - prisma validate → "The schemas at prisma are valid 🚀"
+  - prisma generate → 392 unique models in Prisma.ModelName (matches schema definition).
+  - Generated client has models from every domain (spot-checked: School, User, Student, AcademicSession, Admission, Notification, Invoice, Employee, Lead, InventoryItem, Vehicle, Asset, SystemConfig, ReportExecution, AuditLog, StorageUsage, TransportRouteAlternate).
+  - Seed scripts (01-master-data, 02-identity, 03-school, 04-lookup) TypeScript-clean against regenerated client.
+  - API tsc --noEmit → only the pre-existing OpenTelemetry ReadableSpan error (unrelated to schema, confirmed pre-existing by git stash test).
+- Wrote prisma/SCHEMA_LAYOUT.md documenting the new layout, the Prisma 6.19.3 sentinel workaround, and instructions for re-running the split script.
+
+Stage Summary:
+- 1 root schema.prisma (62 lines: header + generator + datasource) + 16 domain files + 1 sentinel file = 18 .prisma files total.
+- All 392 models + 215 enums preserved exactly as before — no semantic changes to the schema.
+- Prisma client generates successfully with all expected models.
+- Split is reproducible: re-running wave14_split_schema.py on the baseline backup produces identical output.
+- Backwards compatible: existing app code, seed scripts, and migration folders all unchanged.
+- Key artifacts:
+  - /home/z/my-project/scripts/wave14_split_schema.py (split script, idempotent)
+  - /home/z/my-project/scripts/schema.prisma.bak (Wave 13 single-file baseline)
+  - /home/z/my-project/preone/packages/database/prisma/schema.prisma (root, generator+datasource only)
+  - /home/z/my-project/preone/packages/database/prisma/{platform,identity,student,academics,admissions,attendance,communication,finance,hr,crm,inventory,administration,transport,settings,reports,cross_cutting}.prisma (16 domain files)
+  - /home/z/my-project/preone/packages/database/prisma/zz_sentinel.prisma (bug workaround)
+  - /home/z/my-project/preone/packages/database/prisma/SCHEMA_LAYOUT.md (documentation)
+  - /home/z/my-project/preone/packages/database/package.json (updated scripts)

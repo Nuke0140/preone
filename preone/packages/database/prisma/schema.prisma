@@ -290,6 +290,47 @@ model School {
   campaignAudienceSegments CampaignAudienceSegment[]
   counsellorTargets        CounsellorTarget[]
 
+  // ─── Wave 7 back-relations (Inventory) ───
+  inventoryItems       InventoryItem[]
+  stockLots            StockLot[]
+  stockMovements       StockMovement[]
+  suppliers            Supplier[]
+  purchaseRequests     PurchaseRequest[]
+  purchaseRequestLines PurchaseRequestLine[]
+  purchaseOrders       PurchaseOrder[]
+  purchaseOrderLines   PurchaseOrderLine[]
+  goodsReceiptNotes    GoodsReceiptNote[]
+  grnLines             GrnLine[]
+  goodsIssues          GoodsIssue[]
+  goodsIssueLines      GoodsIssueLine[]
+
+  // ─── Wave 7 back-relations (Administration) ───
+  assets               Asset[]
+  maintenanceRequests  MaintenanceRequest[]
+  visitorLogs          VisitorLog[]
+  facilities           Facility[]
+  facilityInspections  FacilityInspection[]
+
+  // ─── Wave 7 back-relations (Transport) ───
+  vehicles             Vehicle[]
+  transportRoutes      Route[]
+  trips                Trip[]
+  studentRouteAssignments StudentRouteAssignment[]
+  transportAttendances TransportAttendance[]
+
+  // ─── Wave 8 back-relations (Settings + Reports + Platform) ───
+  systemConfigs        SystemConfig[]
+  userPreferences      UserPreference[]
+  calendarEvents       CalendarEvent[]
+  reportDefinitions    ReportDefinition[]
+  reportExecutions     ReportExecution[]
+  savedReports         SavedReport[]
+  reportSubscriptions  ReportSubscription[]
+  dashboardWidgets     DashboardWidget[]
+  tenantProvisioning   TenantProvisioning?   @relation("TenantProvisioningSchool")
+  supportTickets       SupportTicket[]       @relation("SupportTicketSchool")
+
+
   @@index([status])
   @@index([tier])
   @@index([createdAt])
@@ -347,6 +388,26 @@ model Branch {
   waitingListEntries   WaitingList[]
   dailyReportTemplates DailyReportTemplate[]
 
+  // ─── Wave 7 back-relations (Inventory + Admin + Transport) ───
+  inventoryItems       InventoryItem[]
+  stockLots            StockLot[]
+  stockMovements       StockMovement[]
+  purchaseRequests     PurchaseRequest[]
+  purchaseOrders       PurchaseOrder[]
+  goodsReceiptNotes    GoodsReceiptNote[]
+  goodsIssues          GoodsIssue[]
+  assets               Asset[]
+  maintenanceRequests  MaintenanceRequest[]
+  visitorLogs          VisitorLog[]
+  facilities           Facility[]
+  facilityInspections  FacilityInspection[]
+  vehicles             Vehicle[]
+  transportRoutes      Route[]
+  trips                Trip[]
+  studentRouteAssignments StudentRouteAssignment[]
+  transportAttendances TransportAttendance[]
+
+
   // ─── Wave 5 back-relations (Communication + Finance) ───
   commTemplates  CommunicationTemplate[]
   announcements  Announcement[]
@@ -361,6 +422,11 @@ model Branch {
   payrollRuns PayrollRun[]
   leads       Lead[]
   campaigns   Campaign[]
+
+  // ─── Wave 8 back-relations (Settings + Reports) ───
+  branchSystemConfigs  SystemConfig[]
+  branchCalendarEvents CalendarEvent[]
+  branchReportExecutions ReportExecution[]
 
   @@unique([schoolId, code])
   @@index([schoolId, isActive])
@@ -436,6 +502,35 @@ model User {
   counsellorTargets      CounsellorTarget[]
 
   @@unique([schoolId, email])
+
+  // ─── Wave 7 back-relations ───
+  stockMovements       StockMovement[]
+  prRequested          PurchaseRequest[]      @relation("PRRequestedBy")
+  prApproved           PurchaseRequest[]      @relation("PRApprover")
+  poIssued             PurchaseOrder[]        @relation("POIssuedBy")
+  grnsReceived         GoodsReceiptNote[]     @relation("GRNReceivedBy")
+  goodsIssuedTo        GoodsIssue[]           @relation("GIssuedTo")
+  goodsIssuedBy        GoodsIssue[]           @relation("GIssuedBy")
+  assetsAssigned       Asset[]                @relation("AssetAssignedTo")
+  maintRequested       MaintenanceRequest[]   @relation("MaintRequestedBy")
+  maintAssigned        MaintenanceRequest[]   @relation("MaintAssignedTo")
+  visitorsToMeet       VisitorLog[]           @relation("VisitorPersonToMeet")
+  visitorsApproved     VisitorLog[]           @relation("VisitorApprovedBy")
+  inspectionsBy        FacilityInspection[]   @relation("InspectedBy")
+  transportAttendanceMarked TransportAttendance[] @relation("TransportAttendanceMarkedBy")
+
+  // ─── Wave 8 back-relations ───
+  userPreferences           UserPreference[]
+  calendarEventsOrganized   CalendarEvent[]         @relation("CalendarEventOrganizer")
+  reportExecutions          ReportExecution[]       @relation("ReportRequestedBy")
+  savedReports              SavedReport[]           @relation("SavedReportOwner")
+  reportSubscriptions       ReportSubscription[]    @relation("ReportSubscriber")
+  dashboardWidgets          DashboardWidget[]       @relation("DashboardWidgetOwner")
+  tenantProvisionings       TenantProvisioning[]    @relation("ProvisioningInitiatedBy")
+  supportTicketsRaised      SupportTicket[]         @relation("TicketRaisedBy")
+  supportTicketsAssigned    SupportTicket[]         @relation("TicketAssignedTo")
+  supportTicketComments     SupportTicketComment[]  @relation("TicketCommentAuthor")
+
   @@index([schoolId, status])
   @@index([phone])
   @@index([branchId])
@@ -1186,6 +1281,10 @@ model Student {
   payments        Payment[]
   refunds         Refund[]
 
+  // ─── Wave 7 back-relations (Transport) ───
+  routeAssignments     StudentRouteAssignment[]
+  transportAttendances TransportAttendance[]
+
   @@index([schoolId, branchId, status])
   @@index([branchId, currentSectionId])
   @@index([admissionNumber])
@@ -1696,6 +1795,9 @@ model AcademicSession {
   // ─── Wave 5 back-relations (Finance) ───
   feePlans        FeePlan[]
   studentFeePlans StudentFeePlan[]
+
+  // ─── Wave 8 back-relations (Settings) ───
+  calendarEvents  CalendarEvent[]  @relation("CalendarEventSession")
 
   @@unique([schoolId, code])
   @@index([schoolId, status])
@@ -4628,6 +4730,13 @@ model Employee {
   branch  Branch? @relation(fields: [branchId], references: [id])
   user    User?   @relation(fields: [userId], references: [id])
 
+
+  // ─── Wave 7 back-relations (Transport) ───
+  vehiclesAsDriver     Vehicle[]              @relation("VehicleDriver")
+  vehiclesAsAttendant  Vehicle[]              @relation("VehicleAttendant")
+  tripsAsDriver        Trip[]                 @relation("TripDriver")
+  tripsAsAttendant     Trip[]                 @relation("TripAttendant")
+
   @@unique([schoolId, employeeCode])
   @@index([schoolId, status])
   @@index([schoolId, role])
@@ -5245,3 +5354,1374 @@ model CounsellorTarget {
   @@map("counsellor_targets")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 ENUMS — Inventory + Administration + Transport
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum InventoryItemType {
+  CONSUMABLE    // paper, glue, crayons — issued + replenished
+  ASSET         // chairs, whiteboards — tracked individually
+  EQUIPMENT     // projector, printer — tracked + depreciated
+  PERISHABLE    // food, milk — expiry tracked
+  STATIONERY    // notebooks, pens
+  CLEANING      // detergent, soap
+  MEDICAL       // first-aid supplies
+}
+
+enum InventoryUnit {
+  PIECE
+  KG
+  LITER
+  METER
+  BOX
+  PACK
+  BOTTLE
+  ROLL
+  SET
+}
+
+enum PurchaseRequestStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+  CONVERTED_TO_PO
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  INVOICED
+  CLOSED
+  CANCELLED
+}
+
+enum GrnStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum GoodsIssueStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum StockMovementType {
+  RECEIVE   // GRN
+  ISSUE     // Goods issue
+  ADJUST    // manual adjustment
+  RETURN    // return to supplier
+  TRANSFER  // branch-to-branch
+  WRITEOFF  // damaged/expired
+}
+
+enum SupplierStatus {
+  ACTIVE
+  BLACKLISTED
+  INACTIVE
+}
+
+enum AssetCategory {
+  IT_EQUIPMENT
+  FURNITURE
+  KITCHEN_EQUIPMENT
+  TEACHING_AID
+  SPORTS_EQUIPMENT
+  SAFETY_EQUIPMENT
+  VEHICLE
+  BUILDING
+  OTHER
+}
+
+enum AssetStatus {
+  IN_USE
+  IN_STORAGE
+  UNDER_REPAIR
+  DISPOSED
+  LOST
+  WRITTEN_OFF
+  ALLOCATED
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  EMERGENCY
+  INSPECTION
+  CALIBRATION
+}
+
+enum MaintenanceStatus {
+  REQUESTED
+  APPROVED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DEFERRED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum VisitorStatus {
+  CHECKED_IN
+  CHECKED_OUT
+  DENIED_ENTRY
+  NO_SHOW
+}
+
+enum VisitorType {
+  PARENT
+  VENDOR
+  INSPECTOR
+  DELIVERY
+  GUEST
+  INTERVIEW_CANDIDATE
+  MAINTENANCE_CONTRACTOR
+  OTHER
+}
+
+enum VehicleType {
+  BUS
+  VAN
+  CAR
+  AUTO_RICKSHAW
+  MINI_BUS
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  RETIRED
+  SUSPENDED
+}
+
+enum RouteStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+}
+
+enum TripStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DELAYED
+  SKIPPED
+}
+
+enum TripDirection {
+  PICKUP
+  DROPOFF
+}
+
+enum StudentTransportStatus {
+  ENROLLED
+  OPTED_OUT
+  SUSPENDED
+  GRADUATED
+}
+
+enum TransportAttendanceStatus {
+  BOARDED
+  ALIGHTED
+  ABSENT
+  NO_SHOW
+  LATE_BOARDING
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 — INVENTORY MODULE (BTD §4.3 #9, ~45 tables)
+// Per BRC §11 (Inventory Rules) + ERD v3.0 §19 + API Catalog §16.14
+// Aggregates: Item, Stock, Supplier, PurchaseRequest, PurchaseOrder,
+//             GoodsReceiptNote, GoodsIssue
+// ─────────────────────────────────────────────────────────────────────────────
+
+model InventoryItem {
+  id              String            @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String            @map("school_id") @db.Uuid
+  branchId        String?           @map("branch_id") @db.Uuid
+  itemCode        String            @map("item_code") @db.VarChar(32)
+  name            String            @db.VarChar(160)
+  description     String?           @db.Text
+  category        InventoryItemType @default(CONSUMABLE)
+  unit            InventoryUnit     @default(PIECE)
+  hsnCode         String?           @map("hsn_code") @db.VarChar(8)
+
+  // Stock policy
+  reorderLevel    Int               @default(0) @map("reorder_level")
+  reorderQty      Int               @default(0) @map("reorder_qty")
+  maxLevel        Int?              @map("max_level")
+  currentStock    Int               @default(0) @map("current_stock")
+  reservedStock   Int               @default(0) @map("reserved_stock")
+  // ^ current - reserved = available for issue
+
+  // Cost tracking (weighted average)
+  unitCostCents   Int               @default(0) @map("unit_cost_cents")
+  valuationCents  Int               @default(0) @map("valuation_cents") // currentStock * unitCost
+
+  // Perishable support
+  isPerishable    Boolean           @default(false) @map("is_perishable")
+  shelfLifeDays   Int?              @map("shelf_life_days")
+
+  // Asset/equipment tracking
+  isAssetTracked  Boolean           @default(false) @map("is_asset_tracked")
+  assetPrefix     String?           @map("asset_prefix") @db.VarChar(8)
+
+  isActive        Boolean           @default(true) @map("is_active")
+
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz
+
+  school          School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?           @relation(fields: [branchId], references: [id])
+  stockLots       StockLot[]
+  stockMovements  StockMovement[]
+  prLines         PurchaseRequestLine[]
+  poLines         PurchaseOrderLine[]
+  grnLines        GrnLine[]
+  issueLines      GoodsIssueLine[]
+  assets          Asset[]
+
+  @@unique([schoolId, itemCode])
+  @@index([schoolId, category])
+  @@index([schoolId, isActive])
+  @@index([branchId])
+  @@map("inventory_items")
+}
+
+model StockLot {
+  // A "lot" = a batch of items received together (for FIFO/FEFO)
+  id              String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String           @map("school_id") @db.Uuid
+  branchId        String?          @map("branch_id") @db.Uuid
+  itemId          String           @map("item_id") @db.Uuid
+  lotNumber       String           @map("lot_number") @db.VarChar(64)
+  grnId           String?          @map("grn_id") @db.Uuid
+  supplierId      String?          @map("supplier_id") @db.Uuid
+
+  quantityReceived Int             @map("quantity_received")
+  quantityIssued   Int             @default(0) @map("quantity_issued")
+  quantityOnHand   Int             @map("quantity_on_hand")
+  unitCostCents   Int              @map("unit_cost_cents")
+
+  // Expiry (for perishables)
+  manufacturedAt  DateTime?        @map("manufactured_at") @db.Date
+  expiresAt       DateTime?        @map("expires_at") @db.Date
+
+  receivedAt      DateTime         @map("received_at") @db.Timestamptz
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  item            InventoryItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier        Supplier?        @relation(fields: [supplierId], references: [id])
+  grn             GoodsReceiptNote? @relation(fields: [grnId], references: [id])
+  school          School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?          @relation(fields: [branchId], references: [id])
+
+  @@index([itemId, expiresAt])
+  @@index([schoolId, branchId])
+  @@map("stock_lots")
+}
+
+model StockMovement {
+  // Append-only ledger of every stock change
+  id              String            @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String            @map("school_id") @db.Uuid
+  branchId        String?           @map("branch_id") @db.Uuid
+  itemId          String            @map("item_id") @db.Uuid
+  lotId           String?           @map("lot_id") @db.Uuid
+  movementType    StockMovementType @map("movement_type")
+  quantityDelta   Int               @map("quantity_delta") // +receive / -issue
+  balanceAfter    Int               @map("balance_after")
+  referenceType   String?           @map("reference_type") @db.VarChar(32) // GRN, ISSUE, etc.
+  referenceId     String?           @map("reference_id") @db.Uuid
+  reason          String?           @db.Text
+  performedById   String?           @map("performed_by_id") @db.Uuid
+
+  occurredAt      DateTime          @default(now()) @map("occurred_at") @db.Timestamptz
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  item            InventoryItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  school          School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?           @relation(fields: [branchId], references: [id])
+  performedBy     User?             @relation(fields: [performedById], references: [id])
+
+  @@index([itemId, occurredAt])
+  @@index([schoolId, occurredAt])
+  @@index([referenceType, referenceId])
+  @@map("stock_movements")
+}
+
+model Supplier {
+  id              String          @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String          @map("school_id") @db.Uuid
+
+  supplierCode    String          @map("supplier_code") @db.VarChar(32)
+  name            String          @db.VarChar(160)
+  legalName       String?         @map("legal_name") @db.VarChar(200)
+  gstNumber       String?         @map("gst_number") @db.VarChar(15)
+  panNumber       String?         @map("pan_number") @db.VarChar(10)
+  contactPerson   String?         @map("contact_person") @db.VarChar(120)
+  email           String?         @db.Citext
+  phone           String?         @db.VarChar(16)
+  addressLine1    String?         @map("address_line1") @db.VarChar(255)
+  addressLine2    String?         @map("address_line2") @db.VarChar(255)
+  city            String?         @db.VarChar(64)
+  state           String?         @db.VarChar(64)
+  pincode         String?         @db.VarChar(6)
+
+  paymentTerms    Int             @default(15) @map("payment_terms") // days
+  status          SupplierStatus  @default(ACTIVE)
+
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime?       @map("deleted_at") @db.Timestamptz
+
+  school          School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  purchaseOrders  PurchaseOrder[]
+  stockLots       StockLot[]
+  goodsReceiptNotes GoodsReceiptNote[]
+
+  @@unique([schoolId, supplierCode])
+  @@index([schoolId, status])
+  @@map("suppliers")
+}
+
+model PurchaseRequest {
+  // PR = internal "we need to buy X" request, needs approval before PO
+  id              String                 @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String                 @map("school_id") @db.Uuid
+  branchId        String?                @map("branch_id") @db.Uuid
+  prNumber        String                 @map("pr_number") @db.VarChar(32)
+  requestedById   String                 @map("requested_by_id") @db.Uuid
+  department      String?                @db.VarChar(64)
+  status          PurchaseRequestStatus  @default(DRAFT)
+
+  justification   String?                @db.Text
+  approverId      String?                @map("approver_id") @db.Uuid
+  approvedAt      DateTime?              @map("approved_at") @db.Timestamptz
+  approvalNotes   String?                @map("approval_notes") @db.Text
+  rejectedReason  String?                @map("rejected_reason") @db.Text
+
+  convertedPoId   String?                @map("converted_po_id") @db.Uuid
+
+  requiredBy      DateTime?              @map("required_by") @db.Date
+  totalEstCents   Int                    @default(0) @map("total_est_cents")
+
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?                @relation(fields: [branchId], references: [id])
+  requestedBy     User                   @relation("PRRequestedBy", fields: [requestedById], references: [id])
+  approver        User?                  @relation("PRApprover", fields: [approverId], references: [id])
+  lines           PurchaseRequestLine[]
+  convertedPo     PurchaseOrder?         @relation("PRConvertedPO")
+
+  @@unique([schoolId, prNumber])
+  @@index([schoolId, status])
+  @@index([requestedById])
+  @@map("purchase_requests")
+}
+
+model PurchaseRequestLine {
+  id              String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String           @map("school_id") @db.Uuid
+  prId            String           @map("pr_id") @db.Uuid
+  itemId          String           @map("item_id") @db.Uuid
+  quantity        Int
+  unitCostCents   Int              @map("unit_cost_cents")
+  estCostCents    Int              @map("est_cost_cents")
+  notes           String?          @db.Text
+
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  pr              PurchaseRequest  @relation(fields: [prId], references: [id], onDelete: Cascade)
+  item            InventoryItem    @relation(fields: [itemId], references: [id])
+  school          School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([prId])
+  @@map("purchase_request_lines")
+}
+
+model PurchaseOrder {
+  // PO = issued to supplier, after PR approval
+  id              String               @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String               @map("school_id") @db.Uuid
+  branchId        String?              @map("branch_id") @db.Uuid
+  poNumber        String               @map("po_number") @db.VarChar(32)
+  supplierId      String               @map("supplier_id") @db.Uuid
+  issuedById      String               @map("issued_by_id") @db.Uuid
+  status          PurchaseOrderStatus  @default(DRAFT)
+
+  sourcePrId      String?              @unique @map("source_pr_id") @db.Uuid
+
+  // Totals (in paise)
+  subtotalCents   Int                  @default(0) @map("subtotal_cents")
+  taxCents        Int                  @default(0) @map("tax_cents")
+  shippingCents   Int                  @default(0) @map("shipping_cents")
+  totalCents      Int                  @default(0) @map("total_cents")
+
+  expectedDate    DateTime?            @map("expected_date") @db.Date
+  issuedAt        DateTime?            @map("issued_at") @db.Timestamptz
+  closedAt        DateTime?            @map("closed_at") @db.Timestamptz
+  notes           String?              @db.Text
+
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?              @relation(fields: [branchId], references: [id])
+  supplier        Supplier             @relation(fields: [supplierId], references: [id])
+  issuedBy        User                 @relation("POIssuedBy", fields: [issuedById], references: [id])
+  sourcePr        PurchaseRequest?     @relation("PRConvertedPO", fields: [sourcePrId], references: [id])
+  lines           PurchaseOrderLine[]
+  grns            GoodsReceiptNote[]
+
+  @@unique([schoolId, poNumber])
+  @@index([schoolId, status])
+  @@index([supplierId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id              String         @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String         @map("school_id") @db.Uuid
+  poId            String         @map("po_id") @db.Uuid
+  itemId          String         @map("item_id") @db.Uuid
+  quantity        Int
+  unitCostCents   Int            @map("unit_cost_cents")
+  taxRatePercent  Decimal        @default(0) @map("tax_rate_percent") @db.Decimal(5, 2)
+  lineTotalCents  Int            @map("line_total_cents")
+
+  receivedQty     Int            @default(0) @map("received_qty")
+
+  po              PurchaseOrder  @relation(fields: [poId], references: [id], onDelete: Cascade)
+  item            InventoryItem  @relation(fields: [itemId], references: [id])
+  school          School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([poId])
+  @@map("purchase_order_lines")
+}
+
+model GoodsReceiptNote {
+  // GRN = receipt of goods against a PO (or direct receipt)
+  id              String       @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String       @map("school_id") @db.Uuid
+  branchId        String?      @map("branch_id") @db.Uuid
+  grnNumber       String       @map("grn_number") @db.VarChar(32)
+  poId            String?      @map("po_id") @db.Uuid
+  supplierId      String       @map("supplier_id") @db.Uuid
+  receivedById    String       @map("received_by_id") @db.Uuid
+  status          GrnStatus    @default(DRAFT)
+
+  invoiceNumber   String?      @map("invoice_number") @db.VarChar(64)
+  invoiceDate     DateTime?    @map("invoice_date") @db.Date
+  challanNumber   String?      @map("challan_number") @db.VarChar(64)
+
+  receivedAt      DateTime     @default(now()) @map("received_at") @db.Timestamptz
+  notes           String?      @db.Text
+
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?      @relation(fields: [branchId], references: [id])
+  po              PurchaseOrder? @relation(fields: [poId], references: [id])
+  supplier        Supplier     @relation(fields: [supplierId], references: [id])
+  receivedBy      User         @relation("GRNReceivedBy", fields: [receivedById], references: [id])
+  lines           GrnLine[]
+  stockLots       StockLot[]
+
+  @@unique([schoolId, grnNumber])
+  @@index([schoolId, receivedAt])
+  @@index([poId])
+  @@map("goods_receipt_notes")
+}
+
+model GrnLine {
+  id              String            @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String            @map("school_id") @db.Uuid
+  grnId           String            @map("grn_id") @db.Uuid
+  poLineId        String?           @map("po_line_id") @db.Uuid
+  itemId          String            @map("item_id") @db.Uuid
+  orderedQty      Int               @map("ordered_qty")
+  receivedQty     Int               @map("received_qty")
+  acceptedQty     Int               @map("accepted_qty") // received - rejected
+  rejectedQty     Int               @default(0) @map("rejected_qty")
+  rejectionReason String?           @map("rejection_reason") @db.Text
+  unitCostCents   Int               @map("unit_cost_cents")
+  lotNumber       String?           @map("lot_number") @db.VarChar(64)
+  expiresAt       DateTime?         @map("expires_at") @db.Date
+
+  grn             GoodsReceiptNote  @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  item            InventoryItem     @relation(fields: [itemId], references: [id])
+  school          School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([grnId])
+  @@map("grn_lines")
+}
+
+model GoodsIssue {
+  // Issue goods from inventory to a department/employee
+  id              String           @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String           @map("school_id") @db.Uuid
+  branchId        String?          @map("branch_id") @db.Uuid
+  issueNumber     String           @map("issue_number") @db.VarChar(32)
+  issuedToId      String           @map("issued_to_id") @db.Uuid
+  issuedById      String           @map("issued_by_id") @db.Uuid
+  status          GoodsIssueStatus @default(DRAFT)
+
+  issueDate       DateTime         @default(now()) @map("issue_date") @db.Timestamptz
+  department      String?          @db.VarChar(64)
+  purpose         String?          @db.Text
+
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?          @relation(fields: [branchId], references: [id])
+  issuedTo        User             @relation("GIssuedTo", fields: [issuedToId], references: [id])
+  issuedBy        User             @relation("GIssuedBy", fields: [issuedById], references: [id])
+  lines           GoodsIssueLine[]
+
+  @@unique([schoolId, issueNumber])
+  @@index([issuedToId])
+  @@map("goods_issues")
+}
+
+model GoodsIssueLine {
+  id              String      @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String      @map("school_id") @db.Uuid
+  issueId        String      @map("issue_id") @db.Uuid
+  itemId          String      @map("item_id") @db.Uuid
+  lotId           String?     @map("lot_id") @db.Uuid
+  quantity        Int
+  unitCostCents   Int         @map("unit_cost_cents")
+  lineTotalCents  Int         @map("line_total_cents")
+
+  issue           GoodsIssue  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  item            InventoryItem @relation(fields: [itemId], references: [id])
+  school          School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@map("goods_issue_lines")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 — ADMINISTRATION MODULE (BTD §4.3 #11, ~25 tables)
+// Per BRC §13 (Facility Rules) + ERD v3.0 §20 + API Catalog §16.15
+// Aggregates: Asset, MaintenanceRequest, Visitor
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Asset {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  assetTag        String        @map("asset_tag") @db.VarChar(32)
+  itemId          String?       @map("item_id") @db.Uuid
+  name            String        @db.VarChar(160)
+  category        AssetCategory @default(FURNITURE)
+  status          AssetStatus   @default(IN_USE)
+
+  // Purchase / valuation
+  purchaseDate    DateTime?     @map("purchase_date") @db.Date
+  purchaseCostCents Int         @default(0) @map("purchase_cost_cents")
+  currentValueCents Int         @default(0) @map("current_value_cents")
+  depreciationRatePercent Decimal @default(0) @map("depreciation_rate_percent") @db.Decimal(5, 2)
+
+  // Assignment
+  assignedToId    String?       @map("assigned_to_id") @db.Uuid
+  assignedAt      DateTime?     @map("assigned_at") @db.Timestamptz
+  location        String?       @db.VarChar(255)
+
+  // Warranty
+  warrantyStart   DateTime?     @map("warranty_start") @db.Date
+  warrantyEnd     DateTime?     @map("warranty_end") @db.Date
+  vendorName      String?       @map("vendor_name") @db.VarChar(160)
+
+  // Maintenance
+  lastMaintenanceAt DateTime?   @map("last_maintenance_at") @db.Timestamptz
+  nextMaintenanceDue DateTime?  @map("next_maintenance_due") @db.Date
+
+  // Disposal
+  disposedAt      DateTime?     @map("disposed_at") @db.Timestamptz
+  disposalReason  String?       @map("disposal_reason") @db.Text
+  scrapValueCents Int?          @map("scrap_value_cents")
+
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  item            InventoryItem? @relation(fields: [itemId], references: [id])
+  assignedTo      User?         @relation("AssetAssignedTo", fields: [assignedToId], references: [id])
+  maintenanceRequests MaintenanceRequest[]
+
+  @@unique([schoolId, assetTag])
+  @@index([schoolId, status])
+  @@index([schoolId, category])
+  @@index([assignedToId])
+  @@map("assets")
+}
+
+model MaintenanceRequest {
+  id              String             @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String             @map("school_id") @db.Uuid
+  branchId        String?            @map("branch_id") @db.Uuid
+  requestNumber   String             @map("request_number") @db.VarChar(32)
+  assetId         String?            @map("asset_id") @db.Uuid
+  requestedById   String             @map("requested_by_id") @db.Uuid
+  assignedToId    String?            @map("assigned_to_id") @db.Uuid
+
+  type            MaintenanceType    @default(CORRECTIVE)
+  status          MaintenanceStatus  @default(REQUESTED)
+  priority        MaintenancePriority @default(MEDIUM)
+
+  title           String             @db.VarChar(200)
+  description     String             @db.Text
+
+  // Scheduling
+  scheduledAt     DateTime?          @map("scheduled_at") @db.Timestamptz
+  startedAt       DateTime?          @map("started_at") @db.Timestamptz
+  completedAt     DateTime?          @map("completed_at") @db.Timestamptz
+
+  // Cost tracking
+  estimatedCostCents Int             @default(0) @map("estimated_cost_cents")
+  actualCostCents Int                @default(0) @map("actual_cost_cents")
+  vendorName      String?            @map("vendor_name") @db.VarChar(160)
+  vendorInvoiceNumber String?        @map("vendor_invoice_number") @db.VarChar(64)
+
+  // Resolution
+  resolutionNotes String?            @map("resolution_notes") @db.Text
+  resolutionPhotos Json?             @map("resolution_photos")
+
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?            @relation(fields: [branchId], references: [id])
+  asset           Asset?             @relation(fields: [assetId], references: [id])
+  requestedBy     User               @relation("MaintRequestedBy", fields: [requestedById], references: [id])
+  assignedTo      User?              @relation("MaintAssignedTo", fields: [assignedToId], references: [id])
+
+  @@unique([schoolId, requestNumber])
+  @@index([schoolId, status])
+  @@index([assetId])
+  @@index([priority, status])
+  @@map("maintenance_requests")
+}
+
+model VisitorLog {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  visitorType     VisitorType   @default(GUEST)
+  status          VisitorStatus @default(CHECKED_IN)
+
+  // Visitor details
+  name            String        @db.VarChar(160)
+  phone           String?       @db.VarChar(16)
+  email           String?       @db.Citext
+  organization    String?       @db.VarChar(160)
+  purposeOfVisit  String        @map("purpose_of_visit") @db.VarChar(255)
+  personToMeetId  String?       @map("person_to_meet_id") @db.Uuid
+  numVisitors     Int           @default(1) @map("num_visitors")
+
+  // Visit details
+  checkInAt       DateTime      @default(now()) @map("check_in_at") @db.Timestamptz
+  checkOutAt      DateTime?     @map("check_out_at") @db.Timestamptz
+  durationMinutes Int?          @map("duration_minutes")
+
+  // Identity verification
+  idProofType     String?       @map("id_proof_type") @db.VarChar(32) // AADHAAR, PAN, PASSPORT, DL
+  idProofNumber   String?       @map("id_proof_number") @db.VarChar(32)
+  photoUrl        String?       @map("photo_url") @db.VarChar(512)
+  signatureUrl    String?       @map("signature_url") @db.VarChar(512)
+
+  // Approval
+  approvedById    String?       @map("approved_by_id") @db.Uuid
+  denialReason    String?       @map("denial_reason") @db.Text
+
+  notes           String?       @db.Text
+
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  personToMeet    User?         @relation("VisitorPersonToMeet", fields: [personToMeetId], references: [id])
+  approvedBy      User?         @relation("VisitorApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([schoolId, checkInAt])
+  @@index([status])
+  @@index([personToMeetId])
+  @@map("visitor_logs")
+}
+
+model Facility {
+  // School facility / room (classroom, lab, playground, etc.)
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  name            String        @db.VarChar(120)
+  type            String        @db.VarChar(64) // CLASSROOM, LAB, PLAYGROUND, KITCHEN, OFFICE, STAFF_ROOM
+  capacity        Int           @default(0)
+  areaSqft        Decimal?      @map("area_sqft") @db.Decimal(10, 2)
+  floor           String?       @db.VarChar(32)
+  building        String?       @db.VarChar(64)
+
+  hasAirConditioning Boolean    @default(false) @map("has_ac")
+  hasProjector    Boolean       @default(false) @map("has_projector")
+  hasWhiteboard   Boolean       @default(true) @map("has_whiteboard")
+  hasFireExtinguisher Boolean   @default(false) @map("has_fire_extinguisher")
+  hasCctv         Boolean       @default(false) @map("has_cctv")
+
+  isActive        Boolean       @default(true) @map("is_active")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  inspections     FacilityInspection[]
+
+  @@unique([schoolId, name, type])
+  @@index([schoolId, isActive])
+  @@map("facilities")
+}
+
+model FacilityInspection {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  facilityId      String        @map("facility_id") @db.Uuid
+  inspectedById   String        @map("inspected_by_id") @db.Uuid
+  inspectionDate  DateTime      @map("inspection_date") @db.Timestamptz
+  inspectionType  String        @map("inspection_type") @db.VarChar(64) // SAFETY, HYGIENE, FIRE, STRUCTURAL
+  outcome         String        @db.VarChar(32) // PASS, FAIL, WARN
+  findings        String?       @db.Text
+  actionItems     Json?
+  photos          Json?
+  nextInspectionDue DateTime?   @map("next_inspection_due") @db.Date
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  facility        Facility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  inspectedBy     User          @relation("InspectedBy", fields: [inspectedById], references: [id])
+
+  @@index([schoolId, inspectionDate])
+  @@index([facilityId])
+  @@map("facility_inspections")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 7 — TRANSPORT MODULE (per user request, BRC §14 Transport Rules)
+// Aggregates: Vehicle, Route, Trip, StudentRouteAssignment
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Vehicle {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  vehicleNumber   String        @map("vehicle_number") @db.VarChar(16)
+  type            VehicleType   @default(BUS)
+  status          VehicleStatus @default(ACTIVE)
+
+  make            String?       @db.VarChar(64)
+  model           String?       @db.VarChar(64)
+  yearOfManufacture Int?        @map("year_of_manufacture")
+  color           String?       @db.VarChar(32)
+
+  capacity        Int           @default(0)
+  registeredSeats Int           @default(0) @map("registered_seats")
+
+  // Compliance (per R-TR-001 to R-TR-008)
+  registrationNumber String?    @map("registration_number") @db.VarChar(20)
+  registrationValidTill DateTime? @map("registration_valid_till") @db.Date
+  insuranceValidTill DateTime?  @map("insurance_valid_till") @db.Date
+  pollutionCertValidTill DateTime? @map("pollution_cert_valid_till") @db.Date
+  fitnessCertValidTill DateTime? @map("fitness_cert_valid_till") @db.Date
+  permitValidTill DateTime?     @map("permit_valid_till") @db.Date
+
+  // GPS
+  gpsDeviceId     String?       @map("gps_device_id") @db.VarChar(64)
+  gpsProvider     String?       @map("gps_provider") @db.VarChar(64)
+
+  // Driver
+  driverId        String?       @map("driver_id") @db.Uuid
+  attendantId     String?       @map("attendant_id") @db.Uuid
+
+  isActive        Boolean       @default(true) @map("is_active")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  driver          Employee?     @relation("VehicleDriver", fields: [driverId], references: [id])
+  attendant       Employee?     @relation("VehicleAttendant", fields: [attendantId], references: [id])
+  routes          Route[]
+  trips           Trip[]
+
+  @@unique([schoolId, vehicleNumber])
+  @@index([schoolId, status])
+  @@index([driverId])
+  @@map("vehicles")
+}
+
+model Route {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  routeCode       String        @map("route_code") @db.VarChar(32)
+  name            String        @db.VarChar(160)
+  status          RouteStatus   @default(ACTIVE)
+
+  vehicleId       String?       @map("vehicle_id") @db.Uuid
+
+  // Stops (ordered list)
+  stops           Json          @default("[]") // [{name, lat, lng, pickupTime, dropoffTime, fareCents}]
+
+  totalDistanceKm Decimal?      @map("total_distance_km") @db.Decimal(8, 2)
+  estimatedDurationMin Int?     @map("estimated_duration_min")
+
+  // Fare
+  fareCents       Int           @default(0) @map("fare_cents") // base fare
+  roundTripFareCents Int        @default(0) @map("round_trip_fare_cents")
+
+  // Schedule
+  pickupStartTime String?       @map("pickup_start_time") @db.VarChar(8) // HH:MM
+  dropoffStartTime String?      @map("dropoff_start_time") @db.VarChar(8)
+
+  enrolledCount   Int           @default(0) @map("enrolled_count")
+
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  vehicle         Vehicle?      @relation(fields: [vehicleId], references: [id])
+  trips           Trip[]
+  studentAssignments StudentRouteAssignment[]
+
+  @@unique([schoolId, routeCode])
+  @@index([schoolId, status])
+  @@index([vehicleId])
+  @@map("transport_routes")
+}
+
+model Trip {
+  // A specific run of a route on a specific date
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  routeId         String        @map("route_id") @db.Uuid
+  vehicleId       String        @map("vehicle_id") @db.Uuid
+  driverId        String?       @map("driver_id") @db.Uuid
+  attendantId     String?       @map("attendant_id") @db.Uuid
+
+  tripDate        DateTime      @map("trip_date") @db.Date
+  direction       TripDirection
+  status          TripStatus    @default(SCHEDULED)
+
+  scheduledStart  DateTime      @map("scheduled_start") @db.Timestamptz
+  scheduledEnd    DateTime      @map("scheduled_end") @db.Timestamptz
+  actualStart     DateTime?     @map("actual_start") @db.Timestamptz
+  actualEnd       DateTime?     @map("actual_end") @db.Timestamptz
+
+  // GPS trail
+  gpsTrail        Json?         @map("gps_trail")
+  totalDistanceKm Decimal?      @map("total_distance_km") @db.Decimal(8, 2)
+
+  // Incident
+  incidentNotes   String?       @map("incident_notes") @db.Text
+  delayReason     String?       @map("delay_reason") @db.Text
+
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  route           Route         @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  vehicle         Vehicle       @relation(fields: [vehicleId], references: [id])
+  driver          Employee?     @relation("TripDriver", fields: [driverId], references: [id])
+  attendant       Employee?     @relation("TripAttendant", fields: [attendantId], references: [id])
+  attendances     TransportAttendance[]
+
+  @@unique([routeId, tripDate, direction])
+  @@index([schoolId, tripDate])
+  @@index([vehicleId, tripDate])
+  @@map("trips")
+}
+
+model StudentRouteAssignment {
+  id              String                 @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String                 @map("school_id") @db.Uuid
+  branchId        String?                @map("branch_id") @db.Uuid
+  studentId       String                 @map("student_id") @db.Uuid
+  routeId         String                 @map("route_id") @db.Uuid
+  status          StudentTransportStatus @default(ENROLLED)
+
+  // Pickup / drop-off stop index (within route.stops JSON)
+  pickupStopIdx   Int?                   @map("pickup_stop_idx")
+  dropoffStopIdx  Int?                   @map("dropoff_stop_idx")
+
+  // Schedule
+  direction       TripDirection          @default(PICKUP) // PICKUP / DROPOFF / BOTH
+  effectiveFrom   DateTime               @map("effective_from") @db.Date
+  effectiveTill   DateTime?              @map("effective_till") @db.Date
+
+  // Fare
+  fareCents       Int                    @default(0) @map("fare_cents")
+  billingCycle    String                 @default("MONTHLY") @map("billing_cycle") @db.VarChar(16)
+
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?                @relation(fields: [branchId], references: [id])
+  student         Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  route           Route                  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, routeId, direction])
+  @@index([routeId])
+  @@index([studentId])
+  @@map("student_route_assignments")
+}
+
+model TransportAttendance {
+  id              String                   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String                   @map("school_id") @db.Uuid
+  branchId        String?                  @map("branch_id") @db.Uuid
+  tripId          String                   @map("trip_id") @db.Uuid
+  studentId       String                   @map("student_id") @db.Uuid
+  status          TransportAttendanceStatus @default(ABSENT)
+
+  boardedAt       DateTime?                @map("boarded_at") @db.Timestamptz
+  alightedAt      DateTime?                @map("alighted_at") @db.Timestamptz
+  stopIdx         Int?                     @map("stop_idx")
+
+  markedById      String?                  @map("marked_by_id") @db.Uuid
+  markedAt        DateTime                 @default(now()) @map("marked_at") @db.Timestamptz
+
+  notes           String?                  @db.Text
+
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?                  @relation(fields: [branchId], references: [id])
+  trip            Trip                     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  student         Student                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  markedBy        User?                    @relation("TransportAttendanceMarkedBy", fields: [markedById], references: [id])
+
+  @@unique([tripId, studentId])
+  @@index([studentId, markedAt])
+  @@map("transport_attendances")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 8 — SETTINGS MODULE (BTD §4.3 #13, ~20 APIs)
+// Per BRC §15 (Settings Rules) + ERD v3.0 §22 + API Catalog §16.16
+// Aggregates: SystemConfig, UserPreference, CalendarEvent
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ConfigScope {
+  PLATFORM
+  SCHOOL
+  BRANCH
+  USER
+}
+
+enum CalendarEventType {
+  HOLIDAY
+  EVENT
+  EXAM
+  PTM
+  SPORTS_DAY
+  CULTURAL_DAY
+  FIELD_TRIP
+  STAFF_MEETING
+  GOVERNMENT_HOLIDAY
+  OTHER
+}
+
+enum CalendarEventVisibility {
+  PUBLIC
+  STAFF_ONLY
+  ADMIN_ONLY
+  PARENTS_ONLY
+}
+
+model SystemConfig {
+  id          String       @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String?      @map("school_id") @db.Uuid
+  branchId    String?      @map("branch_id") @db.Uuid
+  scope       ConfigScope  @default(SCHOOL)
+  key         String       @db.VarChar(120)
+  value       Json
+  description String?      @db.Text
+  isEncrypted Boolean      @default(false) @map("is_encrypted")
+  changedBy   String?      @map("changed_by") @db.Uuid
+  changedAt   DateTime     @default(now()) @map("changed_at") @db.Timestamptz
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz
+
+  school      School?      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch      Branch?      @relation(fields: [branchId], references: [id])
+
+  @@unique([scope, schoolId, branchId, key])
+  @@index([schoolId, scope])
+  @@map("system_configs")
+}
+
+model UserPreference {
+  id        String   @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  schoolId  String   @map("school_id") @db.Uuid
+  category  String   @db.VarChar(64)  // NOTIFICATION, DISPLAY, LANGUAGE, etc.
+  key       String   @db.VarChar(120)
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schoolId, category, key])
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model CalendarEvent {
+  id          String                @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId    String                @map("school_id") @db.Uuid
+  branchId    String?               @map("branch_id") @db.Uuid
+  academicSessionId String?         @map("academic_session_id") @db.Uuid
+  title       String                @db.VarChar(200)
+  description String?               @db.Text
+  type        CalendarEventType     @default(EVENT)
+  visibility  CalendarEventVisibility @default(PUBLIC)
+  startDate   DateTime              @map("start_date") @db.Timestamptz
+  endDate     DateTime              @map("end_date") @db.Timestamptz
+  isFullDay   Boolean               @default(true) @map("is_full_day")
+  location    String?               @db.VarChar(255)
+  organizerId String?               @map("organizer_id") @db.Uuid
+  isCancelled Boolean               @default(false) @map("is_cancelled")
+  isRecurring Boolean               @default(false) @map("is_recurring")
+  recurrenceRule String?            @map("recurrence_rule") @db.VarChar(255) // RRULE per iCalendar
+  metadata    Json?
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  school            School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch            Branch?               @relation(fields: [branchId], references: [id])
+  academicSession   AcademicSession?      @relation("CalendarEventSession", fields: [academicSessionId], references: [id])
+  organizer         User?                 @relation("CalendarEventOrganizer", fields: [organizerId], references: [id])
+
+  @@index([schoolId, startDate])
+  @@index([branchId, startDate])
+  @@index([academicSessionId])
+  @@map("calendar_events")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 8 — REPORTS MODULE (BTD §4.3 #12, ~30 APIs)
+// Per BRC §16 (Reporting Rules) + ERD v3.0 §23 + API Catalog §16.17
+// Aggregates: ReportDefinition, ReportExecution, SavedReport
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ReportCategory {
+  ADMISSIONS
+  ATTENDANCE
+  FINANCE
+  ACADEMICS
+  HR
+  INVENTORY
+  TRANSPORT
+  CRM
+  ADMINISTRATION
+  COMMUNICATION
+  COMPLIANCE
+  PLATFORM
+}
+
+enum ReportFormat {
+  PDF
+  XLSX
+  CSV
+  JSON
+  HTML
+}
+
+enum ReportStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ReportScheduleFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM
+}
+
+model ReportDefinition {
+  id              String          @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String?         @map("school_id") @db.Uuid
+  key             String          @db.VarChar(80)
+  name            String          @db.VarChar(200)
+  description     String?         @db.Text
+  category        ReportCategory
+  dataSource      String          @map("data_source") @db.VarChar(120) // view name or service
+  queryTemplate   String          @map("query_template") @db.Text // SQL or builder spec
+  parameters      Json?           // JSON schema for parameter validation
+  defaultFormat   ReportFormat    @default(PDF) @map("default_format")
+  allowedFormats  ReportFormat[]  @default([PDF]) @map("allowed_formats")
+  isSystem        Boolean         @default(false) @map("is_system")
+  isActive        Boolean         @default(true) @map("is_active")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime?       @map("deleted_at") @db.Timestamptz
+
+  school          School?         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  executions      ReportExecution[]
+  subscriptions   ReportSubscription[]
+  savedReports    SavedReport[]
+
+  @@unique([schoolId, key])
+  @@index([category])
+  @@map("report_definitions")
+}
+
+model ReportExecution {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  branchId        String?       @map("branch_id") @db.Uuid
+  reportDefId     String        @map("report_def_id") @db.Uuid
+  requestedById   String        @map("requested_by_id") @db.Uuid
+  status          ReportStatus  @default(QUEUED)
+  format          ReportFormat  @default(PDF)
+
+  parameters      Json?
+  resultUrl       String?       @map("result_url") @db.VarChar(512)
+  resultSizeBytes Int?          @map("result_size_bytes")
+  rowCount        Int?          @map("row_count")
+
+  errorMessage    String?       @map("error_message") @db.Text
+  startedAt       DateTime?     @map("started_at") @db.Timestamptz
+  completedAt     DateTime?     @map("completed_at") @db.Timestamptz
+  durationMs      Int?          @map("duration_ms")
+
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  reportDef       ReportDefinition @relation(fields: [reportDefId], references: [id], onDelete: Cascade)
+  requestedBy     User          @relation("ReportRequestedBy", fields: [requestedById], references: [id])
+
+  @@index([schoolId, createdAt])
+  @@index([reportDefId])
+  @@index([status])
+  @@map("report_executions")
+}
+
+model SavedReport {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  userId          String        @map("user_id") @db.Uuid
+  reportDefId     String        @map("report_def_id") @db.Uuid
+  name            String        @db.VarChar(200)
+  parameters      Json?
+  isPinned        Boolean       @default(false) @map("is_pinned")
+  lastExecutedAt  DateTime?     @map("last_executed_at") @db.Timestamptz
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user            User          @relation("SavedReportOwner", fields: [userId], references: [id], onDelete: Cascade)
+  reportDef       ReportDefinition @relation(fields: [reportDefId], references: [id])
+
+  @@unique([userId, schoolId, name])
+  @@index([userId])
+  @@map("saved_reports")
+}
+
+model ReportSubscription {
+  id              String                  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String                  @map("school_id") @db.Uuid
+  reportDefId     String                  @map("report_def_id") @db.Uuid
+  userId          String                  @map("user_id") @db.Uuid
+  frequency       ReportScheduleFrequency
+  cronExpression  String?                 @map("cron_expression") @db.VarChar(80)
+  parameters      Json?
+  channels        String[]                @default([])  // EMAIL, WHATSAPP, IN_APP
+  nextRunAt       DateTime                @map("next_run_at") @db.Timestamptz
+  lastRunAt       DateTime?               @map("last_run_at") @db.Timestamptz
+  isActive        Boolean                 @default(true) @map("is_active")
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  reportDef       ReportDefinition        @relation(fields: [reportDefId], references: [id], onDelete: Cascade)
+  user            User                    @relation("ReportSubscriber", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reportDefId])
+  @@index([nextRunAt])
+  @@index([schoolId, isActive])
+  @@map("report_subscriptions")
+}
+
+model DashboardWidget {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String        @map("school_id") @db.Uuid
+  userId          String        @map("user_id") @db.Uuid
+  widgetKey       String        @map("widget_key") @db.VarChar(80)
+  title           String        @db.VarChar(200)
+  dataSource      String        @map("data_source") @db.VarChar(120)
+  config          Json?
+  position        Int           @default(0)
+  isVisible       Boolean       @default(true) @map("is_visible")
+  refreshSec      Int           @default(300) @map("refresh_sec")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user            User          @relation("DashboardWidgetOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, widgetKey])
+  @@index([userId, isVisible])
+  @@map("dashboard_widgets")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WAVE 8 — PLATFORM MODULE EXTENSIONS (BTD §4.3 #14, ~25 APIs)
+// Per BRC §17 (Platform Rules) + ERD v3.0 §24 + API Catalog §16.18
+// Aggregates: TenantProvisioning, SupportTicket
+// (Existing: SchoolSubscription, PlatformBilling, PlatformIntegration, FeatureFlag)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_USER
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportTicketCategory {
+  BILLING
+  TECHNICAL
+  ONBOARDING
+  FEATURE_REQUEST
+  BUG
+  DATA_MIGRATION
+  OTHER
+}
+
+enum ProvisioningStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+model TenantProvisioning {
+  id              String            @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String            @unique @map("school_id") @db.Uuid
+  status          ProvisioningStatus @default(PENDING)
+  plan            String            @db.VarChar(32) // STARTER, GROWTH, ENTERPRISE
+  steps           Json              // [{ step, status, startedAt, completedAt, error }]
+  currentStep     String?           @map("current_step") @db.VarChar(80)
+  initiatedById   String            @map("initiated_by_id") @db.Uuid
+  completedAt     DateTime?         @map("completed_at") @db.Timestamptz
+  failureReason   String?           @map("failure_reason") @db.Text
+  metadata        Json?
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School            @relation("TenantProvisioningSchool", fields: [schoolId], references: [id], onDelete: Cascade)
+  initiatedBy     User              @relation("ProvisioningInitiatedBy", fields: [initiatedById], references: [id])
+
+  @@index([status])
+  @@map("tenant_provisionings")
+}
+
+model SupportTicket {
+  id              String                  @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  schoolId        String                  @map("school_id") @db.Uuid
+  raisedById      String                  @map("raised_by_id") @db.Uuid
+  assignedToId    String?                 @map("assigned_to_id") @db.Uuid
+  ticketNumber    String                  @map("ticket_number") @db.VarChar(32)
+  subject         String                  @db.VarChar(200)
+  description     String                  @db.Text
+  category        SupportTicketCategory   @default(OTHER)
+  status          SupportTicketStatus     @default(OPEN)
+  priority        SupportTicketPriority   @default(MEDIUM)
+  tags            String[]                @default([])
+  attachments     Json?
+  firstResponseAt DateTime?               @map("first_response_at") @db.Timestamptz
+  resolvedAt      DateTime?               @map("resolved_at") @db.Timestamptz
+  closedAt        DateTime?               @map("closed_at") @db.Timestamptz
+  satisfactionRating Int?                 @map("satisfaction_rating") // 1-5
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  school          School                  @relation("SupportTicketSchool", fields: [schoolId], references: [id], onDelete: Cascade)
+  raisedBy        User                    @relation("TicketRaisedBy", fields: [raisedById], references: [id])
+  assignedTo      User?                   @relation("TicketAssignedTo", fields: [assignedToId], references: [id])
+  comments        SupportTicketComment[]
+
+  @@unique([schoolId, ticketNumber])
+  @@index([schoolId, status])
+  @@index([priority, status])
+  @@map("support_tickets")
+}
+
+model SupportTicketComment {
+  id              String        @id @default(dbgenerated("uuid_v7()")) @db.Uuid
+  ticketId        String        @map("ticket_id") @db.Uuid
+  authorId        String        @map("author_id") @db.Uuid
+  body            String        @db.Text
+  isInternal      Boolean       @default(false) @map("is_internal")
+  attachments     Json?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  ticket          SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author          User          @relation("TicketCommentAuthor", fields: [authorId], references: [id])
+
+  @@index([ticketId, createdAt])
+  @@map("support_ticket_comments")
+}

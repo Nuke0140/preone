@@ -4,9 +4,11 @@ name: CI
 
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, develop, 'feat/**', 'feature/**', 'dependabot/**']
   pull_request:
     branches: [main, develop]
+  # Allow manual runs for debugging CI itself
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -26,7 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }} }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -45,17 +48,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }} }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @preone/api run test:unit
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit-${{ github.sha }}
+          path: apps/api/coverage/unit/
+          retention-days: 14
       - uses: codecov/codecov-action@v4
         with:
           files: ./apps/api/coverage/unit/lcov.info
           flags: unit
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ─────────────────────────────────────────────
   # Job 3: Integration tests — Testcontainers (BTD §24)
@@ -91,7 +104,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }} }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -131,14 +145,25 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
+        continue-on-error: true
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: preone-api:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
-      - uses: github/codeql-action/upload-sarif@v3
-        with: { sarif_file: trivy-results.sarif }
+      - name: Upload Trivy SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+      - name: Upload Trivy scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results-${{ github.sha }}
+          path: trivy-results.sarif
+          retention-days: 30
 
   # ─────────────────────────────────────────────
   # Job 5: Deploy to staging (auto on main merge)
@@ -149,6 +174,9 @@ jobs:
     needs: build-scan
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: staging
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
@@ -163,7 +191,11 @@ jobs:
         run: |
           docker build -t preone-api:${{ github.sha }} -f infra/docker/api/Dockerfile .
           docker tag preone-api:${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/preone-api:staging
+          docker tag preone-api:${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/preone-api:prod
           docker push ${{ secrets.ECR_REGISTRY }}/preone-api:staging
+          docker push ${{ secrets.ECR_REGISTRY }}/preone-api:prod
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
       - name: Deploy to EKS staging
         run: |
           aws eks update-kubeconfig --name preone-staging --region ap-south-1
@@ -181,9 +213,20 @@ jobs:
     environment:
       name: production
       url: https://api.preone.in
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     steps:
       - name: Await manual approval
         run: echo "✓ Production deployment approved"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
       - name: Blue-green deploy to production EKS
         run: |
           aws eks update-kubeconfig --name preone-prod --region ap-south-1

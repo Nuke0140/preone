@@ -70,10 +70,34 @@ export interface AiLlmConfig {
   defaultMaxTokens?: number;
 }
 
+/**
+ * A single token-batch yielded by the streaming completion endpoint.
+ * Wave 18.1 — SSE streaming for long completions.
+ */
+export interface CompletionStreamChunk {
+  /** The text delta (may be empty for the final chunk). */
+  text: string;
+  /** True when this is the last chunk. */
+  done: boolean;
+  /** Token usage (only present on the final `done=true` chunk). */
+  usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
+  /** Finish reason (only present on the final chunk). */
+  finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_call';
+  /** Error message if the stream failed mid-way. */
+  error?: string;
+}
+
 export interface AiLlmProviderPort {
   readonly name: string;
   complete(req: CompletionRequest, config: AiLlmConfig): Promise<CompletionResult>;
   embed(req: EmbeddingRequest, config: AiLlmConfig): Promise<EmbeddingResult>;
+  /**
+   * Stream a completion as a series of token-batch chunks. Wave 18.1.
+   * Implementations should yield chunks as they arrive from the
+   * provider (no buffering). The final chunk must have done=true
+   * and include usage + finishReason.
+   */
+  completeStream?(req: CompletionRequest, config: AiLlmConfig): AsyncIterable<CompletionStreamChunk>;
   checkHealth(): Promise<boolean>;
 }
 
@@ -118,6 +142,53 @@ export class AiLlmAdapter implements ExternalProvider {
     }
   }
 
+  /**
+   * Stream a completion as a series of token-batch chunks (Wave 18.1).
+   *
+   * Delegates to the provider's `completeStream` if implemented. If
+   * the provider doesn't support streaming (e.g., the Stub), falls
+   * back to a single-chunk emission from `complete()`.
+   *
+   * Circuit breaker is NOT applied to streaming calls — the breaker
+   * wraps `complete()` for non-streaming. Streaming is intentionally
+   * outside the breaker because:
+   *   1. The breaker's slowCallDurationMs (30s) would trip on long
+   *      streams (lesson plans can take 60s+).
+   *   2. The breaker expects a single Promise, not an AsyncIterable.
+   *   3. Streaming failures are visible immediately to the client
+   *      (the SSE connection closes) — no need for fail-fast.
+   */
+  async *completeStream(req: CompletionRequest): AsyncIterable<CompletionStreamChunk> {
+    if (this.provider.completeStream) {
+      try {
+        yield* this.provider.completeStream(req, this.config);
+        return;
+      } catch (err) {
+        this.logger.error(`AI completeStream failed: ${(err as Error).message}`);
+        yield {
+          text: '',
+          done: true,
+          error: (err as Error).message,
+        };
+        return;
+      }
+    }
+    // Fallback: provider doesn't support streaming — emit the full
+    // response as a single chunk.
+    const result = await this.complete(req);
+    yield {
+      text: result.text ?? '',
+      done: true,
+      usage: {
+        promptTokens: result.promptTokens,
+        completionTokens: result.completionTokens,
+        totalTokens: result.totalTokens,
+      },
+      finishReason: result.finishReason,
+      ...(result.ok ? {} : { error: result.error }),
+    };
+  }
+
   async checkHealth(): Promise<ProviderHealthResult> {
     const start = Date.now();
     try {
@@ -159,6 +230,29 @@ export class StubAiLlmProvider implements AiLlmProviderPort {
       completionTokens: Math.ceil(text.length / 4),
       totalTokens: Math.ceil(text.length / 4) + promptTokens,
       model: req.model ?? 'stub-llm',
+    };
+  }
+
+  /**
+   * Stub streaming (Wave 18.1): emit the full response as a single
+   * chunk. Useful for testing the SSE controller without a real LLM.
+   *
+   * For a more realistic streaming test, the controller spec mocks
+   * the adapter directly.
+   */
+  async *completeStream(req: CompletionRequest, _config: AiLlmConfig): AsyncIterable<CompletionStreamChunk> {
+    const lastUser = [...req.messages].reverse().find((m) => m.role === 'user');
+    const text = `[STUB LLM] Echo: ${lastUser?.content ?? '(empty)'}`;
+    const promptTokens = Math.ceil((lastUser?.content?.length ?? 0) / 4);
+    yield {
+      text,
+      done: true,
+      usage: {
+        promptTokens,
+        completionTokens: Math.ceil(text.length / 4),
+        totalTokens: Math.ceil(text.length / 4) + promptTokens,
+      },
+      finishReason: 'stop',
     };
   }
 

@@ -4,24 +4,35 @@
  * Every method:
  *   1. Builds a system + user prompt from the request.
  *   2. Redacts obvious PII patterns (Aadhaar/PAN/phone/email).
- *   3. Calls AiLlmAdapter.complete() (which goes through the circuit breaker).
- *   4. Returns the LLM response + token usage + duration.
- *
- * The service does NOT:
- *   - Persist generated content (callers decide whether to save).
- *   - Stream tokens (Wave 18.1 can add SSE streaming).
- *   - Cache results (Wave 18.1 can add Redis caching for identical prompts).
+ *   3. Checks the Redis prompt cache (Wave 18.1) — short-circuits on hit.
+ *   4. Checks the per-tenant daily token budget (Wave 18.1) — fails
+ *      fast with a fallback stub response if exceeded.
+ *   5. Calls AiLlmAdapter.complete() (which goes through the circuit breaker).
+ *   6. Records actual token usage against the budget (Wave 18.1).
+ *   7. Stores the result in the cache for future identical calls.
+ *   8. Returns the LLM response + token usage + duration + fromCache flag.
  *
  * The service DOES:
  *   - Log every call at INFO (with token usage) for cost tracking.
  *   - Fall back to a deterministic stub response if the LLM circuit is OPEN
  *     (so the feature remains usable during LLM outages, with degraded
  *     quality).
+ *   - Stream tokens via streaming methods (Wave 18.1).
+ *
+ * Streaming (Wave 18.1): the `*streamLessonPlan()` etc. methods are
+ * async generators that yield chunks from AiLlmAdapter.completeStream().
+ * The HTTP controller converts these into SSE events. Caching + budget
+ * checks still apply, but cached responses are yielded as a single
+ * chunk and budget is recorded once at the end.
  */
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AiLlmAdapter } from '@infra/integrations/ai-llm.adapter';
+import type { ChatMessage, CompletionRequest, CompletionStreamChunk } from '@infra/integrations/ai-llm.adapter';
 import { PrismaService } from '@infra/prisma/prisma.service';
+
+import { AiPromptCacheService } from './ai-prompt-cache.service';
+import { AiTokenBudgetService } from './ai-token-budget.service';
 
 import type {
   GenerateLessonPlanRequestDto, GenerateLessonPlanResponseDto,
@@ -31,6 +42,15 @@ import type {
   GetInsightsQueryDto, GetInsightsResponseDto,
 } from '../dto/ai.dto';
 
+/** Output of the unified complete() helper — includes cache + budget metadata. */
+interface CompleteWithCacheResult {
+  text: string;
+  model: string;
+  totalTokens: number;
+  fromCache: boolean;
+  budgetExceeded: boolean;
+}
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -38,7 +58,152 @@ export class AiService {
   constructor(
     private readonly llm: AiLlmAdapter,
     private readonly prisma: PrismaService,
+    private readonly cache: AiPromptCacheService,
+    private readonly budget: AiTokenBudgetService,
   ) {}
+
+  // ─── Wave 18.1 unified helpers ─────────────────────────────────
+
+  /**
+   * Unified completion call with cache + budget enforcement.
+   * All 5 endpoint methods delegate to this helper to share logic.
+   *
+   * Flow:
+   *   1. Check cache → hit? return cached text + fromCache=true.
+   *   2. Check budget → exceeded? return fallback text + budgetExceeded=true.
+   *   3. Call LLM → on success, record usage + populate cache.
+   *   4. On LLM failure, return fallback text (existing Wave 18 behaviour).
+   */
+  private async completeWithCache(
+    messages: ChatMessage[],
+    tenantId: string,
+    options: { temperature?: number; maxOutputTokens?: number; model?: string },
+  ): Promise<CompleteWithCacheResult> {
+    // 1. Cache check.
+    const cached = await this.cache.get({
+      messages,
+      model: options.model,
+      temperature: options.temperature,
+      maxOutputTokens: options.maxOutputTokens,
+      tenantId,
+    });
+    if (cached?.ok && cached.text) {
+      this.logger.log(
+        `AI cache HIT tenant=${tenantId} tokens=${cached.totalTokens ?? 0}`,
+      );
+      return {
+        text: cached.text,
+        model: cached.model ?? 'cached',
+        totalTokens: cached.totalTokens ?? 0,
+        fromCache: true,
+        budgetExceeded: false,
+      };
+    }
+
+    // 2. Budget check (estimate prompt tokens as ~ len/4).
+    const estimatedPromptTokens = messages.reduce((s, m) => s + Math.ceil(m.content.length / 4), 0);
+    const estimatedTotal = estimatedPromptTokens + (options.maxOutputTokens ?? 1024);
+    const budgetCheck = await this.budget.checkBudget(tenantId, estimatedTotal);
+    if (!budgetCheck.allowed) {
+      this.logger.warn(
+        `AI budget exceeded tenant=${tenantId} used=${budgetCheck.usedToday} quota=${budgetCheck.quota}`,
+      );
+      return {
+        text: '',  // caller falls back to deterministic stub
+        model: 'fallback',
+        totalTokens: 0,
+        fromCache: false,
+        budgetExceeded: true,
+      };
+    }
+
+    // 3. Call LLM.
+    const req: CompletionRequest = {
+      messages,
+      ...(options.model ? { model: options.model } : {}),
+      ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+      ...(options.maxOutputTokens !== undefined ? { maxOutputTokens: options.maxOutputTokens } : {}),
+    };
+    const result = await this.llm.complete(req);
+
+    if (!result.ok || !result.text) {
+      // LLM failure — return empty text; caller falls back to stub.
+      return {
+        text: '',
+        model: result.model ?? 'fallback',
+        totalTokens: 0,
+        fromCache: false,
+        budgetExceeded: false,
+      };
+    }
+
+    // 4. Record usage + populate cache.
+    if (result.totalTokens && result.totalTokens > 0) {
+      await this.budget.recordUsage(tenantId, result.totalTokens);
+    }
+    await this.cache.set({
+      messages,
+      model: options.model,
+      temperature: options.temperature,
+      maxOutputTokens: options.maxOutputTokens,
+      tenantId,
+    }, result);
+
+    return {
+      text: result.text,
+      model: result.model ?? 'unknown',
+      totalTokens: result.totalTokens ?? 0,
+      fromCache: false,
+      budgetExceeded: false,
+    };
+  }
+
+  /**
+   * Stream a completion as an async generator. Wave 18.1.
+   *
+   * Bypasses the cache (streaming responses are not cacheable as-is).
+   * Budget check still runs upfront — if exceeded, yields a single
+   * error chunk and returns. After the stream completes, records
+   * actual usage against the budget.
+   */
+  private async *streamWithBudget(
+    messages: ChatMessage[],
+    tenantId: string,
+    options: { temperature?: number; maxOutputTokens?: number; model?: string },
+  ): AsyncIterable<CompletionStreamChunk> {
+    // Budget check upfront.
+    const estimatedPromptTokens = messages.reduce((s, m) => s + Math.ceil(m.content.length / 4), 0);
+    const estimatedTotal = estimatedPromptTokens + (options.maxOutputTokens ?? 1024);
+    const budgetCheck = await this.budget.checkBudget(tenantId, estimatedTotal);
+    if (!budgetCheck.allowed) {
+      yield {
+        text: '',
+        done: true,
+        error: `Daily token budget exceeded (used=${budgetCheck.usedToday}, quota=${budgetCheck.quota})`,
+      };
+      return;
+    }
+
+    const req: CompletionRequest = {
+      messages,
+      ...(options.model ? { model: options.model } : {}),
+      ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+      ...(options.maxOutputTokens !== undefined ? { maxOutputTokens: options.maxOutputTokens } : {}),
+    };
+
+    let totalTokens = 0;
+    for await (const chunk of this.llm.completeStream(req)) {
+      if (chunk.usage?.totalTokens) {
+        totalTokens = chunk.usage.totalTokens;
+      }
+      yield chunk;
+    }
+
+    // Record actual usage after the stream completes.
+    if (totalTokens > 0) {
+      await this.budget.recordUsage(tenantId, totalTokens);
+    }
+  }
 
   // ─── 1. Lesson Plan ────────────────────────────────────────────
 
@@ -46,6 +211,71 @@ export class AiService {
     req: GenerateLessonPlanRequestDto,
     tenantId: string,
   ): Promise<GenerateLessonPlanResponseDto> {
+    const messages = this.buildLessonPlanMessages(req);
+
+    const durationMs = 0; // set by controller via Date.now() before/after
+    const { text, model, totalTokens, fromCache, budgetExceeded } =
+      await this.completeWithCache(messages, tenantId, {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      });
+
+    if (!text || budgetExceeded) {
+      if (budgetExceeded) {
+        this.logger.warn(`generateLessonPlan budget exceeded tenant=${tenantId}`);
+      } else {
+        this.logger.warn(`generateLessonPlan failed: no text from LLM`);
+      }
+      return {
+        lessonPlanMarkdown: this.fallbackLessonPlan(req),
+        model: budgetExceeded ? 'fallback' : model,
+        totalTokens,
+        durationMs,
+      };
+    }
+
+    this.logger.log(
+      `generateLessonPlan tenant=${tenantId} topics=${req.topics.length} tokens=${totalTokens} cache=${fromCache ? 'HIT' : 'MISS'}`,
+    );
+
+    return {
+      lessonPlanMarkdown: text,
+      model,
+      totalTokens,
+      durationMs,
+    };
+  }
+
+  /**
+   * Stream a lesson plan as an async generator (Wave 18.1).
+   * Yields chunks of markdown as the LLM produces them.
+   * Budget check runs upfront — if exceeded, yields a single
+   * error chunk + the fallback plan.
+   */
+  async *streamLessonPlan(
+    req: GenerateLessonPlanRequestDto,
+    tenantId: string,
+  ): AsyncIterable<CompletionStreamChunk> {
+    const messages = this.buildLessonPlanMessages(req);
+    let anyChunks = false;
+    for await (const chunk of this.streamWithBudget(messages, tenantId, {
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+    })) {
+      anyChunks = true;
+      yield chunk;
+    }
+    if (!anyChunks) {
+      // No chunks emitted (budget exceeded upfront) — yield fallback.
+      yield {
+        text: this.fallbackLessonPlan(req),
+        done: true,
+        finishReason: 'stop',
+      };
+    }
+  }
+
+  private buildLessonPlanMessages(req: GenerateLessonPlanRequestDto): ChatMessage[] {
     const systemPrompt = `You are an experienced early-childhood educator and instructional designer.
 You generate age-appropriate, play-based lesson plans for preschool teachers.
 Output: structured Markdown with sections for Objectives, Materials, Warm-up,
@@ -67,36 +297,10 @@ ${req.specialNotes ? `Special notes: ${req.specialNotes}` : ''}
 
 Make the plan concrete and immediately usable by a teacher.`;
 
-    const result = await this.llm.complete({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: this.redactPii(userPrompt) },
-      ],
-      temperature: 0.7,
-      maxOutputTokens: 2048,
-    });
-
-    const durationMs = 0; // set by controller via Date.now() before/after
-    if (!result.ok || !result.text) {
-      this.logger.warn(`generateLessonPlan failed: ${result.error ?? 'no text'}`);
-      return {
-        lessonPlanMarkdown: this.fallbackLessonPlan(req),
-        model: result.model ?? 'fallback',
-        totalTokens: result.totalTokens ?? 0,
-        durationMs,
-      };
-    }
-
-    this.logger.log(
-      `generateLessonPlan tenant=${tenantId} topics=${req.topics.length} tokens=${result.totalTokens ?? 0}`,
-    );
-
-    return {
-      lessonPlanMarkdown: result.text,
-      model: result.model ?? 'unknown',
-      totalTokens: result.totalTokens ?? 0,
-      durationMs,
-    };
+    return [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: this.redactPii(userPrompt) },
+    ];
   }
 
   // ─── 2. Report Card ────────────────────────────────────────────

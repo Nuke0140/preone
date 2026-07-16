@@ -49,3 +49,67 @@ export class ReportSubscriptionCreatedEvent extends DomainEvent<{
   reportDefId: string;
   frequency: string;
 }> {}
+
+// ─── Wave 13: Report Definition (custom report builder) ───────────────────────
+
+export class ReportDefinitionCreatedEvent extends DomainEvent<{
+  definitionId: string;
+  tenantId: string;
+  slug: string;
+  category: string;
+  createdBy: string;
+}> {}
+
+export class ReportDefinitionPublishedEvent extends DomainEvent<{
+  definitionId: string;
+  tenantId: string;
+  publishedBy: string;
+}> {}
+
+export class ReportDefinitionDeprecatedEvent extends DomainEvent<{
+  definitionId: string;
+  tenantId: string;
+  deprecatedBy: string;
+}> {}
+
+export class ReportDefinitionVersionBumpedEvent extends DomainEvent<{
+  definitionId: string;
+  tenantId: string;
+  oldVersion: number;
+  newVersion: number;
+}> {}
+
+// ─── Wave 13: Scheduled Report (cron-based exports per BRC §8.1) ──────────────
+
+export class ScheduledReportCreatedEvent extends DomainEvent<{
+  scheduleId: string;
+  tenantId: string;
+  definitionId: string;
+  cronExpression: string;
+  format: string;
+}> {}
+
+export class ScheduledReportPausedEvent extends DomainEvent<{
+  scheduleId: string;
+  tenantId: string;
+  pausedBy: string;
+}> {}
+
+export class ScheduledReportResumedEvent extends DomainEvent<{
+  scheduleId: string;
+  tenantId: string;
+  resumedBy: string;
+}> {}
+
+export class ScheduledReportTriggeredEvent extends DomainEvent<{
+  scheduleId: string;
+  tenantId: string;
+  executionId: string;
+  triggeredAt: string;
+}> {}
+
+export class ScheduledReportCancelledEvent extends DomainEvent<{
+  scheduleId: string;
+  tenantId: string;
+  cancelledBy: string;
+}> {}

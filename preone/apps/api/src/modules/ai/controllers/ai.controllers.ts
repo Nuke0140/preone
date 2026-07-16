@@ -11,7 +11,7 @@
  * via the 'write' throttler (30 req/min per user) — AI calls are expensive
  * and we want one user to not consume the whole budget.
  *
- * The 'ai.execute' permission is required for all 5 endpoints. Wave 18.1
+ * The 'ai.execute.tenant' permission is required for all 5 endpoints. Wave 18.1
  * can split this into per-endpoint permissions if finer control is needed.
  *
  * Tenant scoping: the controller extracts tenantId from req.user (set by
@@ -42,7 +42,7 @@ export class AiController {
   constructor(private readonly ai: AiService) {}
 
   @Post('lesson-plan/generate')
-  @Permissions('ai.execute')
+  @Permissions('ai.execute.tenant')
   @ApiOperation({ summary: 'Generate a lesson plan (AI)' })
   async generateLessonPlan(
     @Body() dto: GenerateLessonPlanRequestDto,
@@ -56,7 +56,7 @@ export class AiController {
   }
 
   @Post('report-card/generate')
-  @Permissions('ai.execute')
+  @Permissions('ai.execute.tenant')
   @ApiOperation({ summary: 'Generate a report card draft (AI)' })
   async generateReportCard(
     @Body() dto: GenerateReportCardRequestDto,
@@ -70,7 +70,7 @@ export class AiController {
   }
 
   @Post('observation/suggest')
-  @Permissions('ai.execute')
+  @Permissions('ai.execute.tenant')
   @ApiOperation({ summary: 'Suggest observation notes for a student (AI)' })
   async suggestObservation(
     @Body() dto: ObservationSuggestRequestDto,
@@ -84,7 +84,7 @@ export class AiController {
   }
 
   @Post('reply/suggest')
-  @Permissions('ai.execute')
+  @Permissions('ai.execute.tenant')
   @ApiOperation({ summary: 'Suggest 3 reply options for an inbound message (AI)' })
   async suggestReply(
     @Body() dto: ReplySuggestRequestDto,
@@ -98,7 +98,7 @@ export class AiController {
   }
 
   @Get('insights')
-  @Permissions('ai.execute')
+  @Permissions('ai.execute.tenant')
   @ApiOperation({ summary: 'Get AI-generated operational insights' })
   async getInsights(
     @Query() query: GetInsightsQueryDto,

@@ -139,7 +139,7 @@ export const REPORTS_PERMISSIONS: PermissionSeed[] = [
 // AI (Wave 18) — 5 AI-powered endpoints
 // ─────────────────────────────────────────────
 export const AI_PERMISSIONS: PermissionSeed[] = [
-  { code: 'ai.execute', name: 'AI Endpoints', description: 'Generate lesson plans, report cards, observation suggestions, reply suggestions, and operational insights via AI', module: 'ai', action: 'execute', resource: 'ai', scopeType: 'TENANT', isDangerous: false },
+  { code: 'ai.execute.tenant', name: 'AI Endpoints', description: 'Generate lesson plans, report cards, observation suggestions, reply suggestions, and operational insights via AI', module: 'ai', action: 'execute', resource: 'ai', scopeType: 'TENANT', isDangerous: false },
 ];
 
 export const ALL_PERMISSIONS: PermissionSeed[] = [

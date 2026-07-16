@@ -323,7 +323,7 @@ export class WaitingListController {
     @Query('programType') programType: string,
     @Query('academicSessionId') academicSessionId: string,
   ) {
-    const result = await this.svc.listWaitingList(TENANT_ID, branchId, programType as any, academicSessionId);
+    const result = await this.svc.listWaitingList(TENANT_ID, branchId, programType, academicSessionId);
     return ResponseDto.success(result);
   }
 

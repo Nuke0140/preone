@@ -15,12 +15,15 @@
  * emitting 5 integration events (AdmissionApproved.v1 triggers the
  * BTD §17.3 admission approval saga across Identity + Finance +
  * Communication).
+ *
+ * Wave 9 — AdmissionsSaga registered at bootstrap, orchestrating
+ * Student onboarding + FeePlan creation on ApplicationApprovedEvent.
  */
 import { Module, OnModuleInit } from '@nestjs/common';
 
-import { CommandBus, QueryBus } from '@shared/cqrs';
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 import { AdmissionsEventTranslator } from './application/services/admissions-event-translator.service';
 
@@ -43,10 +46,18 @@ import {
   GetApplicationQueryHandler, ListAdmissionsQueryHandler,
   ListApplicationsQueryHandler, ListWaitingListQueryHandler,
 } from './application/handlers/admissions-query-handlers';
+import { AdmissionsSaga } from './application/sagas/admissions.saga';
 import { AdmissionsService } from './application/services/admissions.service';
 import {
   AdmissionsController, ApplicationsController, WaitingListController,
 } from './controllers/admissions.controllers';
+import {
+  FEE_PLAN_PORT,
+  STUDENT_ONBOARDING_PORT,
+  type CreateFeePlanRequest, type CreateFeePlanResult,
+  type IStudentOnboardingPort, type IFeePlanPort,
+  type OnboardStudentRequest, type OnboardStudentResult,
+} from './domain/ports/saga-ports';
 import {
   ADMISSION_REPOSITORY, APPLICATION_REPOSITORY, WAITING_LIST_REPOSITORY,
 } from './domain/repositories/tokens';
@@ -55,12 +66,40 @@ import {
   PrismaWaitingListRepository,
 } from './infrastructure/repositories/prisma-admissions.repository';
 
+/**
+ * Default NoOp implementations of the saga ports.
+ *
+ * These exist so the AdmissionsModule can boot standalone (e.g., in tests
+ * that don't care about student onboarding). In production deployment,
+ * the Student and Finance modules override these providers with their
+ * real implementations.
+ *
+ * Per BTD §15.2 — even NoOp implementations MUST be idempotent (return
+ * the same synthetic ID on duplicate calls).
+ */
+class NoOpStudentOnboardingPort implements IStudentOnboardingPort {
+  async onboardStudent(req: OnboardStudentRequest): Promise<OnboardStudentResult> {
+    return { studentId: `noop-student-${req.applicationId}`, created: false };
+  }
+}
+
+class NoOpFeePlanPort implements IFeePlanPort {
+  async createFeePlan(req: CreateFeePlanRequest): Promise<CreateFeePlanResult> {
+    return { feePlanId: `noop-feeplan-${req.admissionId}`, created: false };
+  }
+}
+
 @Module({
   imports: [PrismaModule, EventBusModule],
   controllers: [ApplicationsController, AdmissionsController, WaitingListController],
   providers: [
     AdmissionsService,
     AdmissionsEventTranslator,
+    // Saga (BTD §15) — Wave 9
+    AdmissionsSaga,
+    // Saga ports — NoOp defaults; overridden by Student/Finance in production
+    { provide: STUDENT_ONBOARDING_PORT, useClass: NoOpStudentOnboardingPort },
+    { provide: FEE_PLAN_PORT, useClass: NoOpFeePlanPort },
     // Repositories
     { provide: APPLICATION_REPOSITORY, useClass: PrismaApplicationRepository },
     { provide: ADMISSION_REPOSITORY, useClass: PrismaAdmissionRepository },
@@ -85,7 +124,7 @@ import {
     GetAdmissionQueryHandler, ListAdmissionsQueryHandler,
     GetPipelineQueryHandler, ListWaitingListQueryHandler,
   ],
-  exports: [AdmissionsService],
+  exports: [AdmissionsService, STUDENT_ONBOARDING_PORT, FEE_PLAN_PORT],
 })
 export class AdmissionsModule implements OnModuleInit {
   constructor(private readonly translator: AdmissionsEventTranslator) {}

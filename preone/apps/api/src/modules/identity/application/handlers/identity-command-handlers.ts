@@ -18,6 +18,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   AuthenticationException, ConflictException, ValidationException,
 } from '@common/errors/exceptions';
+import { EventBusService } from '@infra/event-bus/event-bus.service';
 import {
   CommandBus, CommandHandler, type Command, type CommandMetadata,
 } from '@shared/cqrs';
@@ -29,19 +30,18 @@ import {
 } from '../../application/commands/identity.commands';
 import { LoginCommand } from '../../application/commands/identity.commands';
 import { UnitOfWork } from '../../application/unit-of-work';
-import { EventBusService } from '@infra/event-bus/event-bus.service';
-
-import { UserAggregate } from '../../domain/aggregates/user.aggregate';
 import { SchoolAggregate } from '../../domain/aggregates/school.aggregate';
+import { UserAggregate } from '../../domain/aggregates/user.aggregate';
 import {
   BRANCH_REPOSITORY, ROLE_REPOSITORY, SCHOOL_REPOSITORY, USER_REPOSITORY,
 } from '../../domain/repositories/tokens';
+import { AuthService } from '../services/auth.service';
+
 import type { BranchRepository } from '../../domain/repositories/branch.repository';
 import type { RoleRepository } from '../../domain/repositories/role.repository';
 import type { SchoolRepository } from '../../domain/repositories/school.repository';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 
-import { AuthService } from '../services/auth.service';
 
 // ─────────────────────────────────────────────
 // LoginCommandHandler

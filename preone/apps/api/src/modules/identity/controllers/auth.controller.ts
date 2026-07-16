@@ -13,9 +13,10 @@
  */
 import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { Public } from '@app/decorators/auth.decorators';
+import { RateLimit, RateLimitPolicy } from '@app/decorators/rate-limit.decorator';
 import { ResponseDto } from '@common/types/response-dto';
 
 import {
@@ -32,7 +33,7 @@ export class AuthController {
   /** Email + password login. */
   @Public()
   @Post('login')
-  @Throttle({ auth: { ttl: 60_000, limit: 5 } })
+  @RateLimit(RateLimitPolicy.AUTH)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Email + password login' })
   async login(
@@ -47,7 +48,7 @@ export class AuthController {
   /** Send OTP to phone for passwordless login. */
   @Public()
   @Post('otp/send')
-  @Throttle({ auth: { ttl: 60_000, limit: 3 } })
+  @RateLimit(RateLimitPolicy.AUTH)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send OTP to phone' })
   async sendOtp(
@@ -60,7 +61,7 @@ export class AuthController {
   /** Verify OTP → issue tokens. */
   @Public()
   @Post('otp/verify')
-  @Throttle({ auth: { ttl: 60_000, limit: 5 } })
+  @RateLimit(RateLimitPolicy.AUTH)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify OTP and login' })
   async verifyOtp(
@@ -75,6 +76,7 @@ export class AuthController {
   /** Refresh access token using refresh token. */
   @Public()
   @Post('refresh')
+  @RateLimit(RateLimitPolicy.AUTH)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(
@@ -86,6 +88,7 @@ export class AuthController {
 
   /** Logout — revoke access + refresh tokens. */
   @Post('logout')
+  @RateLimit(RateLimitPolicy.AUTH)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout (revoke session)' })
   async logout(@Body() dto: LogoutDto): Promise<ResponseDto<{ loggedOut: true }>> {

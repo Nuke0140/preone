@@ -18,6 +18,7 @@ import {
 import {
   WaitingListAggregate, WaitingListProps,
 } from '../../domain/aggregates/waiting-list.aggregate';
+
 import type {
   AdmissionListFilter, AdmissionRepository,
   ApplicationListFilter, ApplicationRepository,
@@ -237,7 +238,7 @@ export class PrismaApplicationRepository implements ApplicationRepository {
   }
 
   async save(agg: ApplicationAggregate): Promise<void> {
-    const p = agg['_props'] as ApplicationProps;
+    const p = agg._props;
     const data = {
       schoolId: p.tenantId,
       applicationNumber: p.applicationNumber,
@@ -245,7 +246,7 @@ export class PrismaApplicationRepository implements ApplicationRepository {
       enquiryId: p.enquiryId,
       branchId: p.branchId,
       academicSessionId: p.academicSessionId,
-      programType: p.programType as ProgramType,
+      programType: p.programType,
       admissionType: p.admissionType,
       childFirstName: p.childFirstName,
       childLastName: p.childLastName,
@@ -253,7 +254,7 @@ export class PrismaApplicationRepository implements ApplicationRepository {
       childGender: p.childGender,
       childBloodGroup: p.childBloodGroup as any,
       preferredStartDate: new Date(p.preferredStartDate),
-      status: p.status as ApplicationStatus,
+      status: p.status,
       submittedAt: p.submittedAt ? new Date(p.submittedAt) : null,
       verifiedAt: p.verifiedAt ? new Date(p.verifiedAt) : null,
       approvedAt: p.approvedAt ? new Date(p.approvedAt) : null,
@@ -278,12 +279,12 @@ export class PrismaApplicationRepository implements ApplicationRepository {
   }
 
   private async _syncChildren(agg: ApplicationAggregate): Promise<void> {
-    const p = agg['_props'] as ApplicationProps;
+    const p = agg._props;
 
     // Documents
     await this.prisma.applicationDocument.deleteMany({ where: { applicationId: agg.id } });
     for (const d of p.documents.values()) {
-      const dp = d['_props'];
+      const dp = d._props;
       await this.prisma.applicationDocument.create({
         data: {
           id: d.id, schoolId: p.tenantId, applicationId: agg.id,
@@ -300,7 +301,7 @@ export class PrismaApplicationRepository implements ApplicationRepository {
     // Counselling
     await this.prisma.counsellingSession.deleteMany({ where: { applicationId: agg.id } });
     for (const c of p.counsellingSessions.values()) {
-      const cp = c['_props'];
+      const cp = c._props;
       await this.prisma.counsellingSession.create({
         data: {
           id: c.id, schoolId: p.tenantId, applicationId: agg.id,
@@ -316,7 +317,7 @@ export class PrismaApplicationRepository implements ApplicationRepository {
     // Approvals
     await this.prisma.approval.deleteMany({ where: { applicationId: agg.id } });
     for (const a of p.approvals.values()) {
-      const ap = a['_props'];
+      const ap = a._props;
       await this.prisma.approval.create({
         data: {
           id: a.id, schoolId: p.tenantId, applicationId: agg.id,
@@ -332,11 +333,11 @@ export class PrismaApplicationRepository implements ApplicationRepository {
     // Offers
     await this.prisma.admissionOffer.deleteMany({ where: { applicationId: agg.id } });
     for (const o of p.offers.values()) {
-      const op = o['_props'];
+      const op = o._props;
       await this.prisma.admissionOffer.create({
         data: {
           id: o.id, schoolId: p.tenantId, applicationId: agg.id,
-          offerNumber: op.offerNumber, offeredProgram: op.offeredProgram as ProgramType,
+          offerNumber: op.offerNumber, offeredProgram: op.offeredProgram,
           feeQuoteCents: op.feeQuoteCents, securityDepositCents: op.securityDepositCents,
           offerLetterUrl: op.offerLetterUrl, issuedAt: new Date(op.issuedAt),
           expiresAt: new Date(op.expiresAt),
@@ -349,7 +350,7 @@ export class PrismaApplicationRepository implements ApplicationRepository {
     // Priorities
     await this.prisma.admissionPriority.deleteMany({ where: { applicationId: agg.id } });
     for (const pf of p.priorityFactors.values()) {
-      const pp = pf['_props'];
+      const pp = pf._props;
       await this.prisma.admissionPriority.create({
         data: {
           id: pf.id, schoolId: p.tenantId, applicationId: agg.id,
@@ -388,7 +389,7 @@ export class PrismaApplicationRepository implements ApplicationRepository {
     });
     const result: Record<string, number> = {};
     for (const r of rows) result[r.status] = r._count;
-    return result as Record<ApplicationStatus, number>;
+    return result;
   }
 }
 
@@ -449,7 +450,7 @@ export class PrismaAdmissionRepository implements AdmissionRepository {
   }
 
   async save(agg: AdmissionAggregate): Promise<void> {
-    const p = agg['_props'] as AdmissionProps;
+    const p = agg._props;
     const data = {
       schoolId: p.tenantId,
       admissionNumber: p.admissionNumber,
@@ -553,12 +554,12 @@ export class PrismaWaitingListRepository implements WaitingListRepository {
   }
 
   async save(agg: WaitingListAggregate): Promise<void> {
-    const p = agg['_props'] as WaitingListProps;
+    const p = agg._props;
     const data = {
       schoolId: p.tenantId,
       applicationId: p.applicationId,
       branchId: p.branchId,
-      programType: p.programType as ProgramType,
+      programType: p.programType,
       academicSessionId: p.academicSessionId,
       position: p.position,
       priorityScore: p.priorityScore,

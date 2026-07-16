@@ -26,9 +26,9 @@
  */
 import { Module } from '@nestjs/common';
 
-import { CommandBus, QueryBus } from '@shared/cqrs';
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 import {
   ActivateAcademicSessionCommandHandler, ActivateSectionCommandHandler,
@@ -58,13 +58,11 @@ import {
   EnrollmentService, ObservationService, PortfolioService,
   ReportCardService, SectionService,
 } from './application/services/academics.service';
-
 import {
   AcademicSessionsController, AssessmentsController, CurriculaController,
   EnrollmentsController, ObservationsController, PortfoliosController,
   ReportCardsController, SectionsController,
 } from './controllers/academics.controllers';
-
 import {
   ACADEMIC_SESSION_REPOSITORY, ASSESSMENT_REPOSITORY, CURRICULUM_REPOSITORY,
   ENROLLMENT_REPOSITORY, OBSERVATION_REPOSITORY, PORTFOLIO_REPOSITORY,

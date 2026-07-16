@@ -21,6 +21,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CacheService } from '@infra/cache/cache.service';
 
 import { USER_REPOSITORY } from '../../domain/repositories/tokens';
+
 import type { UserRepository } from '../../domain/repositories/user.repository';
 
 const PERM_TTL_SECONDS = 300; // 5 min per BTD §16.4

@@ -25,6 +25,7 @@ import {
   ATTENDANCE_REPOSITORY, DAILY_LOG_REPOSITORY, DAILY_REPORT_REPOSITORY,
   INCIDENT_REPORT_REPOSITORY, MEDICINE_AUTHORIZATION_REPOSITORY,
 } from '../../domain/repositories/tokens';
+
 import type {
   AttendanceListFilter, AttendanceRepository,
   DailyLogRepository, DailyReportRepository,
@@ -103,7 +104,7 @@ export class AttendanceService {
     attendanceDate: string;
     source: 'MANUAL' | 'BIOMETRIC' | 'RFID' | 'APP';
     notes?: string;
-    entries: Array<{ studentId: string; status: AttendanceStatus; notes?: string }>;
+    entries: { studentId: string; status: AttendanceStatus; notes?: string }[];
   }, actorId: string, tenantId: string): Promise<{ ids: string[] }> {
     const ids: string[] = [];
     for (const entry of props.entries) {

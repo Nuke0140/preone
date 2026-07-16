@@ -142,7 +142,7 @@ export interface ApprovalProps {
   decisionReason?: string;
   decidedAt: string;
   feeWaiverApprovedCents?: number;
-  conditions?: Array<{ type: string; description: string }>;
+  conditions?: { type: string; description: string }[];
 }
 
 export class ApprovalEntity extends Entity<ApprovalProps> {
@@ -303,6 +303,7 @@ export class ApplicationAggregate extends AggregateRoot<ApplicationProps> {
   get childFirstName(): string { return this._props.childFirstName; }
   get childLastName(): string { return this._props.childLastName; }
   get childDob(): string { return this._props.childDob; }
+  get childGender(): 'MALE' | 'FEMALE' | 'OTHER' | 'UNSPECIFIED' { return this._props.childGender; }
   get documents(): ApplicationDocumentEntity[] { return Array.from(this._props.documents.values()); }
   get counsellingSessions(): CounsellingSessionEntity[] {
     return Array.from(this._props.counsellingSessions.values());

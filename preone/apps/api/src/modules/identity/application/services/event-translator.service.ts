@@ -20,14 +20,14 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { EventBusService } from '@infra/event-bus/event-bus.service';
 
+import { SchoolActivatedEvent } from '../../domain/aggregates/school.aggregate';
+import {
+  UserCreatedEvent, UserRolesChangedEvent, UserSuspendedEvent,
+} from '../../domain/aggregates/user.aggregate';
 import {
   toUserOnboardedV1, toSchoolActivatedV1, toUserRolesChangedV1, toUserSuspendedV1,
 } from '../../domain/events/identity-events';
 import { PrismaOutboxRepository } from '../../infrastructure/repositories/prisma-outbox.repository';
-import {
-  UserCreatedEvent, UserRolesChangedEvent, UserSuspendedEvent,
-} from '../../domain/aggregates/user.aggregate';
-import { SchoolActivatedEvent } from '../../domain/aggregates/school.aggregate';
 
 export interface TranslationContext {
   /** Actor who triggered the operation (for audit attribution). */
@@ -56,9 +56,7 @@ export class IdentityEventTranslator {
         await this.outbox.append(toUserOnboardedV1({
           eventId: e.eventId,
           occurredAt: e.occurredAt,
-          payload: e.payload as unknown as {
-            userId: string; tenantId: string; email: string; roles: string[]; createdBy: string;
-          },
+          payload: e.payload,
         }));
         this.logger.debug(`Translated ${UserCreatedEvent.name} → UserOnboarded.v1`);
       } catch (err) {
@@ -74,9 +72,7 @@ export class IdentityEventTranslator {
         await this.outbox.append(toUserRolesChangedV1({
           eventId: e.eventId,
           occurredAt: e.occurredAt,
-          payload: e.payload as unknown as {
-            userId: string; oldRoles: string[]; newRoles: string[]; newPermissionsVersion: number;
-          },
+          payload: e.payload,
         }, ctx.tenantId, ctx.actorId));
       } catch (err) {
         this.logger.error(
@@ -91,9 +87,7 @@ export class IdentityEventTranslator {
         await this.outbox.append(toUserSuspendedV1({
           eventId: e.eventId,
           occurredAt: e.occurredAt,
-          payload: e.payload as unknown as {
-            userId: string; reason: string; suspendedAt: string;
-          },
+          payload: e.payload,
         }, ctx.tenantId, ctx.actorId));
       } catch (err) {
         this.logger.error(
@@ -108,7 +102,7 @@ export class IdentityEventTranslator {
         await this.outbox.append(toSchoolActivatedV1({
           eventId: e.eventId,
           occurredAt: e.occurredAt,
-          payload: e.payload as unknown as { schoolId: string; activatedAt: string },
+          payload: e.payload,
         }, ctx.tenantId, ctx.actorId));
       } catch (err) {
         this.logger.error(

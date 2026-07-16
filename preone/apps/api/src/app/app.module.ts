@@ -26,6 +26,7 @@ import { LoggerModule } from 'nestjs-pino';
 
 import { appConfigSchema } from '../config/env/app-config.schema';
 import { envValidator } from '../config/env/env.validator';
+import { AuditModule } from '../infrastructure/audit/audit.module';
 import { CacheModule } from '../infrastructure/cache/cache.module';
 import { EventBusModule } from '../infrastructure/event-bus/event-bus.module';
 import { HealthModule } from '../infrastructure/health/health.module';
@@ -36,8 +37,6 @@ import { S3Module } from '../infrastructure/s3/s3.module';
 
 
 // 14 bounded contexts (will be uncommented progressively as built)
-import { IdentityModule } from '../modules/identity/identity.module';
-import { StudentModule } from '../modules/student/student.module';
 import { AcademicsModule } from '../modules/academics/academics.module';
 import { AdmissionsModule } from '../modules/admissions/admissions.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
@@ -51,23 +50,17 @@ import { TransportModule } from '../modules/transport/transport.module';
 import { ReportsModule } from '../modules/reports/reports.module';
 import { SettingsModule } from '../modules/settings/settings.module';
 import { PlatformModule } from '../modules/platform/platform.module';
+import { IdentityModule } from '../modules/identity/identity.module';
+import { StudentModule } from '../modules/student/student.module';
 
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
+import { AuditInterceptor } from './interceptors/audit.interceptor';
 import { HttpLoggingInterceptor } from './interceptors/http-logging.interceptor';
 import { TraceContextInterceptor } from './interceptors/trace-context.interceptor';
 
 import type { AppConfig } from '../config/env/app-config.type';
-// import { CrmModule } from './modules/crm/crm.module';
-// import { CommunicationModule } from './modules/communication/communication.module';
-// import { FinanceModule } from './modules/finance/finance.module';
-// import { InventoryModule } from './modules/inventory/inventory.module';
-// import { HrModule } from './modules/hr/hr.module';
-// import { AdministrationModule } from './modules/administration/administration.module';
-// import { ReportsModule } from './modules/reports/reports.module';
-// import { SettingsModule } from './modules/settings/settings.module';
-// import { PlatformModule } from './modules/platform/platform.module';
 
 @Module({
   imports: [
@@ -112,19 +105,26 @@ import type { AppConfig } from '../config/env/app-config.type';
     }),
 
     // 3. Rate limiting — per-IP + per-user (BTD §20.1)
+    //    Named throttlers per policy (BTD §20.1 + §22.6):
+    //      default  — 100 req/min (fallback)
+    //      auth     — 5 req/min per IP (login, OTP, password reset)
+    //      write    — 30 req/min per user (POST/PUT/PATCH/DELETE)
+    //      read     — 200 req/min per user (GET)
+    //      export   — 5 req/min per user (CSV/PDF/XLSX)
+    //      public   — 60 req/min per IP (health, swagger)
+    //      pii      — 10 req/min per user (view Aadhaar/PAN)
+    //    Routes opt in via @RateLimit(RateLimitPolicy.<NAME>).
+    //    Per-tenant overrides via Redis hash key (BTD §22.6) — Wave 10.
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService<AppConfig, true>) => [
-        {
-          name: 'default',
-          ttl: 60_000,
-          limit: config.get('app.rateLimitPerMinute', { infer: true }) ?? 100,
-        },
-        {
-          name: 'auth',
-          ttl: 60_000,
-          limit: 5, // auth routes: 5 req/min per IP
-        },
+        { name: 'default', ttl: 60_000, limit: config.get('app.rateLimitPerMinute', { infer: true }) ?? 100 },
+        { name: 'auth',    ttl: 60_000, limit: 5 },
+        { name: 'write',   ttl: 60_000, limit: 30 },
+        { name: 'read',    ttl: 60_000, limit: 200 },
+        { name: 'export',  ttl: 60_000, limit: 5 },
+        { name: 'public',  ttl: 60_000, limit: 60 },
+        { name: 'pii',     ttl: 60_000, limit: 10 },
       ],
     }),
 
@@ -138,6 +138,7 @@ import type { AppConfig } from '../config/env/app-config.type';
     CacheModule,
     S3Module,
     HealthModule,
+    AuditModule,
 
     // 6. Business modules (14 bounded contexts) — added progressively
     IdentityModule,
@@ -170,8 +171,9 @@ import type { AppConfig } from '../config/env/app-config.type';
     // Global filter — standardized error response
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
 
-    // Global interceptors — logging + trace context propagation
+    // Global interceptors — logging + audit + trace context propagation
     { provide: APP_INTERCEPTOR, useClass: HttpLoggingInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TraceContextInterceptor },
   ],
 })

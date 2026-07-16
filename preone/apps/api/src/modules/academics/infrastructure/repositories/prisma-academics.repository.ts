@@ -24,6 +24,7 @@ import { ObservationAggregate, type ObservationCategory, type ObservationProps }
 import { PortfolioAggregate, PortfolioItem, type PortfolioProps } from '../../domain/aggregates/portfolio.aggregate';
 import { ReportCardAggregate, type ReportCardProps, type ReportCardStatus } from '../../domain/aggregates/report-card.aggregate';
 import { SectionAggregate, type SectionProps, type SectionStatus } from '../../domain/aggregates/section.aggregate';
+
 import type {
   AcademicSessionListFilter, AcademicSessionRepository,
   AssessmentListFilter, AssessmentRepository,
@@ -108,7 +109,7 @@ export class PrismaAcademicSessionRepository implements AcademicSessionRepositor
     const props: AcademicSessionProps = {
       tenantId: row.schoolId, name: row.name, code: row.code,
       startDate: row.startDate.toISOString(), endDate: row.endDate.toISOString(),
-      status: row.status as AcademicSessionStatus, isCurrent: row.isCurrent,
+      status: row.status, isCurrent: row.isCurrent,
       activatedAt: row.activatedAt?.toISOString(),
       completedAt: row.completedAt?.toISOString(),
       metadata: row.metadata as Record<string, unknown> | undefined,
@@ -184,7 +185,7 @@ export class PrismaCurriculumRepository implements CurriculumRepository {
       tenantId: row.schoolId, branchId: row.branchId,
       sessionId: row.sessionId, classroomId: row.classroomId,
       name: row.name, description: row.description ?? undefined,
-      status: row.status as CurriculumStatus, gradeLevel: row.gradeLevel,
+      status: row.status, gradeLevel: row.gradeLevel,
       objectives: row.objectives as any,
       pedagogy: row.pedagogy ?? undefined,
       publishedAt: row.publishedAt?.toISOString(),
@@ -276,7 +277,7 @@ export class PrismaSectionRepository implements SectionRepository {
       name: row.name, code: row.code, gradeLevel: row.gradeLevel,
       capacity: row.capacity, enrolledCount: row.enrolledCount,
       minAgeMonths: row.minAgeMonths, maxAgeMonths: row.maxAgeMonths,
-      status: row.status as SectionStatus,
+      status: row.status,
       startDate: row.startDate?.toISOString(),
       endDate: row.endDate?.toISOString(),
       activatedAt: row.activatedAt?.toISOString(),
@@ -369,7 +370,7 @@ export class PrismaEnrollmentRepository implements EnrollmentRepository {
       tenantId: row.schoolId, studentId: row.studentId,
       sessionId: row.sessionId, sectionId: row.sectionId,
       enrollmentNumber: row.enrollmentNumber,
-      type: row.type as EnrollmentType, status: row.status as EnrollmentStatus,
+      type: row.type, status: row.status,
       enrolledAt: row.enrolledAt.toISOString(),
       startDate: row.startDate.toISOString(),
       endDate: row.endDate?.toISOString(),
@@ -449,7 +450,7 @@ export class PrismaObservationRepository implements ObservationRepository {
     const props: ObservationProps = {
       tenantId: row.schoolId, enrollmentId: row.enrollmentId, sectionId: row.sectionId,
       observedAt: row.observedAt.toISOString(),
-      category: row.category as ObservationCategory,
+      category: row.category,
       title: row.title ?? undefined, description: row.description,
       evidenceUrls: row.evidenceUrls as any,
       rating: row.rating ?? undefined,
@@ -559,7 +560,7 @@ export class PrismaAssessmentRepository implements AssessmentRepository {
   ): AssessmentAggregate {
     const props: AssessmentProps = {
       tenantId: row.schoolId, sectionId: row.sectionId, termId: row.termId ?? undefined,
-      name: row.name, type: row.type as AssessmentType, status: row.status as AssessmentStatus,
+      name: row.name, type: row.type, status: row.status,
       description: row.description ?? undefined,
       totalMarks: row.totalMarks ?? undefined,
       passingMarks: row.passingMarks ?? undefined,
@@ -668,7 +669,7 @@ export class PrismaReportCardRepository implements ReportCardRepository {
     const props: ReportCardProps = {
       tenantId: row.schoolId, enrollmentId: row.enrollmentId,
       sectionId: row.sectionId, termId: row.termId, templateId: row.templateId,
-      status: row.status as ReportCardStatus,
+      status: row.status,
       content: row.content as any,
       overallGrade: row.overallGrade ?? undefined,
       attendanceSummary: row.attendanceSummary as any,

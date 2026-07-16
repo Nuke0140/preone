@@ -215,3 +215,28 @@ Stage Summary:
 - TypeScript compiles with 0 new errors (pre-existing OTel version conflict excluded)
 - BRC coverage closed: R-RPT-001/002, R-SET-003, R-PLT-001/002/005/010, R-DAT-007/008/010, R-CMP-008
 - Next: PR review/merge, then Wave 14 (likely load testing, pen test, DR drill, or production deployment)
+
+---
+Task ID: repo-cleanup
+Agent: Repository Maintenance Engineer (Main)
+Task: Clean repository without breaking the project — find temporary txt files, generated dumps, duplicate exports, temporary reports, extracted files, download/upload folders, tool-results. Move important documentation into docs/reference/. Delete only generated artifacts. Never delete ADR / PRD / DDD / ERD / API docs / official documentation. Generate cleanup-report.md.
+
+Work Log:
+- Surveyed /home/z/my-project/ root, identified 4 categories of clutter: (1) top-level extracted .txt dumps, (2) extracted/ folder with 20 generated .json/.txt dumps, (3) tool-results/ folder with 14 cached Read/Bash outputs, (4) 4 generated/backup artifacts inside scripts/.
+- Verified each suspect file was a generated artifact (e.g. prd_tables.txt opens with "Table 0 / PreOne Master PRD" — clearly extracted from PreOne_Master_PRD_v1.0.docx).
+- Created docs/reference/ directory at project root.
+- Moved all 10 official documents from upload/ to docs/reference/: Vision, Master PRD, BRC, ADR v1.0, ADR-111 DevOps, Backend Technical Design (.docx + .pdf), ERD v3.0, Prisma Schema v3.0, API Contract Catalog. None deleted.
+- Deleted 6 top-level .txt dumps (prd_content, prd_tables, brc_content, brc_tables, adr_content, adr_tables).
+- Deleted entire extracted/ directory (20 generated .json/.txt dumps).
+- Deleted entire tool-results/ directory (14 cached tool outputs).
+- Deleted 4 generated artifacts in scripts/: btd_extracted.txt, erd_extracted.txt, schema.prisma.bak, missing_models.prisma.
+- Preserved all .py/.ts source scripts in scripts/, the entire preone/ application source tree, .env, .gitignore, .git/, download/, skills/, worklog.md.
+- Empty upload/ directory left in place — it is root-owned and the maintainer account lacks rmdir permission.
+- Generated /home/z/my-project/cleanup-report.md with full Files Deleted / Files Moved / Files Kept tables and reasons.
+
+Stage Summary:
+- 41 generated files deleted, 2 generated directories removed (extracted/, tool-results/).
+- 10 official documents relocated to docs/reference/ (single canonical home for ADR / PRD / DDD / ERD / API docs).
+- 0 source files modified or deleted; 0 official documents deleted.
+- cleanup-report.md written at project root as the deliverable.
+- Repository root is now free of temporary dumps, tool output caches, and loose extracted .txt files. preone/ source tree and scripts/ source code are intact.

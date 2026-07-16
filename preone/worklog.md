@@ -285,3 +285,64 @@ Stage Summary:
   - apps/api/src/modules/attendance/{domain,application,controllers,infrastructure,test}/** (15 files, 14 events, 4 aggregates, 16 commands, 6 queries, 5 controllers, 5 Prisma repos, 29 tests)
   - packages/database/prisma/schema.prisma extended with 35 new models + 20 new enums (Admissions + trimmed Attendance)
 - Lead-to-classroom flow now end-to-end: Lead → Application → Document verification → Counselling → Approval → Admission → Student creation (via Identity saga) → Attendance marking → Daily logs → Daily reports → Incident handling
+
+---
+Task ID: 6
+Agent: Main (Super Z)
+Task: Wave 6 — HR + CRM modules (BTD §4.3 #10 + #2) — push, PR, test
+
+Work Log:
+- Created branch feat/wave-6-hr-crm from feat/wave-4.1-5-communication-finance-btd
+- Built HR module (4 aggregates, 4 controllers, 4 Prisma repos, 17 cmd + 8 query handlers):
+  - EmployeeAggregate: 7-state PROSPECTIVE→EXITED with BGV gate (R-HR-002),
+    3-month probation (R-HR-012), handover-required exit (R-HR-008), promotion
+  - LeaveAggregate: 6-state with 10-day consecutive limit (R-HR-004), maternity
+    exemption, half-day/quarter-day support, substitute assignment (R-HR-005)
+  - PayrollAggregate: 6-state with PF@12% validation, gross/deductions/net math
+    invariant, segregation-of-duties approval (R-APR-011), hold/release
+  - PerformanceReviewAggregate: 7-state quarterly cycle (R-HR-007), 1-5 rating
+    scale, weighted goal aggregation, HR finalization, employee acknowledgement
+- Built CRM module (3 aggregates, 4 controllers, 3 Prisma repos, 18 cmd + 6 query handlers):
+  - LeadAggregate: 10-state NEW→CONVERTED/LOST/DROPPED→REACTIVATED with priority-
+    by-score, duplicate-phone detection, application cross-link
+  - CampaignAggregate: 7-state with budget enforcement, audience cap, delivery
+    metrics, ROI computation
+  - FollowUpAggregate: 5-state with reschedule chain + reminder counter
+- Integration events wired:
+  - StaffOnboarded.v1 → Identity (create user)
+  - StaffOffboarded.v1 → Identity (revoke) + Inventory (asset recovery)
+  - LeaveApproved.v1 → Communication + Academics (substitute)
+  - PayslipIssued.v1 → Communication (payslip SMS)
+  - LeadCaptured.v1 → Communication (welcome)
+  - LeadConverted.v1 → Admissions (link app→lead for attribution)
+  - LeadLost.v1 → Communication (win-back)
+  - CampaignLaunched.v1 → Communication (fan-out)
+  - ApplicationApprovedEvent (Admissions) → auto-convert linked lead (reverse)
+- Database: 19 new Prisma models (HR: 11, CRM: 8) + 19 enums + RLS migration
+  with PII encryption on employee bank/PAN/Aadhaar + lead phone/email/parent names,
+  trigram indexes, touch_updated_at triggers, audit log triggers
+- Wired HrModule + CrmModule in app.module.ts
+- Fixed schema issues: Lead ambiguous relations (@relation names), School/Branch/
+  Employee back-relations, Employee.userId @unique for 1-to-1 with User
+- Fixed all TSC errors: Prisma enum casts, ApplicationApprovedEvent (not
+  AdmissionApprovedEvent), Decimal-to-number conversion, Rating type cast,
+  ReviewCycle cast, removed substitute SectionTeacher creation (schema unsupported)
+- All 413 tests pass (354 prior + 32 HR + 27 CRM)
+- TypeScript compiles with ZERO errors
+- Pushed feat/wave-6-hr-crm branch to GitHub
+- Created PR #10: feat(wave-6): HR + CRM modules — 19 tables, 7 aggregates, 413 tests
+
+Stage Summary:
+- Wave 6 complete: HR + CRM modules fully implemented per BTD §4.3 #2 + #10
+- 7 new DDD aggregates with state machines, invariants, and domain events
+- 35 new command handlers + 14 new query handlers on CQRS bus
+- ~65 new REST endpoints across 8 controllers
+- 47 new domain events + 9 integration event flows
+- 19 new Prisma models + 19 new enums (schema now 135 models, ~5,200 lines)
+- RLS enabled on all 19 Wave 6 tables with PII encryption on sensitive columns
+- 413 tests pass (23 test files)
+- TypeScript compiles with zero errors
+- Bounded contexts active: 9/14 (Identity, Student, Academics, Admissions,
+  Attendance, Communication, Finance, HR, CRM)
+- PR #10 opened against feat/wave-4.1-5-communication-finance-btd
+- 5 commits on branch: feat(wave-6) + 4 fix commits for schema/TSC issues

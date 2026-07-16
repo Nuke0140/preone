@@ -43,6 +43,8 @@ import { AdmissionsModule } from '../modules/admissions/admissions.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { CommunicationModule } from '../modules/communication/communication.module';
 import { FinanceModule } from '../modules/finance/finance.module';
+import { HrModule } from '../modules/hr/hr.module';
+import { CrmModule } from '../modules/crm/crm.module';
 
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -139,9 +141,9 @@ import type { AppConfig } from '../config/env/app-config.type';
     AttendanceModule,
     CommunicationModule,
     FinanceModule,
-    // CrmModule,
+    HrModule,
+    CrmModule,
     // InventoryModule,
-    // HrModule,
     // AdministrationModule,
     // ReportsModule,
     // SettingsModule,

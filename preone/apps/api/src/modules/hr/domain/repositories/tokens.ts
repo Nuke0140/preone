@@ -1,0 +1,7 @@
+/**
+ * DI tokens for HR repositories.
+ */
+export const EMPLOYEE_REPOSITORY = Symbol('EMPLOYEE_REPOSITORY');
+export const LEAVE_REPOSITORY = Symbol('LEAVE_REPOSITORY');
+export const PAYROLL_REPOSITORY = Symbol('PAYROLL_REPOSITORY');
+export const PERFORMANCE_REVIEW_REPOSITORY = Symbol('PERFORMANCE_REVIEW_REPOSITORY');

@@ -240,3 +240,30 @@ Stage Summary:
 - 0 source files modified or deleted; 0 official documents deleted.
 - cleanup-report.md written at project root as the deliverable.
 - Repository root is now free of temporary dumps, tool output caches, and loose extracted .txt files. preone/ source tree and scripts/ source code are intact.
+
+---
+Task ID: prisma-ddd-review
+Agent: Principal DDD Architect (Main)
+Task: Review Prisma schema as Principal DDD Architect. Never merge models only because names look similar. Review Aggregate Roots, Entities, Relationships, Business lifecycle, Ownership, Bounded Context for the four named model groups: Employee/Staff/StaffProfile, StudentMedicalHistory/StudentMedicalRecord, FeePlan/FeeInstallment, InventoryItem/InventoryStock. Decide safe merge vs unsafe merge with DDD justification. Generate prisma-review.md. Never modify schema automatically — only recommend.
+
+Work Log:
+- Located all 9 target models via grep across 18 .prisma files: Employee (hr.prisma:113), Staff (hr.prisma:689), StaffProfile (hr.prisma:728), StudentMedicalRecord (student.prisma:117), StudentMedicalHistory (academics.prisma:667), FeePlan (finance.prisma:170), FeePlanInstallment (finance.prisma:210), FeeInstallment (finance.prisma:746), InventoryItem (inventory.prisma:198), InventoryStock (inventory.prisma:773).
+- Read full definitions of each model with surrounding context (100-200 lines each).
+- Cross-referenced each model via grep for relation usages — discovered:
+  * Employee has 10+ sibling-aggregate relations; Staff family has zero relations (structurally orphaned).
+  * StudentMedicalRecord is orphan; StudentMedicalHistory is wired to Student.medicalHistory.
+  * Discovered hidden third medical model MedicalRecord (academics.prisma:362) — Student.medicalRecords actually points to MedicalRecord, not StudentMedicalRecord. So StudentMedicalRecord is the orphan spec copy of MedicalRecord.
+  * FeePlan has 5 child relations; FeePlanInstallment is its cascade child (FK with onDelete: Cascade); FeeInstallment is orphan with zero relations.
+  * InventoryItem has 12 child relations; StockLot is its cascade child (the operational per-batch stock model); InventoryStock is orphan with zero relations. InventoryStock is the orphan spec copy of StockLot.
+- Identified systemic anti-pattern: "ERD v3.0 spec copy" — every reviewed group has an operational model (uuid_v7, FK relations, Cascade) and a parallel spec copy (uuid(), no relations, Wave-6 audit columns, "per ERD v3.0" comment, never referenced).
+- Identified bounded-context file placement issues: MedicalRecord, Immunization, Allergy, StudentMedicalHistory, StudentIdCard, MilestoneAchievement, PickupAuthorization live in academics.prisma but belong to the Student aggregate → should be moved to student.prisma (file move, no schema change).
+- Verified aggregate-boundary integrity for operational models — all cascade rules are correct.
+- Did NOT modify any .prisma file. Recommendations only, as required.
+- Generated /home/z/my-project/prisma-review.md with: (1) at-a-glance verdict table, (2) per-group detailed analysis with DDD dimensions, (3) hidden-third-model discovery for Student medical and Inventory stock, (4) cross-cutting findings on the systemic spec-vs-operational pattern, (5) 10 numbered recommendations with risk and priority, (6) closing note that the fix is deprecation not merge.
+
+Stage Summary:
+- Verdicts: Employee/Staff/StaffProfile = Unsafe merge (deprecate Staff family of 6 models). StudentMedicalHistory/StudentMedicalRecord = Unsafe merge (different concepts; StudentMedicalRecord is orphan dup of MedicalRecord). FeePlan/FeeInstallment = Unsafe merge for the asked pair (parent-child); FeeInstallment is orphan dup of FeePlanInstallment → safe to deprecate. InventoryItem/InventoryStock = Unsafe merge (catalog vs batch); InventoryStock is orphan dup of StockLot → safe to deprecate.
+- Key insight: every "merge" question is actually a "deprecate the orphan spec copy" question. The operational models are canonical; the spec copies are dead weight.
+- 10 recommendations issued (R1-R10), 4 marked High priority, all deprecation/file-move actions (zero schema merges recommended).
+- prisma-review.md written at /home/z/my-project/prisma-review.md as the deliverable.
+- No .prisma files modified. Schema is untouched.

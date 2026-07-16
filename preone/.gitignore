@@ -1,68 +1,151 @@
-# Dependencies
+# ─────────────────────────────────────────────────────────────
+# PreOne — .gitignore
+# Hardened per security review (2026-07-17)
+# Rules:
+#   1. All secret-bearing files MUST be ignored by default.
+#   2. Only *.example templates may be committed.
+#   3. Negation (`!`) is used sparingly to whitelist example files.
+# ─────────────────────────────────────────────────────────────
+
+# ─── Dependencies ───────────────────────────────────────────
 node_modules/
 .pnpm-store/
+.yarn/cache/
+.yarn/install-state.gz
 
-# Build outputs
+# ─── Build outputs ──────────────────────────────────────────
 dist/
 build/
 .next/
 out/
 *.tsbuildinfo
+*.tgz
 
-# Turbo cache
+# ─── Turbo cache ────────────────────────────────────────────
 .turbo/
 .turbo-cache/
 
-# Environment
+# ─── Environment files (NEVER commit real env files) ────────
+# Catch-all: any file whose name starts with .env
 .env
-.env.local
-.env.*.local
-.env.production
+.env.*
+# Whitelist example templates (safe to commit — placeholders only)
 !.env.example
 !.env.*.example
+# Explicitly catch common local-dev names in case catch-all is bypassed
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+.env.test
+.env.qa
+.env.uat
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-
-# Coverage
-coverage/
-*.lcov
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-
-# Docker
-infra/docker/data/
-
-# Secrets — never commit
+# ─── Secrets — never commit ─────────────────────────────────
+# Private keys (any extension)
 *.pem
 *.key
-secrets/
-infra/secrets/
-
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.key.pub
+# SSH / GPG
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+id_ecdsa
+id_ecdsa.pub
+id_dsa
+id_dsa.pub
+*.ppk
+*.gpg
+*.asc
+# Certificates (CA bundles, signed certs — public keys are fine but
+# we err on the side of caution; commit explicit `.crt.example` if needed)
+*.crt
+*.cert
+*.cer
+*.der
+*.csr
+# Combined PEM bundles
+*.bundle
+*.chain.pem
+# Secret directories (ignore all contents by default; whitelisted READMEs below)
+# Note: do NOT ignore the directory itself, only its contents — otherwise
+# negation patterns for README.md would not work.
+secrets/*
+infra/secrets/*
+!infra/secrets/README.md
+!secrets/README.md
+.secrets/
+credentials/
+.aws/
+.gcp/
+.azure/
+# Cloud provider config files
+.aws/credentials
+.aws/config
+.gcp/credentials.json
+.gcp/service-account.json
+.azure/azureauth.json
 # Terraform
 *.tfstate
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
 
-# Prisma
+# ─── Logs ───────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Coverage / test artifacts ──────────────────────────────
+coverage/
+*.lcov
+test-results/
+playwright-report/
+.nyc_output/
+
+# ─── IDE / editor ───────────────────────────────────────────
+.vscode/
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+*.orig
+.DS_Store
+Thumbs.db
+
+# ─── Docker ─────────────────────────────────────────────────
+infra/docker/data/
+*.pid
+
+# ─── Prisma ─────────────────────────────────────────────────
 prisma/migrations/dev.db*
 prisma/*.db
+packages/database/prisma/migrations/dev.db*
+packages/database/prisma/*.db
 
-# Mobile builds
+# ─── Mobile builds ──────────────────────────────────────────
 apps/mobile/ios/
 apps/mobile/android/
 apps/mobile/.expo/
 
-# Testing
-test-results/
-playwright-report/
+# ─── Misc runtime artifacts ─────────────────────────────────
+*.pid
+*.seed
+*.pid.lock
+.cache/
+.eslintcache
+.turbo-cache/

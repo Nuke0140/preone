@@ -135,6 +135,13 @@ export const REPORTS_PERMISSIONS: PermissionSeed[] = [
   { code: 'reports.export.execute', name: 'Export Reports', description: 'Download report exports', module: 'reports', action: 'export', resource: 'report', scopeType: 'TENANT', isDangerous: false },
 ];
 
+// ─────────────────────────────────────────────
+// AI (Wave 18) — 5 AI-powered endpoints
+// ─────────────────────────────────────────────
+export const AI_PERMISSIONS: PermissionSeed[] = [
+  { code: 'ai.execute', name: 'AI Endpoints', description: 'Generate lesson plans, report cards, observation suggestions, reply suggestions, and operational insights via AI', module: 'ai', action: 'execute', resource: 'ai', scopeType: 'TENANT', isDangerous: false },
+];
+
 export const ALL_PERMISSIONS: PermissionSeed[] = [
   ...PLATFORM_PERMISSIONS,
   ...IDENTITY_PERMISSIONS,
@@ -144,6 +151,7 @@ export const ALL_PERMISSIONS: PermissionSeed[] = [
   ...FINANCE_PERMISSIONS,
   ...OPERATIONS_PERMISSIONS,
   ...REPORTS_PERMISSIONS,
+  ...AI_PERMISSIONS,
 ];
 
 // ─────────────────────────────────────────────

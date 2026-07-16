@@ -121,7 +121,7 @@ export class PrismaGuardianRepository implements GuardianRepository {
       city: row.city ?? undefined,
       state: row.state ?? undefined,
       postalCode: row.postalCode ?? undefined,
-      status: row.status as GuardianStatus,
+      status: row.status,
       userId: row.userId ?? undefined,
       deletedAt: row.deletedAt?.toISOString(),
     };

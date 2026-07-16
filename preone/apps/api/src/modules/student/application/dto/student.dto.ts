@@ -459,7 +459,7 @@ export class StudentResponseDto {
   @ApiPropertyOptional() currentGradeLevel?: string;
   @ApiPropertyOptional() currentSectionId?: string;
   @ApiPropertyOptional() allergiesSummary?: string;
-  @ApiPropertyOptional({ type: 'array' }) medicalAlerts?: Array<{ severity: string; summary: string }>;
+  @ApiPropertyOptional({ type: 'array' }) medicalAlerts?: { severity: string; summary: string }[];
   @ApiPropertyOptional() custodyNotes?: string;
   @ApiProperty() isPickupRestricted!: boolean;
   @ApiProperty({ type: () => [GuardianResponseDto] }) guardians!: GuardianResponseDto[];

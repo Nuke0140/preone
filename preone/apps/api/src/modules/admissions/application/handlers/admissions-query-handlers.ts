@@ -77,7 +77,7 @@ export class ListWaitingListQueryHandler implements QueryHandler<ListWaitingList
   async handle(q: ListWaitingListQuery) {
     return this.svc.listWaitingList(
       q.payload.tenantId, q.payload.branchId,
-      q.payload.programType as any, q.payload.academicSessionId,
+      q.payload.programType, q.payload.academicSessionId,
     );
   }
 }

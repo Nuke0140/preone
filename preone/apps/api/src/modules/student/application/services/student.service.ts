@@ -18,19 +18,18 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   BusinessException, ConflictException, NotFoundException, ValidationException,
 } from '@common/errors/exceptions';
-
 import { EventBusService } from '@infra/event-bus/event-bus.service';
 
+import { GuardianAggregate } from '../../domain/aggregates/guardian.aggregate';
 import {
   StudentAggregate, type StudentStatus, type Gender, type BloodGroup,
 } from '../../domain/aggregates/student.aggregate';
-import { GuardianAggregate } from '../../domain/aggregates/guardian.aggregate';
 import {
   GUARDIAN_REPOSITORY, STUDENT_REPOSITORY,
 } from '../../domain/repositories/tokens';
+
 import type { GuardianRepository } from '../../domain/repositories/guardian.repository';
 import type { StudentRepository, StudentListFilter } from '../../domain/repositories/student.repository';
-
 import type {
   CreateStudentDto, UpdateStudentDto, EnrollStudentDto, PromoteStudentDto,
   TransferStudentDto, WithdrawStudentDto, AddGuardianDto, StudentResponseDto,
@@ -105,8 +104,8 @@ export class StudentService {
       legalLastName: dto.legalLastName,
       preferredName: dto.preferredName,
       dateOfBirth: dto.dateOfBirth,
-      gender: dto.gender as Gender,
-      bloodGroup: (dto.bloodGroup ?? 'UNKNOWN') as BloodGroup,
+      gender: dto.gender,
+      bloodGroup: (dto.bloodGroup ?? 'UNKNOWN'),
       nationality: dto.nationality ?? 'Indian',
       religion: dto.religion,
       motherTongue: dto.motherTongue,
@@ -124,7 +123,7 @@ export class StudentService {
       const gDto = dto.guardians.find((d) => d.phone === g.phone)!;
       student.addGuardian({
         guardianId: g.id,
-        relation: gDto.relation as any,
+        relation: gDto.relation,
         isPrimary: gDto.isPrimary ?? false,
         isPickupAuthorized: gDto.isPickupAuthorized ?? true,
         isEmergencyContact: gDto.isEmergencyContact ?? true,
@@ -178,7 +177,7 @@ export class StudentService {
     const filter: StudentListFilter = {
       tenantId,
       branchId: query.branchId,
-      status: query.status as StudentStatus | undefined,
+      status: query.status,
       gradeLevel: query.gradeLevel,
       sectionId: query.sectionId,
       search: query.search,
@@ -313,7 +312,7 @@ export class StudentService {
     }
     student.addGuardian({
       guardianId: guardian.id,
-      relation: dto.relation as any,
+      relation: dto.relation,
       isPrimary: dto.isPrimary ?? false,
       isPickupAuthorized: dto.isPickupAuthorized ?? true,
       isEmergencyContact: dto.isEmergencyContact ?? true,

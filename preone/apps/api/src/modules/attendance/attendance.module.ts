@@ -14,9 +14,9 @@
  */
 import { Module } from '@nestjs/common';
 
-import { CommandBus, QueryBus } from '@shared/cqrs';
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 import {
   AddDailyReportHighlightCommandHandler, AddIncidentActionCommandHandler,

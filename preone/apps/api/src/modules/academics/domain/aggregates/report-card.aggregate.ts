@@ -21,12 +21,12 @@ export type ReportCardStatus =
 export interface ReportCardSection {
   title: string;
   type: 'SUBJECT' | 'CO_CURRICULAR' | 'DEVELOPMENTAL' | 'COMMENT';
-  fields: Array<{
+  fields: {
     name: string;
     label: string;
     value: string;
     grade?: string;
-  }>;
+  }[];
 }
 
 export interface AttendanceSummary {

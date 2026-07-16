@@ -15,10 +15,12 @@
  * is processed by exactly one worker.
  */
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+
 import { RedisService, RedisDb } from '@infra/redis/redis.service';
 
 import { INTEGRATION_EVENT_STREAM } from '../../domain/events/identity-events';
 import { PrismaOutboxRepository } from '../../infrastructure/repositories/prisma-outbox.repository';
+
 import type { OutboxRecord } from '../../domain/repositories/outbox.repository';
 
 const POLL_INTERVAL_MS = 2_000;

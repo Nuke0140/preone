@@ -4,15 +4,17 @@
  * Per BTD §12.2 — Command Side: handlers are looked up by command type name.
  * Per BTD §12.3 — Query Side: handlers are looked up by query type name.
  *
- * For v1 (Wave 2.1): in-process synchronous dispatch. For v1.1+ this can
- * be extended to support pipeline behaviors (logging, validation, retries)
- * similar to MediatR in .NET.
+ * Wave 9 enhancement: every execute() call is wrapped in an OTel span
+ * (BTD §22.2). When the OTel SDK is not started, the tracer is a NoopTracer
+ * and the overhead is a single closure allocation.
  *
  * Handlers are registered via the @CommandHandler decorator metadata —
  * the module wiring scans the providers list and registers each handler
  * under its supported command type.
  */
 import { Injectable, Logger } from '@nestjs/common';
+
+import { runCqrsSpan, setActorAttributes } from './otel-tracing';
 
 import type {
   Command, CommandHandler, Query, QueryHandler,
@@ -36,7 +38,11 @@ export class CommandBus {
     if (!handler) {
       throw new Error(`No CommandHandler registered for "${command.type}"`);
     }
-    return (await handler.handle(command)) as T;
+    return runCqrsSpan<T>('command', command.type, (span) => {
+      setActorAttributes(span, command.metadata);
+      span.setAttribute('preone.cqrs.handler', handler.constructor.name);
+      return handler.handle(command) as Promise<T>;
+    }, { handlerName: handler.constructor.name });
   }
 }
 
@@ -58,6 +64,10 @@ export class QueryBus {
     if (!handler) {
       throw new Error(`No QueryHandler registered for "${query.type}"`);
     }
-    return (await handler.handle(query)) as T;
+    return runCqrsSpan<T>('query', query.type, (span) => {
+      setActorAttributes(span, query.metadata);
+      span.setAttribute('preone.cqrs.handler', handler.constructor.name);
+      return handler.handle(query) as Promise<T>;
+    }, { handlerName: handler.constructor.name });
   }
 }

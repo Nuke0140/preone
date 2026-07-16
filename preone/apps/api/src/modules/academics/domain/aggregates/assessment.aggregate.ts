@@ -30,7 +30,7 @@ export interface AssessmentItemProps {
   maxMarks: number;
   weightPercent: number;
   sortOrder: number;
-  rubric?: Array<{ level: string; description: string; marks: number }>;
+  rubric?: { level: string; description: string; marks: number }[];
   subjectId?: string;
   learningOutcomeId?: string;
 }
@@ -176,7 +176,7 @@ export class AssessmentAggregate extends AggregateRoot<AssessmentProps> {
     let hasAny = false;
     for (const item of this._props.items) {
       const score = this.getScore(item.id, enrollmentId);
-      if (score && score.marks !== undefined && !score.isAbsent && !score.isExcused) {
+      if (score?.marks !== undefined && !score.isAbsent && !score.isExcused) {
         total += score.marks;
         hasAny = true;
       }

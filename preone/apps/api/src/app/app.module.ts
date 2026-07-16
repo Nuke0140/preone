@@ -45,6 +45,12 @@ import { CommunicationModule } from '../modules/communication/communication.modu
 import { FinanceModule } from '../modules/finance/finance.module';
 import { HrModule } from '../modules/hr/hr.module';
 import { CrmModule } from '../modules/crm/crm.module';
+import { InventoryModule } from '../modules/inventory/inventory.module';
+import { AdministrationModule } from '../modules/administration/administration.module';
+import { TransportModule } from '../modules/transport/transport.module';
+import { ReportsModule } from '../modules/reports/reports.module';
+import { SettingsModule } from '../modules/settings/settings.module';
+import { PlatformModule } from '../modules/platform/platform.module';
 
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -143,11 +149,12 @@ import type { AppConfig } from '../config/env/app-config.type';
     FinanceModule,
     HrModule,
     CrmModule,
-    // InventoryModule,
-    // AdministrationModule,
-    // ReportsModule,
-    // SettingsModule,
-    // PlatformModule,
+    InventoryModule,
+    AdministrationModule,
+    TransportModule,
+    ReportsModule,
+    SettingsModule,
+    PlatformModule,
   ],
   providers: [
     // Global guards — JwtAuthGuard + PermissionsGuard run on every route

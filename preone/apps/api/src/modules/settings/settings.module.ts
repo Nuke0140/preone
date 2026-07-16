@@ -1,30 +1,51 @@
 /**
- * SettingsModule — Academic Years, Calendars, Integrations, Flags
- *
- * Per BTD §4.3 Module Catalog #13:
- *   "settings — Academic Years, Calendars, Configs — ~35 APIs"
- *
- * Per API Catalog §16.16 + ERD v3.0 (Settings, 12 tables):
- *   - Academic year CRUD (active year flag — only one active per school)
- *   - Holiday calendar (national + state + school-specific)
- *   - Branch-level settings (timings, weekly off, late pickup fee)
- *   - Fee head configuration (admission, tuition, transport, meal, activity)
- *   - Late fee policy (R-FIN-002: daily amount + max cap)
- *   - Refund policy (R-FIN-003, R-FIN-004)
- *   - Discount policy (sibling R-FIN-005, early bird R-FIN-006, merit R-FIN-013)
- *   - Pickup authorization rules (R-OPS-001, R-OPS-002)
- *   - Notification preferences (R-NOT-001 to R-NOT-012 cadence)
- *   - Integration config (per-tenant payment gateway, SMS provider, etc.)
- *   - Feature flags (3-level: Platform AND School AND Plan per ADR)
- *   - Localization (language, timezone, date format, currency)
- *   - Email / SMS / WhatsApp templates
- *   - Role-based field visibility (R-DAT-004)
- *
- * Cache: Settings cached in Redis (1h TTL), invalidated via pub/sub on change.
- *
- * Status: STUB — to be implemented in Wave 8 per BUILD_ROADMAP.md
+ * SettingsModule — wiring for Settings bounded context.
  */
 import { Module } from '@nestjs/common';
 
-@Module({})
+import { CommandBus, QueryBus } from '@shared/cqrs';
+import { EventBusModule } from '@infra/event-bus/event-bus.module';
+import { PrismaModule } from '@infra/prisma/prisma.module';
+
+import { SettingsService } from './application/services/settings.service';
+import {
+  CancelCalendarEventCommandHandler, CreateCalendarEventCommandHandler,
+  DeleteSystemConfigCommandHandler, SetSystemConfigCommandHandler,
+  SetUserPreferenceCommandHandler, UpdateCalendarEventCommandHandler,
+} from './application/handlers/settings-command-handlers';
+import {
+  GetCalendarEventQueryHandler, GetSystemConfigQueryHandler,
+  GetUserPreferenceQueryHandler, ListCalendarEventsQueryHandler,
+  ListSystemConfigsQueryHandler, ListUserPreferencesQueryHandler,
+} from './application/handlers/settings-query-handlers';
+import {
+  CalendarEventsController, SystemConfigsController, UserPreferencesController,
+} from './controllers/settings.controllers';
+import {
+  CALENDAR_EVENT_REPOSITORY, SYSTEM_CONFIG_REPOSITORY, USER_PREFERENCE_REPOSITORY,
+} from './domain/repositories/tokens';
+import {
+  PrismaCalendarEventRepository, PrismaSystemConfigRepository, PrismaUserPreferenceRepository,
+} from './infrastructure/repositories/prisma-settings.repository';
+
+@Module({
+  imports: [PrismaModule, EventBusModule],
+  controllers: [SystemConfigsController, UserPreferencesController, CalendarEventsController],
+  providers: [
+    SettingsService,
+    { provide: SYSTEM_CONFIG_REPOSITORY, useClass: PrismaSystemConfigRepository },
+    { provide: USER_PREFERENCE_REPOSITORY, useClass: PrismaUserPreferenceRepository },
+    { provide: CALENDAR_EVENT_REPOSITORY, useClass: PrismaCalendarEventRepository },
+    // CQRS
+    CommandBus, QueryBus,
+    SetSystemConfigCommandHandler, DeleteSystemConfigCommandHandler,
+    SetUserPreferenceCommandHandler,
+    CreateCalendarEventCommandHandler, UpdateCalendarEventCommandHandler, CancelCalendarEventCommandHandler,
+    // Queries
+    GetSystemConfigQueryHandler, ListSystemConfigsQueryHandler,
+    GetUserPreferenceQueryHandler, ListUserPreferencesQueryHandler,
+    GetCalendarEventQueryHandler, ListCalendarEventsQueryHandler,
+  ],
+  exports: [SettingsService],
+})
 export class SettingsModule {}

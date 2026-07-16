@@ -17,6 +17,7 @@
  *   - RATE_LIMIT_POLICY_TABLE — concrete { limit, ttl } for each policy
  *   - @RateLimit(policy) decorator — applies the named throttler to a route
  *   - resolveRateLimitOverride(tenantId, policy, redis) — for per-tenant overrides
+ *   - TenantRateLimitCache — in-process TTL cache for override lookups (Wave 10)
  *
  * Usage in controllers:
  *   @Post('login')
@@ -30,6 +31,10 @@
  * The decorator expands to @Throttle({ <policy>: { limit, ttl } }) which the
  * global ThrottlerGuard reads. Multiple named throttlers can co-exist on a
  * single route (each is evaluated independently).
+ *
+ * Wave 10: per-tenant overrides are now LIVE. The TenantAwareThrottlerGuard
+ * looks up Redis hash `rl:override:<tenantId>:<policy>` for each authenticated
+ * request and replaces the static limit/ttl. See guards/tenant-aware-throttler.guard.ts.
  */
 import { SetMetadata } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
@@ -90,7 +95,7 @@ export const RATE_LIMIT_POLICY_KEY = 'rateLimitPolicy';
  * same route are NOT supported — use @Throttle directly for that.
  *
  * The policy name is also stored as route metadata for audit logging +
- * metrics tagging.
+ * metrics tagging + per-tenant override resolution.
  *
  * Usage:
  *   @Post('login')
@@ -100,7 +105,7 @@ export const RATE_LIMIT_POLICY_KEY = 'rateLimitPolicy';
 export function RateLimit(policy: RateLimitPolicy): MethodDecorator & ClassDecorator {
   const config = RATE_LIMIT_POLICY_TABLE[policy];
   return function (target: unknown, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
-    // Store policy name as metadata for observability
+    // Store policy name as metadata for observability + per-tenant override resolution
     SetMetadata(RATE_LIMIT_POLICY_KEY, policy)(target as object, propertyKey!, descriptor!);
     // Apply @Throttle with the policy's named throttler
     Throttle({ [policy]: { limit: config.limit, ttl: config.ttl } })(
@@ -112,14 +117,24 @@ export function RateLimit(policy: RateLimitPolicy): MethodDecorator & ClassDecor
 }
 
 // ─────────────────────────────────────────────
-// Per-tenant override resolution (BTD §22.6)
+// Per-tenant override resolution (BTD §22.6) — Wave 10 hook made LIVE
 // ─────────────────────────────────────────────
+
+/**
+ * Minimal Redis-like client interface for override lookups.
+ * Decouples the resolver from ioredis so tests can pass a stub.
+ */
+export interface RateLimitRedisClient {
+  hgetall(key: string): Promise<Record<string, string> | null>;
+}
 
 /**
  * Resolve an effective rate-limit config for a given tenant + policy.
  *
  * Checks Redis hash key `rl:override:<tenantId>:<policy>` for an override.
- * Falls back to the policy table default if no override is set.
+ * Falls back to the policy table default if no override is set, or if Redis
+ * is unavailable (circuit-breaker semantics — never fail the request due to
+ * rate-limit config lookup failure).
  *
  * Format of override hash fields:
  *   limit: "50"
@@ -128,14 +143,14 @@ export function RateLimit(policy: RateLimitPolicy): MethodDecorator & ClassDecor
  * Per BTD §22.6, ops can set overrides at runtime via:
  *   redis-cli HSET rl:override:<tenantId>:write limit 50 ttl 120000
  *
- * Implementation note: this is intentionally NOT used inside the request hot
- * path (ThrottlerGuard reads the static config). Per-tenant overrides require
- * a custom ThrottlerStorage service — to be added in Wave 10.
+ * Wave 10: this function is now invoked inside TenantAwareThrottlerGuard on
+ * every authenticated request. To avoid hitting Redis on every single request,
+ * the guard wraps it in TenantRateLimitCache (5-second TTL in-process LRU).
  */
 export async function resolveRateLimitOverride(
   tenantId: string,
   policy: RateLimitPolicy,
-  redis?: { hgetall: (key: string) => Promise<Record<string, string> | null> },
+  redis?: RateLimitRedisClient,
 ): Promise<RateLimitConfig> {
   const fallback = RATE_LIMIT_POLICY_TABLE[policy];
   if (!redis) return fallback;
@@ -147,6 +162,87 @@ export async function resolveRateLimitOverride(
       limit: Number(override.limit ?? fallback.limit),
     };
   } catch {
+    // Circuit-breaker: never fail the request due to rate-limit config lookup
     return fallback;
+  }
+}
+
+// ─────────────────────────────────────────────
+// TenantRateLimitCache — in-process TTL cache (Wave 10)
+// ─────────────────────────────────────────────
+
+interface CacheEntry {
+  config: RateLimitConfig;
+  expiresAt: number;
+}
+
+/**
+ * In-process TTL cache for per-tenant rate-limit override lookups.
+ *
+ * Without this cache, every authenticated request would issue an HGETALL to
+ * Redis (≈1ms LAN, but adds up under load). With the cache, we issue at most
+ * one HGETALL per (tenantId, policy) per `ttlMs` window.
+ *
+ * Trade-offs:
+ *   - Stale overrides: an override set via redis-cli takes up to `ttlMs`
+ *     seconds to take effect. Default 5s — acceptable for ops tuning.
+ *   - Memory: bounded by (numTenants × numPolicies) entries; each entry is
+ *     ~50 bytes. For 10k tenants × 7 policies = 70k entries ≈ 3.5MB. Fine.
+ *   - Cache invalidation: ops can call `invalidate(tenantId, policy)` after
+ *     setting an override if they need immediate effect. Or simply restart
+ *     the API pod — the cache is per-process.
+ *
+ * The cache is per-process (not distributed). For multi-instance deployments,
+ * each pod has its own cache — acceptable since overrides change rarely.
+ */
+export class TenantRateLimitCache {
+  private readonly cache = new Map<string, CacheEntry>();
+  private readonly ttlMs: number;
+
+  constructor(ttlMs: number = 5_000) {
+    this.ttlMs = ttlMs;
+  }
+
+  /**
+   * Get an override config, hitting Redis only on cache miss or stale entry.
+   * Falls back to the policy default if Redis is unavailable.
+   */
+  async get(
+    tenantId: string,
+    policy: RateLimitPolicy,
+    redis?: RateLimitRedisClient,
+  ): Promise<RateLimitConfig> {
+    const key = `${tenantId}:${policy}`;
+    const now = Date.now();
+    const hit = this.cache.get(key);
+    if (hit && hit.expiresAt > now) {
+      return hit.config;
+    }
+    const config = await resolveRateLimitOverride(tenantId, policy, redis);
+    this.cache.set(key, { config, expiresAt: now + this.ttlMs });
+    return config;
+  }
+
+  /** Invalidate a single entry — call after setting an override via Redis. */
+  invalidate(tenantId: string, policy: RateLimitPolicy): void {
+    this.cache.delete(`${tenantId}:${policy}`);
+  }
+
+  /** Invalidate all entries for a tenant (e.g., on tenant config update). */
+  invalidateTenant(tenantId: string): void {
+    const prefix = `${tenantId}:`;
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) this.cache.delete(key);
+    }
+  }
+
+  /** Clear all entries — useful in tests. */
+  clear(): void {
+    this.cache.clear();
+  }
+
+  /** Current size — useful for tests + monitoring. */
+  get size(): number {
+    return this.cache.size;
   }
 }

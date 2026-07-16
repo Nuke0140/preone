@@ -157,3 +157,27 @@ Stage Summary:
 - Total test count: 526 passing (was 296 at end of Wave 6)
 - All 14 BTD §4.3 module catalog entries now have full DDD + CQRS + EventBus implementations
 - Next: commit, push branch, raise PR
+
+---
+Task ID: 11
+Agent: Main (Super Z)
+Task: Wave 11 — Finance (CRITICAL, biggest blocker): push, raise PR, and test.
+
+Work Log:
+- Verified working tree on `feat/wave-11-finance` (commit 969e134). 18 Finance .ts files present under `preone/apps/api/src/modules/finance/`.
+- Ran `pnpm --filter @preone/api run typecheck` → TypeScript compiles with ZERO errors.
+- Ran `npx vitest run` → **26 test files / 450 tests pass (0 failures)**, including 63 new tests in `src/modules/finance/test/finance.aggregate.spec.ts` (FeeHead, FeePlan, Invoice, Payment, Refund, Receipt aggregates: state machines, invariants, late fee calc, idempotency, refunds, concessions, write-offs, cheque bounce).
+- Pushed `feat/wave-11-finance` to origin using user-provided PAT (push URL `https://x-access-token:***@github.com/Nuke0140/preone.git`). New remote branch created.
+- Raised PR via GitHub REST API (`POST /repos/Nuke0140/preone/pulls`):
+  - PR #15: https://github.com/Nuke0140/preone/pull/15
+  - Title: `feat(wave-11): Finance module — Fees, Invoices, Payments, Refunds, Receipts, GST`
+  - head: `feat/wave-11-finance` → base: `main`
+  - state: `open`, draft: false
+- Security note: PAT was shared in plaintext in chat; user should revoke + regenerate at https://github.com/settings/tokens after this push.
+
+Stage Summary:
+- Wave 11 Finance module fully validated locally (typecheck + 450 tests pass).
+- Branch pushed to origin: `feat/wave-11-finance`.
+- PR raised: https://github.com/Nuke0140/preone/pull/15
+- Module delivers: 22 Prisma models + 20 enums, 6 DDD aggregates + 27 domain events, 16 command + 14 query handlers, 5 controllers (~30 REST endpoints), ~850 LOC SQL migration. BRC coverage: R-FIN-001..014 + R-APR-002 ✅; R-FIN-016..020 🟡 stubs.
+- Next: PR review/merge, then Wave 12 (Inventory + HR + Administration).

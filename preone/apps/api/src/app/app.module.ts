@@ -38,17 +38,29 @@ import { S3Module } from '../infrastructure/s3/s3.module';
 
 // 14 bounded contexts (will be uncommented progressively as built)
 import { AcademicsModule } from '../modules/academics/academics.module';
+import { AdministrationModule } from '../modules/administration/administration.module';
 import { AdmissionsModule } from '../modules/admissions/admissions.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
+import { CommunicationModule } from '../modules/communication/communication.module';
+import { CrmModule } from '../modules/crm/crm.module';
+import { FinanceModule } from '../modules/finance/finance.module';
+import { HrModule } from '../modules/hr/hr.module';
 import { IdentityModule } from '../modules/identity/identity.module';
+import { InventoryModule } from '../modules/inventory/inventory.module';
+import { PlatformModule } from '../modules/platform/platform.module';
+import { ReportsModule } from '../modules/reports/reports.module';
+import { SettingsModule } from '../modules/settings/settings.module';
 import { StudentModule } from '../modules/student/student.module';
+import { TransportModule } from '../modules/transport/transport.module';
 
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
+import { TenantAwareThrottlerGuard } from './guards/tenant-aware-throttler.guard';
 import { AuditInterceptor } from './interceptors/audit.interceptor';
 import { HttpLoggingInterceptor } from './interceptors/http-logging.interceptor';
 import { TraceContextInterceptor } from './interceptors/trace-context.interceptor';
+import { TenantRateLimitCache } from './decorators/rate-limit.decorator';
 
 import type { AppConfig } from '../config/env/app-config.type';
 
@@ -104,7 +116,8 @@ import type { AppConfig } from '../config/env/app-config.type';
     //      public   — 60 req/min per IP (health, swagger)
     //      pii      — 10 req/min per user (view Aadhaar/PAN)
     //    Routes opt in via @RateLimit(RateLimitPolicy.<NAME>).
-    //    Per-tenant overrides via Redis hash key (BTD §22.6) — Wave 10.
+    //    Per-tenant overrides via Redis hash key (BTD §22.6) — Wave 10 LIVE.
+    //    See guards/tenant-aware-throttler.guard.ts for override resolution.
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService<AppConfig, true>) => [
@@ -152,7 +165,10 @@ import type { AppConfig } from '../config/env/app-config.type';
     // unless opted out via @Public() decorator
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: TenantAwareThrottlerGuard },
+
+    // Wave 10 — per-tenant rate-limit override cache (5s TTL in-process LRU)
+    { provide: 'TENANT_RATE_LIMIT_CACHE', useFactory: () => new TenantRateLimitCache(5_000) },
 
     // Global pipe — DTO validation
     // (ValidationPipe is registered in main.ts instead — global pipes need

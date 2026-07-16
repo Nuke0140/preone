@@ -7,6 +7,11 @@
  * It MUST be called from within a Prisma transaction (via tx handle passed
  * by the UnitOfWork). The caller (UnitOfWork) is responsible for ensuring
  * the outbox write is atomic with the aggregate save.
+ *
+ * Wave 10b additions (BTD §15.3):
+ *   - pollRetryable() — poll FAILED rows past their backoff window
+ *   - markRetryAttempt() — increment attempts, set last_attempt_at + next_retry_at
+ *   - markDeadLetter() — terminal DEAD_LETTER status
  */
 import { Injectable } from '@nestjs/common';
 import { Prisma, type PrismaClient } from '@prisma/client';
@@ -25,6 +30,9 @@ interface OutboxRow {
   status: string;
   attempts: number;
   last_error: string | null;
+  last_attempt_at: Date | null;
+  next_retry_at: Date | null;
+  dead_letter_reason: string | null;
   published_at: Date | null;
   created_at: Date;
 }
@@ -45,6 +53,7 @@ const RAW_INSERT = `
 const RAW_POLL = `
   SELECT id, event_id, event_type, aggregate_id, aggregate_type,
          tenant_id, payload, status, attempts, last_error,
+         last_attempt_at, next_retry_at, dead_letter_reason,
          published_at, created_at
   FROM outbox
   WHERE status = 'PENDING'
@@ -54,13 +63,60 @@ const RAW_POLL = `
 `
 
 const RAW_MARK_PUBLISHED = `
-  UPDATE outbox SET status = 'PUBLISHED', published_at = NOW(), attempts = attempts + 1
-  WHERE event_id = $1
+  UPDATE outbox
+     SET status = 'PUBLISHED',
+         published_at = NOW(),
+         attempts = attempts + 1,
+         next_retry_at = NULL,
+         updated_at = NOW()
+   WHERE event_id = $1
 `
 
 const RAW_MARK_FAILED = `
-  UPDATE outbox SET status = 'FAILED', last_error = $2, attempts = attempts + 1
-  WHERE event_id = $1
+  UPDATE outbox
+     SET status = 'FAILED',
+         last_error = $2,
+         attempts = attempts + 1,
+         last_attempt_at = NOW(),
+         next_retry_at = $3,
+         updated_at = NOW()
+   WHERE event_id = $1
+`
+
+// Wave 10b — retry worker queries ──────────────────────────────────────────
+
+const RAW_POLL_RETRYABLE = `
+  SELECT id, event_id, event_type, aggregate_id, aggregate_type,
+         tenant_id, payload, status, attempts, last_error,
+         last_attempt_at, next_retry_at, dead_letter_reason,
+         published_at, created_at
+  FROM outbox
+  WHERE status = 'FAILED'
+    AND (next_retry_at IS NULL OR next_retry_at <= NOW())
+  ORDER BY COALESCE(last_attempt_at, created_at) ASC
+  LIMIT $1
+  FOR UPDATE SKIP LOCKED
+`
+
+const RAW_MARK_RETRY_ATTEMPT = `
+  UPDATE outbox
+     SET last_error = $2,
+         attempts = attempts + 1,
+         last_attempt_at = NOW(),
+         next_retry_at = $3,
+         updated_at = NOW()
+   WHERE event_id = $1
+`
+
+const RAW_MARK_DEAD_LETTER = `
+  UPDATE outbox
+     SET status = 'DEAD_LETTER',
+         dead_letter_reason = $2,
+         last_error = $2,
+         last_attempt_at = NOW(),
+         next_retry_at = NULL,
+         updated_at = NOW()
+   WHERE event_id = $1
 `
 
 function mapRow(row: OutboxRow): OutboxRecord {
@@ -75,6 +131,9 @@ function mapRow(row: OutboxRow): OutboxRecord {
     status: row.status as OutboxStatus,
     attempts: row.attempts,
     lastError: row.last_error ?? undefined,
+    lastAttemptAt: row.last_attempt_at?.toISOString(),
+    nextRetryAt: row.next_retry_at?.toISOString(),
+    deadLetterReason: row.dead_letter_reason ?? undefined,
     publishedAt: row.published_at?.toISOString(),
     createdAt: row.created_at.toISOString(),
   };
@@ -118,7 +177,34 @@ export class PrismaOutboxRepository implements OutboxRepository {
     await this.prisma.$executeRawUnsafe(RAW_MARK_PUBLISHED, eventId);
   }
 
-  async markFailed(eventId: string, error: string): Promise<void> {
-    await this.prisma.$executeRawUnsafe(RAW_MARK_FAILED, eventId, error);
+  /**
+   * Initial failure — called by OutboxPublisher when the first publish attempt
+   * fails. Sets status to FAILED, schedules next retry with backoff.
+   *
+   * Wave 10b change: now accepts a `nextRetryAt` parameter (the backoff
+   * expiry). Existing callers (OutboxPublisher) compute the backoff using
+   * the same formula as SagaRetryWorker for consistency.
+   *
+   * For backwards compatibility, if nextRetryAt is omitted, defaults to
+   * NOW() + 30s (the SagaRetryWorker base backoff).
+   */
+  async markFailed(eventId: string, error: string, nextRetryAt?: Date): Promise<void> {
+    const retryAt = nextRetryAt ?? new Date(Date.now() + 30_000);
+    await this.prisma.$executeRawUnsafe(RAW_MARK_FAILED, eventId, error, retryAt);
+  }
+
+  // ─── Wave 10b: retry worker methods ───────────────────────────────────
+
+  async pollRetryable(limit: number): Promise<OutboxRecord[]> {
+    const rows = await this.prisma.$queryRawUnsafe<OutboxRow[]>(RAW_POLL_RETRYABLE, limit);
+    return rows.map(mapRow);
+  }
+
+  async markRetryAttempt(eventId: string, error: string, nextRetryAt: Date): Promise<void> {
+    await this.prisma.$executeRawUnsafe(RAW_MARK_RETRY_ATTEMPT, eventId, error, nextRetryAt);
+  }
+
+  async markDeadLetter(eventId: string, reason: string): Promise<void> {
+    await this.prisma.$executeRawUnsafe(RAW_MARK_DEAD_LETTER, eventId, reason);
   }
 }

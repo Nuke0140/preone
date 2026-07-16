@@ -40,6 +40,7 @@ import {
 } from './application/handlers/admissions-query-handlers';
 import { AdmissionsSaga } from './application/sagas/admissions.saga';
 import { AdmissionsService } from './application/services/admissions.service';
+import { AdmissionsEventTranslator } from './application/services/admissions-event-translator.service';
 import {
   AdmissionsController, ApplicationsController, WaitingListController,
 } from './controllers/admissions.controllers';

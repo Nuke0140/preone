@@ -24,12 +24,16 @@ import { Global, Module, OnModuleInit, Logger } from '@nestjs/common';
 import type { Server } from 'socket.io';
 
 import { RedisModule } from '../redis/redis.module';
+import { CacheModule } from '../cache/cache.module';
+import { PrismaModule } from '../prisma/prisma.module';
 
 import { WsJwtVerifier } from './auth/ws-jwt-verifier';
 import { WsPubSubBridge } from './bridge/ws-pubsub-bridge';
+import { RealtimeEventPublisher } from './bridge/realtime-event-publisher';
 import { WsConnectionManager } from './gateway/ws-connection-manager';
 import { WsBaseGateway } from './gateway/ws-base-gateway';
 import { WsScopeResolver } from './subscription/ws-scope-resolver';
+import { WsScopeCheckService } from './subscription/ws-scope-check.service';
 import { WsSubscriptionManager } from './subscription/ws-subscription-manager';
 
 import { ChatGateway } from './gateways/chat.gateway';
@@ -40,13 +44,15 @@ import { BusTrackingGateway } from './gateways/bus-tracking.gateway';
 
 @Global()
 @Module({
-  imports: [RedisModule],
+  imports: [RedisModule, CacheModule, PrismaModule],
   providers: [
     WsJwtVerifier,
     WsConnectionManager,
+    WsScopeCheckService,
     WsScopeResolver,
     WsSubscriptionManager,
     WsPubSubBridge,
+    RealtimeEventPublisher,
     // 5 gateways — NestJS instantiates them and attaches to the Socket.IO server.
     ChatGateway,
     AttendanceLiveGateway,
@@ -57,9 +63,11 @@ import { BusTrackingGateway } from './gateways/bus-tracking.gateway';
   exports: [
     WsJwtVerifier,
     WsConnectionManager,
+    WsScopeCheckService,
     WsScopeResolver,
     WsSubscriptionManager,
     WsPubSubBridge,
+    RealtimeEventPublisher,
   ],
 })
 export class RealtimeModule implements OnModuleInit {

@@ -1,12 +1,14 @@
 /**
  * Unit tests for WsSubscriptionManager — subscribe / unsubscribe flow
- * with mocked Socket.IO sockets and a real WsScopeResolver.
+ * with mocked Socket.IO sockets and a WsScopeResolver backed by a
+ * mocked WsScopeCheckService.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Socket } from 'socket.io';
 
 import { WsSubscriptionManager } from '../subscription/ws-subscription-manager';
 import { WsScopeResolver } from '../subscription/ws-scope-resolver';
+import { WsScopeCheckService } from '../subscription/ws-scope-check.service';
 import { WsConnectionManager } from '../gateway/ws-connection-manager';
 import { WsNamespace, type WsAuthenticatedUser, type WsConnectionContext } from '../ws-connection-context';
 
@@ -61,10 +63,20 @@ describe('WsSubscriptionManager', () => {
   let connMgr: WsConnectionManager;
   let scopeResolver: WsScopeResolver;
   let subMgr: WsSubscriptionManager;
+  let scopeCheck: vi.Mocked<WsScopeCheckService>;
 
   beforeEach(() => {
     connMgr = new WsConnectionManager();
-    scopeResolver = new WsScopeResolver();
+    // Mock the DB-backed scope check service — default to allow-all so
+    // tests that don't care about DB checks can proceed; tests that do
+    // care can override the mock per-test.
+    scopeCheck = {
+      canTeacherAccessSection: vi.fn().mockResolvedValue(true),
+      canParentAccessSection: vi.fn().mockResolvedValue(true),
+      canParentAccessTrip: vi.fn().mockResolvedValue(true),
+      invalidate: vi.fn().mockResolvedValue(undefined),
+    } as unknown as vi.Mocked<WsScopeCheckService>;
+    scopeResolver = new WsScopeResolver(scopeCheck);
     subMgr = new WsSubscriptionManager(connMgr, scopeResolver);
   });
 

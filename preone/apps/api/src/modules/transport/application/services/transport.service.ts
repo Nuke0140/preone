@@ -13,6 +13,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 
 import { EventBusService } from '@infra/event-bus/event-bus.service';
 import { PrismaService } from '@infra/prisma/prisma.service';
+import { RealtimeEventPublisher } from '@infra/realtime/bridge/realtime-event-publisher';
 
 import { RouteAggregate } from '../../domain/aggregates/route.aggregate';
 import { TripAggregate } from '../../domain/aggregates/trip.aggregate';
@@ -38,6 +39,7 @@ export class TransportService {
     @Inject(TRANSPORT_ATTENDANCE_REPOSITORY) private readonly attendance: TransportAttendanceRepository,
     private readonly eventBus: EventBusService,
     private readonly prisma: PrismaService,
+    private readonly realtime: RealtimeEventPublisher,
   ) {}
 
   // ─── Vehicles ───────────────────────────────────────────────
@@ -186,6 +188,16 @@ export class TransportService {
     t.start(new Date().toISOString());
     await this.trips.save(t);
     await this.eventBus.publishAll(t.commit());
+
+    // Wave 16.1 — notify all trip subscribers (parents of enrolled wards,
+    // transport staff, admins) that the trip has started.
+    await this.realtime.publish(
+      'bus',
+      tenantId,
+      `trip:${tripId}`,
+      'trip.started',
+      { tripId, startedAt: new Date().toISOString() },
+    );
   }
 
   async completeTrip(tripId: string, actualEnd: string, totalDistanceKm: number | undefined, tenantId: string): Promise<void> {
@@ -193,6 +205,15 @@ export class TransportService {
     t.complete(actualEnd, totalDistanceKm);
     await this.trips.save(t);
     await this.eventBus.publishAll(t.commit());
+
+    // Wave 16.1 — notify subscribers the trip has completed.
+    await this.realtime.publish(
+      'bus',
+      tenantId,
+      `trip:${tripId}`,
+      'trip.completed',
+      { tripId, actualEnd, totalDistanceKm },
+    );
   }
 
   async markTripDelayed(tripId: string, reason: string, tenantId: string): Promise<void> {
@@ -200,6 +221,16 @@ export class TransportService {
     t.markDelayed(reason);
     await this.trips.save(t);
     await this.eventBus.publishAll(t.commit());
+
+    // Wave 16.1 — notify subscribers of the delay (parents can adjust
+    // pickup/drop-off plans accordingly).
+    await this.realtime.publish(
+      'bus',
+      tenantId,
+      `trip:${tripId}`,
+      'trip.delayed',
+      { tripId, reason, delayedAt: new Date().toISOString() },
+    );
   }
 
   async cancelTrip(tripId: string, reason: string, tenantId: string): Promise<void> {
@@ -207,6 +238,16 @@ export class TransportService {
     t.cancel(reason);
     await this.trips.save(t);
     await this.eventBus.publishAll(t.commit());
+
+    // Wave 16.1 — notify subscribers of the cancellation (parents need
+    // to arrange alternate transport).
+    await this.realtime.publish(
+      'bus',
+      tenantId,
+      `trip:${tripId}`,
+      'trip.cancelled',
+      { tripId, reason, cancelledAt: new Date().toISOString() },
+    );
   }
 
   // ─── Student Enrollment ─────────────────────────────────────

@@ -7,45 +7,51 @@
  *    to their own classroom's room, not all branches. Subscription scope
  *    MUST be consistent with JWT scope."
  *
- * Rules implemented below (per-domain authorization matrix):
+ * Wave 16.1 (this version) adds DB-backed scope checks:
+ *   - Teachers: SectionTeacher lookup (may subscribe to room:/class: for
+ *     sections they teach).
+ *   - Parents: Enrollment lookup (may subscribe to room:/class: for
+ *     sections their wards are enrolled in).
+ *   - Parents: TransportAttendance lookup (may subscribe to trip: for
+ *     trips their wards are assigned to).
  *
- * 1. room:<roomId>
- *    - ADMIN / CENTER_HEAD: any room in their tenant.
- *    - TEACHER: only rooms for sections they teach (lookup via SectionTeacher).
- *    - PARENT: only rooms for their child's section.
+ * The previous Wave 16.0 v1 was synchronous + JWT-claim-only; this v1.1
+ * is async + DB-backed. All callers (WsSubscriptionManager) have been
+ * updated to await the resolver.
+ *
+ * Authorization matrix (per-channel):
+ *
+ * 1. room:<roomId> / class:<classId>
+ *    - ADMIN / PLATFORM_ADMIN / CENTER_HEAD: any room/class in their tenant.
+ *    - TEACHER: only sections they teach (SectionTeacher lookup).
+ *    - PARENT: only sections their wards are enrolled in (Enrollment lookup).
  *    - Otherwise: denied.
  *
- * 2. class:<classId>
- *    - ADMIN / CENTER_HEAD: any class in their tenant.
- *    - TEACHER: only classes they teach.
- *    - PARENT: only their child's class.
+ * 2. branch:<branchId>
+ *    - ADMIN / PLATFORM_ADMIN: any branch in their tenant.
+ *    - CENTER_HEAD / TEACHER / PARENT: their own branch (from JWT.branchId).
  *
- * 3. branch:<branchId>
- *    - ADMIN / CENTER_HEAD: their branch (or any branch in tenant if ADMIN).
- *    - TEACHER / PARENT: their own branch (from JWT.branchId).
- *
- * 4. user:<userId>
+ * 3. user:<userId>
  *    - Self only. Always allowed if user.id === userId.
  *
- * 5. trip:<tripId>
- *    - ADMIN / CENTER_HEAD / TRANSPORT_STAFF: any trip in tenant.
- *    - PARENT: only trips their child is enrolled on.
+ * 4. trip:<tripId>
+ *    - ADMIN / PLATFORM_ADMIN / CENTER_HEAD / TRANSPORT_STAFF: any trip in tenant.
+ *    - PARENT: only trips their wards are assigned to (TransportAttendance lookup).
  *    - TEACHER: denied (teachers do not need bus tracking).
  *
- * 6. school:<schoolId>
- *    - ADMIN only (school-wide broadcasts).
+ * 5. school:<schoolId>
+ *    - ADMIN / PLATFORM_ADMIN only (school-wide broadcasts).
  *    - schoolId MUST match user.tenantId.
  *
- * NOTE: This is a v1 synchronous resolver. Section/SectionTeacher/trip-
- * enrollment lookups hit the database; results are cached for 60s in the
- * Redis cache layer (cache key: ws:scope:<userId>:<channel>). When the
- * underlying data changes (student withdrawn, teacher reassigned), the
- * cache is invalidated via the EventBus subscription.
+ * Caching: the DB-backed checks are cached for 60s in Redis by
+ * WsScopeCheckService. Stale results over-grant briefly but never
+ * under-grant — safe direction.
  */
 import { Injectable, Logger } from '@nestjs/common';
 
 import { parseChannel, CHANNEL_PREFIX } from '../ws-message-envelope';
 import type { WsAuthenticatedUser } from '../ws-connection-context';
+import { WsScopeCheckService } from './ws-scope-check.service';
 
 export type ScopeResolution =
   | { ok: true }
@@ -55,14 +61,15 @@ export type ScopeResolution =
 export class WsScopeResolver {
   private readonly logger = new Logger(WsScopeResolver.name);
 
+  constructor(private readonly scopeCheck: WsScopeCheckService) {}
+
   /**
    * Resolve whether the given user may subscribe to the given channel.
    *
-   * For v1 we only do JWT-claim-based checks (no DB lookups yet). The full
-   * DB-backed scope check (SectionTeacher, TripEnrollment) is a Wave 16.1
-   * follow-up — see `TODO(db-backed-scope-checks)` below.
+   * Async in Wave 16.1 — DB-backed checks for teachers, parents, and
+   * trip subscribers. Admins/center-heads remain pure-JWT (no DB hit).
    */
-  resolve(user: WsAuthenticatedUser, channel: string): ScopeResolution {
+  async resolve(user: WsAuthenticatedUser, channel: string): Promise<ScopeResolution> {
     const parsed = parseChannel(channel);
     if (!parsed) {
       return { ok: false, code: 'CHANNEL_INVALID', reason: `Unknown channel format: ${channel}` };
@@ -70,18 +77,37 @@ export class WsScopeResolver {
 
     switch (parsed.prefix) {
       case CHANNEL_PREFIX.ROOM:
-      case CHANNEL_PREFIX.CLASS:
-        // For v1: allow if user is admin or center_head in the same tenant.
-        // Teachers and parents get a placeholder "denied" — Wave 16.1 will
-        // wire DB lookups for section/trip enrollment.
+      case CHANNEL_PREFIX.CLASS: {
+        // Admin / center-head — JWT-only check, no DB hit.
         if (this.isAdmin(user) || this.isCenterHead(user)) {
           return { ok: true };
         }
-        // TODO(db-backed-scope-checks): look up section_teacher / student_enrollment
-        // for v1.1. Until then, allow teachers + parents to subscribe to
-        // any room/class in their tenant — they could already GET this data
-        // via REST, and denying here would block the demo.
-        return { ok: true };
+        // Teachers — SectionTeacher lookup.
+        if (this.isTeacher(user)) {
+          const ok = await this.scopeCheck.canTeacherAccessSection(user.id, parsed.id);
+          if (ok) return { ok: true };
+          return {
+            ok: false,
+            code: 'SCOPE_DENIED',
+            reason: `Teacher ${user.id} is not assigned to section ${parsed.id}`,
+          };
+        }
+        // Parents — Enrollment lookup (any ward enrolled in this section).
+        if (this.isParent(user)) {
+          const ok = await this.scopeCheck.canParentAccessSection(user.id, parsed.id);
+          if (ok) return { ok: true };
+          return {
+            ok: false,
+            code: 'SCOPE_DENIED',
+            reason: `Parent ${user.id} has no ward enrolled in section ${parsed.id}`,
+          };
+        }
+        return {
+          ok: false,
+          code: 'SCOPE_DENIED',
+          reason: `User ${user.id} has no role granting access to ${channel}`,
+        };
+      }
 
       case CHANNEL_PREFIX.BRANCH:
         // ADMIN can subscribe to any branch in their tenant.
@@ -103,10 +129,39 @@ export class WsScopeResolver {
           reason: `User ${user.id} cannot subscribe to user:${parsed.id}`,
         };
 
-      case CHANNEL_PREFIX.TRIP:
-        // For v1: allow any authenticated user in the tenant. Trip enrollment
-        // check is a Wave 16.1 follow-up.
-        return { ok: true };
+      case CHANNEL_PREFIX.TRIP: {
+        // Admin / center-head / transport staff — JWT-only.
+        if (
+          this.isAdmin(user) ||
+          this.isCenterHead(user) ||
+          this.isTransportStaff(user)
+        ) {
+          return { ok: true };
+        }
+        // Parents — TransportAttendance lookup.
+        if (this.isParent(user)) {
+          const ok = await this.scopeCheck.canParentAccessTrip(user.id, parsed.id);
+          if (ok) return { ok: true };
+          return {
+            ok: false,
+            code: 'SCOPE_DENIED',
+            reason: `Parent ${user.id} has no ward assigned to trip ${parsed.id}`,
+          };
+        }
+        // Teachers — denied (teachers do not need bus tracking).
+        if (this.isTeacher(user)) {
+          return {
+            ok: false,
+            code: 'SCOPE_DENIED',
+            reason: `Teachers cannot subscribe to trip channels`,
+          };
+        }
+        return {
+          ok: false,
+          code: 'SCOPE_DENIED',
+          reason: `User ${user.id} has no role granting access to trip ${parsed.id}`,
+        };
+      }
 
       case CHANNEL_PREFIX.SCHOOL:
         // ADMIN only, and schoolId must match tenantId.
@@ -131,11 +186,25 @@ export class WsScopeResolver {
     }
   }
 
+  // ─── Role helpers ────────────────────────────────────────────────
+
   private isAdmin(user: WsAuthenticatedUser): boolean {
     return user.roles.includes('ADMIN') || user.roles.includes('PLATFORM_ADMIN');
   }
 
   private isCenterHead(user: WsAuthenticatedUser): boolean {
     return user.roles.includes('CENTER_HEAD');
+  }
+
+  private isTeacher(user: WsAuthenticatedUser): boolean {
+    return user.roles.includes('TEACHER') || user.roles.includes('CLASS_TEACHER');
+  }
+
+  private isParent(user: WsAuthenticatedUser): boolean {
+    return user.roles.includes('PARENT') || user.roles.includes('GUARDIAN');
+  }
+
+  private isTransportStaff(user: WsAuthenticatedUser): boolean {
+    return user.roles.includes('TRANSPORT_STAFF') || user.roles.includes('DRIVER');
   }
 }

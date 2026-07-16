@@ -13,7 +13,7 @@
  *   - 1 saga (AdmissionsSaga) — orchestrates student onboarding + fee plan creation
  *     on ApplicationApprovedEvent (BTD §15)
  */
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 
 import { EventBusModule } from '@infra/event-bus/event-bus.module';
 import { PrismaModule } from '@infra/prisma/prisma.module';
@@ -117,4 +117,12 @@ class NoOpFeePlanPort implements IFeePlanPort {
   ],
   exports: [AdmissionsService, STUDENT_ONBOARDING_PORT, FEE_PLAN_PORT],
 })
-export class AdmissionsModule {}
+export class AdmissionsModule implements OnModuleInit {
+  constructor(private readonly translator: AdmissionsEventTranslator) {}
+
+  onModuleInit(): void {
+    // Register domain-event → integration-event translations.
+    // Per BTD §14.3 — translations are explicit per event type.
+    this.translator.register();
+  }
+}

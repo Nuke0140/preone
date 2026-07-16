@@ -1,0 +1,6 @@
+/**
+ * DI tokens for Settings repositories.
+ */
+export const SYSTEM_CONFIG_REPOSITORY = Symbol('SYSTEM_CONFIG_REPOSITORY');
+export const USER_PREFERENCE_REPOSITORY = Symbol('USER_PREFERENCE_REPOSITORY');
+export const CALENDAR_EVENT_REPOSITORY = Symbol('CALENDAR_EVENT_REPOSITORY');

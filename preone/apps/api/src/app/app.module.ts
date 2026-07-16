@@ -51,15 +51,6 @@ import { HttpLoggingInterceptor } from './interceptors/http-logging.interceptor'
 import { TraceContextInterceptor } from './interceptors/trace-context.interceptor';
 
 import type { AppConfig } from '../config/env/app-config.type';
-// import { CrmModule } from './modules/crm/crm.module';
-// import { CommunicationModule } from './modules/communication/communication.module';
-// import { FinanceModule } from './modules/finance/finance.module';
-// import { InventoryModule } from './modules/inventory/inventory.module';
-// import { HrModule } from './modules/hr/hr.module';
-// import { AdministrationModule } from './modules/administration/administration.module';
-// import { ReportsModule } from './modules/reports/reports.module';
-// import { SettingsModule } from './modules/settings/settings.module';
-// import { PlatformModule } from './modules/platform/platform.module';
 
 @Module({
   imports: [
@@ -145,15 +136,16 @@ import type { AppConfig } from '../config/env/app-config.type';
     AcademicsModule,
     AdmissionsModule,
     AttendanceModule,
-    // CrmModule,
-    // CommunicationModule,
-    // FinanceModule,
-    // InventoryModule,
-    // HrModule,
-    // AdministrationModule,
-    // ReportsModule,
-    // SettingsModule,
-    // PlatformModule,
+    CommunicationModule,
+    FinanceModule,
+    HrModule,
+    CrmModule,
+    InventoryModule,
+    AdministrationModule,
+    TransportModule,
+    ReportsModule,
+    SettingsModule,
+    PlatformModule,
   ],
   providers: [
     // Global guards — JwtAuthGuard + PermissionsGuard run on every route

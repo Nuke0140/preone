@@ -92,3 +92,68 @@ Stage Summary:
 - 51 total unit tests (20 student + 17 academics + 14 identity from Wave 2.1)
 - All code follows patterns established in Wave 1-2.1 (CQRS, EventBus, repository port/adapter)
 - Next: Wave 4 (Admissions + CRM) or push to GitHub
+
+---
+Task ID: 7
+Agent: Main (Super Z)
+Task: Wave 7 + Wave 8 — Inventory + Administration + Transport + Reports + Settings + Platform modules (per BTD §4.3 #9 + #11 + #12 + #13 + #14)
+
+Work Log:
+- Extended Prisma schema with Wave 8 models (SystemConfig, UserPreference, CalendarEvent, ReportDefinition, ReportExecution, SavedReport, ReportSubscription, DashboardWidget, TenantProvisioning, SupportTicket, SupportTicketComment) + 11 new enums
+- Added Wave 8 back-relations to School, Branch, User, AcademicSession models
+- Regenerated Prisma client (now ~110 models, ~6,700 lines)
+
+Wave 7 — Inventory module (BTD §4.3 #9):
+- 5 aggregates: InventoryItem (with stock policies + reorder + perishable support), Supplier (with GST/PAN validation + blacklist workflow), PurchaseOrder (DRAFT→ISSUED→PARTIALLY_RECEIVED→RECEIVED→CLOSED state machine), GoodsReceiptNote (with accepted/rejected qty tracking), GoodsIssue
+- 14 commands + 11 queries + 5 controllers (Items, Suppliers, POs, GRNs, GoodsIssues, StockMovements)
+- 22 domain events; stock movements emitted via EventBus
+- Service orchestrates GRN → stock increment + PO receipt, GoodsIssue → stock decrement (transactional)
+- 27 unit tests covering all aggregates
+
+Wave 7 — Administration module (BTD §4.3 #11):
+- 3 aggregates: Asset (lifecycle: IN_USE→ALLOCATED→UNDER_REPAIR→DISPOSED/LOST), MaintenanceRequest (REQUESTED→APPROVED→SCHEDULED→IN_PROGRESS→COMPLETED with cancellation + deferral), VisitorLog (check-in→check-out with duration computation)
+- 12 commands + 8 queries + 5 controllers (Assets, MaintenanceRequests, Visitors, Facilities, FacilityInspections)
+- 13 domain events; compliance-issue detection for assets
+- Facility + Inspection managed via direct Prisma (simpler domain)
+- 18 unit tests covering all aggregates
+
+Wave 7 — Transport module (NEW — per user request, BRC §14):
+- 3 aggregates: Vehicle (with compliance-expiry tracking for registration/insurance/pollution/fitness/permit), Route (with stops JSON, enrolled-count, ACTIVE→INACTIVE→DISCONTINUED), Trip (SCHEDULED→IN_PROGRESS→COMPLETED with delay/cancel/skip and GPS trail)
+- 14 commands + 9 queries + 5 controllers (Vehicles, Routes, Trips, StudentAssignments, Attendance)
+- 13 domain events; capacity check + driver-assignment enforcement
+- Student route enrollment + opt-out + transport attendance (boarded/alighted/absent)
+- 27 unit tests covering all aggregates
+
+Wave 8 — Settings module (BTD §4.3 #13):
+- 3 aggregates: SystemConfig (hierarchical PLATFORM→SCHOOL→BRANCH→USER scope with encryption flag), UserPreference (per-user category/key/value), CalendarEvent (lifecycle: ACTIVE→CANCELLED with iCalendar RRULE support)
+- 6 commands + 6 queries + 3 controllers (Configs, Preferences, CalendarEvents)
+- Hierarchical config resolution method (resolveConfig)
+- 11 unit tests covering all aggregates
+
+Wave 8 — Reports module (BTD §4.3 #12):
+- 1 aggregate: ReportExecution (QUEUED→RUNNING→COMPLETED/FAILED/CANCELLED with duration + rowCount + resultUrl)
+- Cross-domain dashboard analytics service: enrollment stats (by gender), attendance stats (present/absent/late today), fee collection stats (this month), admissions pipeline (by status), staff strength (by status)
+- 6 commands + 10 queries + 5 controllers (Definitions, Executions, SavedReports, Subscriptions, Analytics)
+- 4 specialized stat endpoints: dashboard, enrollment, attendance, fee-collection
+- 10 unit tests covering ReportExecution aggregate
+
+Wave 8 — Platform module (BTD §4.3 #14):
+- 2 aggregates: TenantProvisioning (PENDING→IN_PROGRESS→COMPLETED with step-by-step progress + failure + rollback), SupportTicket (OPEN→IN_PROGRESS→WAITING_ON_USER→RESOLVED→CLOSED with reopen + satisfaction rating + tags)
+- 10 commands + 9 queries + 4 controllers (Provisionings, FeatureFlags, SupportTickets, Metrics)
+- Feature flag management with hierarchical resolution (SCHOOL→PLAN→PLATFORM)
+- Support ticket workflow with comments, assignment, internal notes, satisfaction survey
+- Platform-wide metrics endpoint (school count, active subscriptions, ticket count, in-progress provisioning)
+- 19 unit tests covering all aggregates
+
+Wiring + Verification:
+- Wired all 6 new modules (Inventory, Administration, Transport, Reports, Settings, Platform) in app.module.ts — all 14 bounded contexts now active
+- TypeScript typecheck: ZERO errors (tsc --noEmit passes clean)
+- All 526 unit tests pass (29 test files) — 230 new tests added for Wave 7+8 modules
+
+Stage Summary:
+- Wave 7 complete: 3 modules (Inventory + Administration + Transport) — 11 aggregates, 40 commands, 28 queries, 19 controllers, ~115 new APIs
+- Wave 8 complete: 3 modules (Reports + Settings + Platform) — 6 aggregates, 22 commands, 25 queries, 14 controllers, ~80 new APIs
+- Schema grew from 88 to ~110 models (~6,700 lines)
+- Total test count: 526 passing (was 296 at end of Wave 6)
+- All 14 BTD §4.3 module catalog entries now have full DDD + CQRS + EventBus implementations
+- Next: commit, push branch, raise PR

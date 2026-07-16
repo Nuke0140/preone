@@ -7337,3 +7337,5452 @@ model CctvCoverage {
   @@index([schoolId, isActive])
   @@map("cctv_coverages")
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// WAVE 13 — DATABASE v3.0 COMPLETION
+// Generated from ERD v3.0 — adds 208 missing models to reach 307-table target
+// Domains: Platform (4) + Cross-Cutting (12) + CRM (11) + Student (11) +
+// Academics (16) + Daily Ops (17) + Inventory (20) + Communication (27) +
+// Finance (29) + HR (28) + Administration (14) + Transport (8) + Settings (9)
+// Note: Models use plain FK columns (no Prisma @relation) to avoid inverse-field
+// churn. Relations can be progressively promoted as modules consume them.
+// ════════════════════════════════════════════════════════════════════════
+
+// MODEL: storage_usages (per ERD v3.0, aggregate=Tenant)
+model StorageUsage {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  month                    Int
+  year                     Int
+  photosBytes              BigInt
+  documentsBytes           BigInt
+  backupsBytes             BigInt
+  totalBytes               BigInt
+  limitBytes               BigInt
+  overageBytes             BigInt
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([month, year])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("storage_usages")
+}
+
+// MODEL: feature_usages (per ERD v3.0, aggregate=Tenant)
+model FeatureUsage {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  month                    Int
+  year                     Int
+  smsSent                  Int
+  whatsappSent             Int
+  emailSent                Int
+  pushSent                 Int
+  apiCalls                 BigInt
+  quotaSms                 Int
+  quotaWhatsapp            Int
+  quotaEmail               Int
+  quotaApi                 BigInt
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([month, year])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("feature_usages")
+}
+
+// MODEL: platform_api_keys (per ERD v3.0, aggregate=Tenant)
+model PlatformApiKey {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  keyHash                  String
+  keyPrefix                String
+  permissions              Json
+  lastUsedAt               DateTime?
+  isActive                 Boolean
+  expiresAt                DateTime?
+  revokedAt                DateTime?
+  revokedBy                String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("platform_api_keys")
+}
+
+// MODEL: platform_backups (per ERD v3.0, aggregate=Tenant)
+model PlatformBackup {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  type                     BackupType
+  sizeBytes                BigInt
+  storageUrl               String
+  status                   BackupStatus
+  startedAt                DateTime
+  completedAt              DateTime?
+  verifiedAt               DateTime?
+  retentionUntil           DateTime
+  errorMessage             String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([status])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("platform_backups")
+}
+
+// MODEL: global_configurations (per ERD v3.0, aggregate=PlatformConfig)
+model GlobalConfiguration {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  key                      String
+  value                    String
+  description              String?
+  isEditable               Boolean
+  isSensitive              Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  roleId                   String?
+  permissionId             String?
+  userId                   String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([key])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("global_configurations")
+}
+
+// MODEL: marketing_campaigns (per ERD v3.0, aggregate=Campaign)
+model MarketingCampaign {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  channel                  CampaignChannel
+  startDate                DateTime
+  endDate                  DateTime?
+  budgetCents              Int?
+  targetLeads              Int?
+  actualLeads              Int
+  actualConversions        Int
+  utmSource                String?
+  utmMedium                String?
+  utmCampaign              String?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("marketing_campaigns")
+}
+
+// MODEL: lead_source_tbls (per ERD v3.0, aggregate=Campaign)
+model LeadSourceTbl {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  channel                  CampaignChannel
+  isActive                 Boolean
+  defaultScoreWeight       Decimal
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_source_tbls")
+}
+
+// MODEL: enquirys (per ERD v3.0, aggregate=Lead)
+model Enquiry {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  leadId                   String
+  programType              ProgramType
+  intendedStartDate        DateTime
+  priority                 String
+  notes                    String?
+  status                   String
+  convertedAt              DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("enquirys")
+}
+
+// MODEL: referrals (per ERD v3.0, aggregate=Lead)
+model Referral {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  referrerParentId         String?
+  referredLeadId           String
+  referralCode             String
+  status                   ReferralStatus
+  rewardType               String?
+  rewardAmountCents        Int?
+  rewardedAt               DateTime?
+  qualifiedAt              DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("referrals")
+}
+
+// MODEL: referral_rewards (per ERD v3.0, aggregate=Lead)
+model ReferralReward {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  referralId               String
+  recipient                String
+  rewardType               String
+  amountCents              Int
+  invoiceCreditId          String?
+  issuedAt                 DateTime
+  redeemedAt               DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("referral_rewards")
+}
+
+// MODEL: whats_app_opt_ins (per ERD v3.0, aggregate=Lead)
+model WhatsAppOptIn {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  phone                    String
+  source                   String
+  optedInAt                DateTime
+  optedOutAt               DateTime?
+  templateId               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([phone])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("whats_app_opt_ins")
+}
+
+// MODEL: email_subscriptions (per ERD v3.0, aggregate=Lead)
+model EmailSubscription {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  email                    String
+  subscribedAt             DateTime
+  unsubscribedAt           DateTime?
+  source                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([email])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("email_subscriptions")
+}
+
+// MODEL: lead_scores (per ERD v3.0, aggregate=Lead)
+model LeadScore {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  leadId                   String
+  scoreValue               Int
+  scoreTier                LeadScoreTier
+  sourceWeight             Decimal
+  engagementScore          Int
+  recencyScore             Int
+  profileCompletenessScore Int
+  computedAt               DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_scores")
+}
+
+// MODEL: lead_conversions (per ERD v3.0, aggregate=Lead)
+model LeadConversion {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  leadId                   String
+  fromStage                String
+  toStage                  String
+  convertedAt              DateTime
+  durationHours            Decimal
+  convertedBy              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_conversions")
+}
+
+// MODEL: lead_assignments (per ERD v3.0, aggregate=Lead)
+model LeadAssignment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  leadId                   String
+  assignedTo               String
+  assignedBy               String?
+  strategy                 String
+  assignedAt               DateTime
+  unassignedAt             DateTime?
+  reason                   String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lead_assignments")
+}
+
+// MODEL: marketing_channels (per ERD v3.0, aggregate=Campaign)
+model MarketingChannel {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  channel                  CampaignChannel
+  providerConfig           Json?
+  rateLimitPerMin          Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  leadId                   String?
+  academicSessionId        String?
+  applicationId            String?
+  verifiedBy               String?
+  counsellorId             String?
+  approverId               String?
+  studentId                String?
+  classroomId              String?
+  feePlanId                String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("marketing_channels")
+}
+
+// MODEL: student_medical_records (per ERD v3.0, aggregate=Student)
+model StudentMedicalRecord {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  bloodGroup               BloodGroup?
+  heightCm                 Decimal?
+  weightKg                 Decimal?
+  bmi                      Decimal?
+  pediatricianName         String?
+  pediatricianPhone        String?
+  hospitalName             String?
+  emergencyContactName     String
+  emergencyContactPhone    String
+  emergencyContactRelationship String?
+  medicalConditions        Json?
+  allergies                Json?
+  medications              Json?
+  dietaryRestrictions      Json?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_medical_records")
+}
+
+// MODEL: immunization_records (per ERD v3.0, aggregate=Student)
+model ImmunizationRecord {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  vaccineName              String
+  doseNumber               Int
+  administeredDate         DateTime
+  administeredBy           String?
+  certificateUrl           String?
+  nextDueDate              DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("immunization_records")
+}
+
+// MODEL: student_passports (per ERD v3.0, aggregate=Student)
+model StudentPassport {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  passportNumberEncrypted  Bytes
+  passportNumberMasked     String
+  issuingCountry           String
+  issueDate                DateTime
+  expiryDate               DateTime
+  fileUrl                  String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_passports")
+}
+
+// MODEL: classroom_assignments (per ERD v3.0, aggregate=Classroom)
+model ClassroomAssignment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  classroomId              String
+  sectionId                String?
+  academicSessionId        String
+  assignedAt               DateTime
+  unassignedAt             DateTime?
+  rollNumber               Int?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("classroom_assignments")
+}
+
+// MODEL: promotions (per ERD v3.0, aggregate=Student)
+model Promotion {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  academicSessionId        String
+  fromClassroomId          String?
+  toClassroomId            String?
+  fromProgram              ProgramType?
+  toProgram                ProgramType?
+  status                   PromotionStatus
+  remarks                  String?
+  promotedBy               String?
+  promotedAt               DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("promotions")
+}
+
+// MODEL: graduations (per ERD v3.0, aggregate=Student)
+model Graduation {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  academicSessionId        String
+  ceremonyDate             DateTime
+  certificateNumber        String
+  certificateUrl           String?
+  honors                   String?
+  photos                   Json?
+  graduatedAt              DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("graduations")
+}
+
+// MODEL: transfers (per ERD v3.0, aggregate=Student)
+model Transfer {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  transferType             String
+  fromBranchId             String
+  toBranchId               String?
+  toSchoolName             String?
+  reason                   TransferReason
+  transferCertificateUrl   String?
+  requestedAt              DateTime
+  approvedAt               DateTime?
+  completedAt              DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("transfers")
+}
+
+// MODEL: archives (per ERD v3.0, aggregate=Student)
+model Archive {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  archivedAt               DateTime
+  archiveReason            String
+  dataMinimized            Boolean
+  minimizedAt              DateTime?
+  retentionUntil           DateTime
+  archivedBy               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("archives")
+}
+
+// MODEL: student_historys (per ERD v3.0, aggregate=Student)
+model StudentHistory {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  event                    String
+  snapshot                 Json
+  occurredAt               DateTime
+  actorId                  String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_historys")
+}
+
+// MODEL: student_consents (per ERD v3.0, aggregate=Student)
+model StudentConsent {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  guardianId               String
+  consentType              ConsentType
+  granted                  Boolean
+  grantedAt                DateTime?
+  revokedAt                DateTime?
+  validUntil               DateTime?
+  evidenceUrl              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("student_consents")
+}
+
+// MODEL: sibling_links (per ERD v3.0, aggregate=Student)
+model SiblingLink {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  siblingStudentId         String
+  relationship             String
+  verified                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  programId                String?
+  academicSessionId        String?
+  classroomId              String?
+  curriculumId             String?
+  lessonPlanId             String?
+  observerId               String?
+  observationId            String?
+  portfolioId              String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("sibling_links")
+}
+
+// MODEL: programs (per ERD v3.0, aggregate=Program)
+model Program {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  programType              ProgramType
+  minAgeYears              Decimal
+  maxAgeYears              Decimal
+  description              String?
+  isActive                 Boolean
+  displayOrder             Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("programs")
+}
+
+// MODEL: lesson_plan_items (per ERD v3.0, aggregate=Program)
+model LessonPlanItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  lessonPlanId             String
+  dayOfWeek                Int
+  timeSlot                 String  // was: TimeSlot (model ref stripped to scalar)
+  activityType             ActivityType
+  title                    String
+  description              String?
+  learningOutcomeIds       Json?
+  materials                Json?
+  durationMinutes          Int
+  deliveryStatus           String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("lesson_plan_items")
+}
+
+// MODEL: activitys (per ERD v3.0, aggregate=Program)
+model Activity {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  activityType             ActivityType
+  description              String?
+  materials                Json?
+  ageBandMin               Decimal?
+  ageBandMax               Decimal?
+  learningOutcomeIds       Json?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("activitys")
+}
+
+// MODEL: observation_tags (per ERD v3.0, aggregate=Program)
+model ObservationTag {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  observationId            String
+  tag                      String
+  taggedBy                 String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("observation_tags")
+}
+
+// MODEL: milestone_assessments (per ERD v3.0, aggregate=Program)
+model MilestoneAssessment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  milestoneId              String
+  status                   MilestoneStatus
+  assessedBy               String?
+  assessedAt               DateTime
+  ageAtAssessmentMonths    Int
+  notes                    String?
+  concernFlagged           Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("milestone_assessments")
+}
+
+// MODEL: report_card_sections (per ERD v3.0, aggregate=Program)
+model ReportCardSection {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  reportCardId             String
+  domain                   String
+  sectionTitle             String
+  overallRating            String
+  teacherRemarks           String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("report_card_sections")
+}
+
+// MODEL: report_card_comments (per ERD v3.0, aggregate=Program)
+model ReportCardComment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  sectionId                String
+  learningOutcomeId        String?
+  milestoneId              String?
+  rating                   String
+  comment                  String?
+  aiSuggested              Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("report_card_comments")
+}
+
+// MODEL: learning_materials (per ERD v3.0, aggregate=Program)
+model LearningMaterial {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  title                    String
+  materialType             String
+  programType              ProgramType?
+  fileUrl                  String
+  thumbnailUrl             String?
+  description              String?
+  durationMinutes          Int?
+  isPublished              Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("learning_materials")
+}
+
+// MODEL: teacher_subjects (per ERD v3.0, aggregate=Program)
+model TeacherSubject {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  teacherId                String
+  subjectId                String
+  classroomId              String
+  academicSessionId        String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("teacher_subjects")
+}
+
+// MODEL: classroom_subjects (per ERD v3.0, aggregate=Program)
+model ClassroomSubject {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  classroomId              String
+  subjectId                String
+  weeklyPeriods            Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("classroom_subjects")
+}
+
+// MODEL: syllabuss (per ERD v3.0, aggregate=Program)
+model Syllabus {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  subjectId                String
+  classroomId              String
+  academicSessionId        String
+  totalUnits               Int
+  units                    Json
+  isPublished              Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("syllabuss")
+}
+
+// MODEL: syllabus_progresss (per ERD v3.0, aggregate=Program)
+model SyllabusProgress {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  syllabusId               String
+  unitNo                   Int
+  status                   String
+  startedAt                DateTime?
+  completedAt              DateTime?
+  teacherId                String?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("syllabus_progresss")
+}
+
+// MODEL: weekly_plans (per ERD v3.0, aggregate=Program)
+model WeeklyPlan {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  classroomId              String
+  weekStartDate            DateTime
+  theme                    String?
+  objectives               Json?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("weekly_plans")
+}
+
+// MODEL: monthly_themes (per ERD v3.0, aggregate=Program)
+model MonthlyTheme {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  monthIndex               Int
+  academicSessionId        String
+  description              String?
+  color                    String?
+  imageUrl                 String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("monthly_themes")
+}
+
+// MODEL: holiday_homeworks (per ERD v3.0, aggregate=Program)
+model HolidayHomework {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  classroomId              String
+  title                    String
+  description              String?
+  assignedDate             DateTime
+  dueDate                  DateTime
+  attachmentUrl            String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("holiday_homeworks")
+}
+
+// MODEL: parent_teacher_meetings (per ERD v3.0, aggregate=Program)
+model ParentTeacherMeeting {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  classroomId              String?
+  academicSessionId        String
+  title                    String
+  scheduledAt              DateTime
+  durationMinutes          Int
+  mode                     String
+  location                 String?
+  videoLink                String?
+  agenda                   String?
+  status                   String
+  minutesUrl               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  studentId                String?
+  attendanceId             String?
+  grantedByGuardianId      String?
+  pickupLogId              String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("parent_teacher_meetings")
+}
+
+// MODEL: meal_logs (per ERD v3.0, aggregate=Attendance)
+model MealLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  mealDate                 DateTime
+  mealType                 MealType
+  menuItem                 String?
+  amountEaten              MealAmountEaten
+  notes                    String?
+  recordedBy               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("meal_logs")
+}
+
+// MODEL: meal_menus (per ERD v3.0, aggregate=Attendance)
+model MealMenu {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  menuDate                 DateTime
+  mealType                 MealType
+  menuItems                Json
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("meal_menus")
+}
+
+// MODEL: nap_logs (per ERD v3.0, aggregate=Attendance)
+model NapLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  napDate                  DateTime
+  napStartAt               DateTime?
+  napEndAt                 DateTime?
+  durationMinutes          Int?
+  quality                  NapQuality
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("nap_logs")
+}
+
+// MODEL: toilet_logs (per ERD v3.0, aggregate=Attendance)
+model ToiletLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  logDate                  DateTime
+  logTime                  String
+  type                     ToiletType
+  notes                    String?
+  recordedBy               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("toilet_logs")
+}
+
+// MODEL: mood_logs (per ERD v3.0, aggregate=Attendance)
+model MoodLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  moodDate                 DateTime
+  timeSlot                 String  // was: TimeSlot (model ref stripped to scalar)
+  mood                     Mood
+  notes                    String?
+  recordedBy               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("mood_logs")
+}
+
+// MODEL: water_intake_logs (per ERD v3.0, aggregate=Attendance)
+model WaterIntakeLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  logDate                  DateTime
+  logTime                  String
+  quantityMl               Int
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("water_intake_logs")
+}
+
+// MODEL: medicine_logs (per ERD v3.0, aggregate=Attendance)
+model MedicineLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  medicineName             String
+  dosage                   String
+  administeredAt           DateTime
+  administeredBy           String
+  authorizationId          String?
+  notes                    String?
+  parentNotifiedAt         DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("medicine_logs")
+}
+
+// MODEL: emergency_logs (per ERD v3.0, aggregate=Attendance)
+model EmergencyLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  emergencyType            EmergencyType
+  occurredAt               DateTime
+  resolvedAt               DateTime?
+  description              String
+  actionsTaken             String
+  studentsAffectedCount    Int
+  staffInvolved            Json?
+  externalAgenciesNotified Json?
+  parentNotifiedAt         DateTime?
+  reportedBy               String
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("emergency_logs")
+}
+
+// MODEL: emergency_drills (per ERD v3.0, aggregate=Attendance)
+model EmergencyDrill {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  drillType                EmergencyType
+  scheduledDate            DateTime
+  conductedAt              DateTime?
+  participantsCount        Int?
+  evacuationTimeSeconds    Int?
+  observations             String?
+  improvements             String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("emergency_drills")
+}
+
+// MODEL: today_dashboards (per ERD v3.0, aggregate=Attendance)
+model TodayDashboard {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  dashboardDate            DateTime
+  totalStudents            Int
+  presentCount             Int
+  absentCount              Int
+  lateCount                Int
+  onFieldTripCount         Int
+  incidentsCount           Int
+  pendingPickupsCount      Int
+  birthdaysCount           Int
+  newAdmissionsCount       Int
+  snapshotAt               DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("today_dashboards")
+}
+
+// MODEL: time_slots (per ERD v3.0, aggregate=Attendance)
+model TimeSlot {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  slotType                 String  // was: TimeSlot (model ref stripped to scalar)
+  startTime                String
+  endTime                  String
+  displayOrder             Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("time_slots")
+}
+
+// MODEL: activity_schedules (per ERD v3.0, aggregate=Attendance)
+model ActivitySchedule {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  classroomId              String
+  dayOfWeek                Int
+  timeSlot                 String  // was: TimeSlot (model ref stripped to scalar)
+  activityType             ActivityType
+  title                    String?
+  description              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("activity_schedules")
+}
+
+// MODEL: visitor_blacklists (per ERD v3.0, aggregate=Attendance)
+model VisitorBlacklist {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  visitorName              String
+  phone                    String?
+  reason                   String
+  addedBy                  String
+  addedAt                  DateTime
+  expiresAt                DateTime?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("visitor_blacklists")
+}
+
+// MODEL: gate_passs (per ERD v3.0, aggregate=Attendance)
+model GatePass {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  issuedAt                 DateTime
+  reason                   String
+  authorizedBy             String
+  usedAt                   DateTime?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("gate_passs")
+}
+
+// MODEL: field_trips (per ERD v3.0, aggregate=Attendance)
+model FieldTrip {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  title                    String
+  destination              String
+  destinationAddress       String?
+  tripDate                 DateTime
+  departureAt              DateTime
+  returnAt                 DateTime
+  classroomIds             Json?
+  totalStudents            Int
+  supervisorId             String
+  transportVehicleId       String?
+  costCents                Int?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("field_trips")
+}
+
+// MODEL: field_trip_authorizations (per ERD v3.0, aggregate=Attendance)
+model FieldTripAuthorization {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  fieldTripId              String
+  studentId                String
+  guardianId               String
+  authorized               Boolean
+  authorizedAt             DateTime?
+  declinedAt               DateTime?
+  feeInvoiceId             String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("field_trip_authorizations")
+}
+
+// MODEL: inventory_categorys (per ERD v3.0, aggregate=Inventory)
+model InventoryCategory {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     InventoryCategoryName
+  description              String?
+  isActive                 Boolean
+  displayOrder             Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("inventory_categorys")
+}
+
+// MODEL: inventory_stocks (per ERD v3.0, aggregate=Inventory)
+model InventoryStock {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  itemId                   String
+  batchNumber              String?
+  quantity                 Decimal
+  unitCostCents            Int
+  receivedAt               DateTime
+  grnId                    String?
+  expiryDate               DateTime?
+  location                 String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("inventory_stocks")
+}
+
+// MODEL: purchase_request_items (per ERD v3.0, aggregate=Inventory)
+model PurchaseRequestItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  purchaseRequestId        String
+  itemId                   String?
+  itemName                 String
+  quantity                 Decimal
+  unit                     String
+  estimateCents            Int
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("purchase_request_items")
+}
+
+// MODEL: purchase_order_items (per ERD v3.0, aggregate=Inventory)
+model PurchaseOrderItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  purchaseOrderId          String
+  itemId                   String?
+  itemName                 String
+  quantityOrdered          Decimal
+  quantityReceived         Decimal
+  unitCostCents            Int
+  taxPercentage            Decimal
+  lineTotalCents           Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("purchase_order_items")
+}
+
+// MODEL: grns (per ERD v3.0, aggregate=Inventory)
+model GRN {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  grnNumber                String
+  purchaseOrderId          String?
+  vendorId                 String
+  receivedDate             DateTime
+  receivedBy               String
+  status                   GRNStatus
+  verifiedBy               String?
+  verifiedAt               DateTime?
+  invoiceNumber            String?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("grns")
+}
+
+// MODEL: grnitems (per ERD v3.0, aggregate=Inventory)
+model GRNItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  grnId                    String
+  poItemId                 String?
+  itemId                   String
+  quantityReceived         Decimal
+  quantityAccepted         Decimal
+  quantityRejected         Decimal
+  rejectionReason          String?
+  batchNumber              String?
+  expiryDate               DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("grnitems")
+}
+
+// MODEL: vendors (per ERD v3.0, aggregate=Inventory)
+model Vendor {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  gstNumber                String?
+  panNumber                String?
+  contactPerson            String?
+  phone                    String
+  email                    String?
+  address                  String
+  city                     String
+  state                    String
+  pincode                  String
+  paymentTermsDays         Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vendors")
+}
+
+// MODEL: vendor_contacts (per ERD v3.0, aggregate=Inventory)
+model VendorContact {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  vendorId                 String
+  name                     String
+  designation              String?
+  phone                    String?
+  email                    String?
+  isPrimary                Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vendor_contacts")
+}
+
+// MODEL: stock_issues (per ERD v3.0, aggregate=Inventory)
+model StockIssue {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  issueNumber              String
+  issuedToUserId           String?
+  issuedToClassroomId      String?
+  issueDate                DateTime
+  status                   StockIssueStatus
+  purpose                  String?
+  issuedBy                 String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_issues")
+}
+
+// MODEL: stock_issue_items (per ERD v3.0, aggregate=Inventory)
+model StockIssueItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  stockIssueId             String
+  itemId                   String
+  quantityIssued           Decimal
+  quantityReturned         Decimal
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_issue_items")
+}
+
+// MODEL: stock_returns (per ERD v3.0, aggregate=Inventory)
+model StockReturn {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  returnNumber             String
+  returnType               StockReturnType
+  referenceType            String?
+  referenceId              String?
+  vendorId                 String?
+  returnDate               DateTime
+  reason                   String
+  processedBy              String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_returns")
+}
+
+// MODEL: stock_return_items (per ERD v3.0, aggregate=Inventory)
+model StockReturnItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  stockReturnId            String
+  itemId                   String
+  quantity                 Decimal
+  condition                ItemCondition?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_return_items")
+}
+
+// MODEL: damaged_items (per ERD v3.0, aggregate=Inventory)
+model DamagedItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  itemId                   String
+  quantity                 Decimal
+  condition                ItemCondition
+  damageReason             String
+  disposalAction           DamagedItemAction
+  disposalDate             DateTime?
+  recordedBy               String
+  photoUrl                 String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("damaged_items")
+}
+
+// MODEL: damaged_actions (per ERD v3.0, aggregate=Inventory)
+model DamagedAction {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  damagedItemId            String
+  action                   DamagedItemAction
+  actionDate               DateTime
+  costCents                Int?
+  notes                    String?
+  actedBy                  String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("damaged_actions")
+}
+
+// MODEL: stock_audit_items (per ERD v3.0, aggregate=Inventory)
+model StockAuditItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  stockAuditId             String
+  itemId                   String
+  systemQuantity           Decimal
+  physicalQuantity         Decimal
+  discrepancy              Decimal
+  discrepancyType          String?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("stock_audit_items")
+}
+
+// MODEL: low_stock_alerts (per ERD v3.0, aggregate=Inventory)
+model LowStockAlert {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  itemId                   String
+  alertType                LowStockAlertType
+  quantityAtTrigger        Decimal
+  triggeredAt              DateTime
+  acknowledgedBy           String?
+  acknowledgedAt           DateTime?
+  resolvedAt               DateTime?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("low_stock_alerts")
+}
+
+// MODEL: reorder_rules (per ERD v3.0, aggregate=Inventory)
+model ReorderRule {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  itemId                   String
+  triggerLevel             Decimal
+  reorderQty               Decimal
+  vendorId                 String?
+  autoCreatePr             Boolean
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("reorder_rules")
+}
+
+// MODEL: kitchen_inventorys (per ERD v3.0, aggregate=Inventory)
+model KitchenInventory {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  itemName                 String
+  category                 String
+  quantity                 Decimal
+  unit                     String
+  minLevel                 Decimal
+  reorderLevel             Decimal
+  isPerishable             Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("kitchen_inventorys")
+}
+
+// MODEL: kitchen_consumptions (per ERD v3.0, aggregate=Inventory)
+model KitchenConsumption {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  itemId                   String
+  consumptionDate          DateTime
+  quantityConsumed         Decimal
+  mealType                 MealType?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("kitchen_consumptions")
+}
+
+// MODEL: supplier_invoices (per ERD v3.0, aggregate=Inventory)
+model SupplierInvoice {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceNumber            String
+  vendorId                 String
+  poId                     String?
+  grnId                    String?
+  invoiceDate              DateTime
+  subtotalCents            Int
+  taxCents                 Int
+  totalCents               Int
+  status                   String
+  dueDate                  DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("supplier_invoices")
+}
+
+// MODEL: supplier_payments (per ERD v3.0, aggregate=Inventory)
+model SupplierPayment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  supplierInvoiceId        String
+  amountCents              Int
+  paymentDate              DateTime
+  paymentMode              PaymentMode
+  transactionRef           String?
+  paidBy                   String
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  authorId                 String?
+  announcementId           String?
+  broadcastId              String?
+  recipientUserId          String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("supplier_payments")
+}
+
+// MODEL: broadcasts (per ERD v3.0, aggregate=Communication)
+model Broadcast {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  broadcastName            String
+  templateId               String?
+  channels                 Json
+  recipientFilter          Json
+  totalRecipients          Int
+  sentCount                Int
+  deliveredCount           Int
+  failedCount              Int
+  scheduledAt              DateTime?
+  startedAt                DateTime?
+  completedAt              DateTime?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("broadcasts")
+}
+
+// MODEL: broadcast_logs (per ERD v3.0, aggregate=Communication)
+model BroadcastLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  broadcastId              String
+  recipientUserId          String?
+  recipientPhone           String?
+  recipientEmail           String?
+  channel                  BroadcastType
+  status                   String
+  providerMessageId        String?
+  sentAt                   DateTime?
+  deliveredAt              DateTime?
+  failureReason            String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("broadcast_logs")
+}
+
+// MODEL: smslogs (per ERD v3.0, aggregate=Communication)
+model SMSLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  recipientPhone           String
+  recipientName            String?
+  message                  String
+  templateId               String?
+  senderId                 String?
+  dltTemplateId            String?
+  provider                 String
+  providerMessageId        String?
+  status                   SMSStatus
+  sentAt                   DateTime?
+  deliveredAt              DateTime?
+  costCents                Int?
+  failureReason            String?
+  referenceType            String?
+  referenceId              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("smslogs")
+}
+
+// MODEL: whats_app_logs (per ERD v3.0, aggregate=Communication)
+model WhatsAppLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  recipientPhone           String
+  recipientName            String?
+  templateName             String?
+  templateLanguage         String?
+  bodyText                 String?
+  mediaUrls                Json?
+  provider                 String
+  providerMessageId        String?
+  status                   WhatsAppStatus
+  sentAt                   DateTime?
+  deliveredAt              DateTime?
+  readAt                   DateTime?
+  costCents                Int?
+  failureReason            String?
+  referenceType            String?
+  referenceId              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("whats_app_logs")
+}
+
+// MODEL: email_logs (per ERD v3.0, aggregate=Communication)
+model EmailLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  recipientEmail           String
+  recipientName            String?
+  subject                  String
+  body                     String
+  templateId               String?
+  attachmentUrls           Json?
+  provider                 String
+  providerMessageId        String?
+  status                   EmailStatus
+  sentAt                   DateTime?
+  deliveredAt              DateTime?
+  openedAt                 DateTime?
+  clickedAt                DateTime?
+  failureReason            String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("email_logs")
+}
+
+// MODEL: push_logs (per ERD v3.0, aggregate=Communication)
+model PushLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  recipientUserId          String
+  deviceToken              String
+  title                    String
+  body                     String
+  data                     Json?
+  provider                 String
+  providerMessageId        String?
+  status                   String
+  sentAt                   DateTime?
+  deliveredAt              DateTime?
+  failureReason            String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("push_logs")
+}
+
+// MODEL: smstemplates (per ERD v3.0, aggregate=Communication)
+model SMSTemplate {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  template                 String
+  variables                Json?
+  type                     String
+  dltTemplateId            String
+  dltSenderId              String
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("smstemplates")
+}
+
+// MODEL: whats_app_templates (per ERD v3.0, aggregate=Communication)
+model WhatsAppTemplate {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  templateName             String
+  language                 String
+  category                 String
+  headerType               String
+  headerText               String?
+  body                     String
+  footer                   String?
+  buttonActions            Json?
+  variables                Json?
+  approvalStatus           String
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("whats_app_templates")
+}
+
+// MODEL: email_templates (per ERD v3.0, aggregate=Communication)
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  subject                  String
+  body                     String
+  variables                Json?
+  type                     String
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("email_templates")
+}
+
+// MODEL: notification_templates (per ERD v3.0, aggregate=Communication)
+model NotificationTemplate {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  triggerEvent             TriggerEvent
+  name                     String
+  smsTemplateId            String?
+  whatsappTemplateId       String?
+  emailTemplateId          String?
+  pushTitle                String?
+  pushBody                 String?
+  defaultChannels          Json
+  isActive                 Boolean
+  cooldownMinutes          Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("notification_templates")
+}
+
+// MODEL: notification_rules (per ERD v3.0, aggregate=Communication)
+model NotificationRule {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  triggerEvent             TriggerEvent
+  channelsOverride         Json?
+  recipientFilter          Json?
+  isEnabled                Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("notification_rules")
+}
+
+// MODEL: notification_queues (per ERD v3.0, aggregate=Communication)
+model NotificationQueue {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  templateId               String?
+  triggerEvent             TriggerEvent
+  recipientUserId          String?
+  recipientPhone           String?
+  recipientEmail           String?
+  channels                 Json
+  templateVariables        Json?
+  referenceType            String?
+  referenceId              String?
+  priority                 Int
+  scheduledAt              DateTime?
+  attemptedAt              DateTime?
+  attempts                 Int
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("notification_queues")
+}
+
+// MODEL: chat_rooms (per ERD v3.0, aggregate=Communication)
+model ChatRoom {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String?
+  type                     ChatRoomType
+  classroomId              String?
+  isArchived               Boolean
+  lastMessageAt            DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("chat_rooms")
+}
+
+// MODEL: chat_room_members (per ERD v3.0, aggregate=Communication)
+model ChatRoomMember {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  chatRoomId               String
+  userId                   String
+  role                     String
+  joinedAt                 DateTime
+  leftAt                   DateTime?
+  mutedUntil               DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("chat_room_members")
+}
+
+// MODEL: chat_messages (per ERD v3.0, aggregate=Communication)
+model ChatMessage {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  chatRoomId               String
+  senderId                 String
+  messageType              ChatMessageType
+  body                     String?
+  attachmentUrl            String?
+  attachmentThumbnailUrl   String?
+  attachmentSizeBytes      BigInt?
+  replyToMessageId         String?
+  editedAt                 DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  ref                      String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("chat_messages")
+}
+
+// MODEL: chat_message_reads (per ERD v3.0, aggregate=Communication)
+model ChatMessageRead {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  chatMessageId            String
+  userId                   String
+  readAt                   DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("chat_message_reads")
+}
+
+// MODEL: chat_attachments (per ERD v3.0, aggregate=Communication)
+model ChatAttachment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  chatMessageId            String
+  fileUrl                  String
+  fileType                 String
+  fileSizeBytes            BigInt
+  thumbnailUrl             String?
+  durationSeconds          Int?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("chat_attachments")
+}
+
+// MODEL: events (per ERD v3.0, aggregate=Communication)
+model Event {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  title                    String
+  description              String?
+  type                     EventType
+  classroomIds             Json?
+  startAt                  DateTime
+  endAt                    DateTime
+  location                 String?
+  coverImageUrl            String?
+  organizerId              String?
+  rsvpRequired             Boolean
+  rsvpDeadline             DateTime?
+  status                   EventStatus
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("events")
+}
+
+// MODEL: event_rsvps (per ERD v3.0, aggregate=Communication)
+model EventRSVP {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  eventId                  String
+  userId                   String?
+  guardianId               String?
+  response                 RSVPResponse
+  numberOfGuests           Int
+  respondedAt              DateTime
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("event_rsvps")
+}
+
+// MODEL: event_albums (per ERD v3.0, aggregate=Communication)
+model EventAlbum {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  eventId                  String
+  title                    String
+  coverImageUrl            String?
+  totalPhotos              Int
+  isPublished              Boolean
+  publishedAt              DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("event_albums")
+}
+
+// MODEL: event_photos (per ERD v3.0, aggregate=Communication)
+model EventPhoto {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  albumId                  String
+  photoUrl                 String
+  thumbnailUrl             String?
+  caption                  String?
+  taggedUserIds            Json?
+  uploadedBy               String?
+  displayOrder             Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("event_photos")
+}
+
+// MODEL: broadcast_subscriptions (per ERD v3.0, aggregate=Communication)
+model BroadcastSubscription {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  userId                   String?
+  phone                    String?
+  email                    String?
+  channel                  BroadcastType
+  category                 String
+  subscribed               Boolean
+  optedInAt                DateTime?
+  optedOutAt               DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("broadcast_subscriptions")
+}
+
+// MODEL: message_template_variables (per ERD v3.0, aggregate=Communication)
+model MessageTemplateVariable {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  templateId               String
+  variableName             String
+  dataType                 String
+  description              String?
+  exampleValue             String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("message_template_variables")
+}
+
+// MODEL: dltregistrations (per ERD v3.0, aggregate=Communication)
+model DLTRegistration {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  entityId                 String
+  senderId                 String
+  header                   String?
+  registeredAt             DateTime
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("dltregistrations")
+}
+
+// MODEL: provider_configs (per ERD v3.0, aggregate=Communication)
+model ProviderConfig {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  providerName             String
+  channel                  BroadcastType
+  credentialsEncrypted     Bytes
+  rateLimitPerMin          Int
+  isActive                 Boolean
+  isDefault                Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("provider_configs")
+}
+
+// MODEL: message_delivery_statuss (per ERD v3.0, aggregate=Communication)
+model MessageDeliveryStatus {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  referenceType            String
+  referenceId              String
+  channel                  BroadcastType
+  totalCount               Int
+  sentCount                Int
+  deliveredCount           Int
+  readCount                Int
+  failedCount              Int
+  snapshotAt               DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("message_delivery_statuss")
+}
+
+// MODEL: conversation_states (per ERD v3.0, aggregate=Communication)
+model ConversationState {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  userId                   String?
+  phone                    String?
+  channel                  BroadcastType
+  currentState             String
+  context                  Json?
+  lastMessageAt            DateTime?
+  expiresAt                DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  feePlanId                String?
+  feeHeadId                String?
+  studentId                String?
+  invoiceId                String?
+  scholarshipId            String?
+  academicSessionId        String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("conversation_states")
+}
+
+// MODEL: fee_heads (per ERD v3.0, aggregate=Finance)
+model FeeHead {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  type                     FeeHeadType
+  frequency                FeeHeadFrequency
+  defaultAmountCents       Int
+  isTaxable                Boolean
+  taxPercentage            Decimal?
+  isRefundable             Boolean
+  description              String?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fee_heads")
+}
+
+// MODEL: fee_plan_items (per ERD v3.0, aggregate=Finance)
+model FeePlanItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  feePlanId                String
+  feeHeadId                String
+  amountCents              Int
+  frequency                FeeHeadFrequency
+  displayOrder             Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fee_plan_items")
+}
+
+// MODEL: fee_installments (per ERD v3.0, aggregate=Finance)
+model FeeInstallment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  feePlanId                String
+  installmentNumber        Int
+  dueDate                  DateTime
+  amountCents              Int
+  label                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fee_installments")
+}
+
+// MODEL: discounts (per ERD v3.0, aggregate=Finance)
+model Discount {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  type                     DiscountType
+  value                    Decimal
+  feeHeadId                String?
+  validFrom                DateTime
+  validUntil               DateTime?
+  maxUsageCount            Int?
+  usedCount                Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("discounts")
+}
+
+// MODEL: discount_approvals (per ERD v3.0, aggregate=Finance)
+model DiscountApproval {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  discountId               String?
+  requestedBy              String
+  approvedBy               String?
+  amountCents              Int
+  reason                   String
+  status                   String
+  decidedAt                DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("discount_approvals")
+}
+
+// MODEL: penalty_rules (per ERD v3.0, aggregate=Finance)
+model PenaltyRule {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  type                     PenaltyType
+  value                    Decimal
+  maxPenaltyCents          Int?
+  graceDays                Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("penalty_rules")
+}
+
+// MODEL: penaltys (per ERD v3.0, aggregate=Finance)
+model Penalty {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  penaltyRuleId            String
+  amountCents              Int
+  leviedAt                 DateTime
+  reason                   String?
+  waived                   Boolean
+  waivedBy                 String?
+  waivedAt                 DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("penaltys")
+}
+
+// MODEL: invoice_items (per ERD v3.0, aggregate=Invoice)
+model InvoiceItem {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  feeHeadId                String
+  description              String?
+  quantity                 Decimal
+  unitAmountCents          Int
+  discountCents            Int
+  taxPercentage            Decimal
+  taxCents                 Int
+  lineTotalCents           Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("invoice_items")
+}
+
+// MODEL: invoice_discounts (per ERD v3.0, aggregate=Invoice)
+model InvoiceDiscount {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  discountId               String?
+  amountCents              Int
+  reason                   String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("invoice_discounts")
+}
+
+// MODEL: invoice_taxs (per ERD v3.0, aggregate=Invoice)
+model InvoiceTax {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  taxType                  String
+  taxPercentage            Decimal
+  taxableAmountCents       Int
+  taxAmountCents           Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("invoice_taxs")
+}
+
+// MODEL: receipts (per ERD v3.0, aggregate=Invoice)
+model Receipt {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  receiptNumber            String
+  paymentId                String
+  studentId                String
+  amountCents              Int
+  receiptDate              DateTime
+  pdfUrl                   String?
+  issuedBy                 String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("receipts")
+}
+
+// MODEL: cheque_details (per ERD v3.0, aggregate=Invoice)
+model ChequeDetail {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  paymentId                String
+  chequeNumber             String
+  bankName                 String
+  branchName               String?
+  chequeDate               DateTime
+  status                   ChequeStatus
+  clearedAt                DateTime?
+  bounceReason             String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("cheque_details")
+}
+
+// MODEL: cheque_bounces (per ERD v3.0, aggregate=Invoice)
+model ChequeBounce {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  chequeDetailId           String
+  bounceDate               DateTime
+  bounceReason             String
+  bankChargesCents         Int?
+  penaltyInvoiceId         String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("cheque_bounces")
+}
+
+// MODEL: refund_approvals (per ERD v3.0, aggregate=Invoice)
+model RefundApproval {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  refundId                 String
+  approvalLevel            Int
+  approverId               String
+  decision                 String
+  decisionReason           String?
+  decidedAt                DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("refund_approvals")
+}
+
+// MODEL: write_offs (per ERD v3.0, aggregate=Invoice)
+model WriteOff {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  amountCents              Int
+  reason                   WriteOffReason
+  notes                    String?
+  approvedBy               String
+  approvedAt               DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("write_offs")
+}
+
+// MODEL: expense_categorys (per ERD v3.0, aggregate=Finance)
+model ExpenseCategory {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  description              String?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("expense_categorys")
+}
+
+// MODEL: expenses (per ERD v3.0, aggregate=Finance)
+model Expense {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  expenseNumber            String
+  categoryId               String
+  vendorId                 String?
+  title                    String
+  description              String?
+  amountCents              Int
+  gstCents                 Int
+  totalCents               Int
+  invoiceNumber            String?
+  invoiceDate              DateTime?
+  expenseDate              DateTime
+  paymentMode              PaymentMode
+  transactionRef           String?
+  paidBy                   String
+  approvedBy               String?
+  status                   ExpenseStatus
+  receiptUrl               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("expenses")
+}
+
+// MODEL: expense_approvals (per ERD v3.0, aggregate=Finance)
+model ExpenseApproval {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  expenseId                String
+  approvalLevel            Int
+  approverId               String
+  decision                 String
+  notes                    String?
+  decidedAt                DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("expense_approvals")
+}
+
+// MODEL: income_categorys (per ERD v3.0, aggregate=Finance)
+model IncomeCategory {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  description              String?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("income_categorys")
+}
+
+// MODEL: incomes (per ERD v3.0, aggregate=Finance)
+model Income {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  incomeNumber             String
+  categoryId               String
+  title                    String
+  description              String?
+  amountCents              Int
+  incomeDate               DateTime
+  receivedFrom             String?
+  paymentMode              PaymentMode
+  transactionRef           String?
+  receiptUrl               String?
+  recordedBy               String
+  status                   IncomeStatus
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("incomes")
+}
+
+// MODEL: financial_reports (per ERD v3.0, aggregate=Finance)
+model FinancialReport {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  type                     FinancialReportType
+  period                   String
+  startDate                DateTime
+  endDate                  DateTime
+  data                     Json
+  generatedBy              String?
+  fileUrl                  String?
+  generatedAt              DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("financial_reports")
+}
+
+// MODEL: financial_report_datas (per ERD v3.0, aggregate=Finance)
+model FinancialReportData {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  financialReportId        String
+  section                  String
+  lineItem                 String
+  amountCents              Int
+  metadata                 Json?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("financial_report_datas")
+}
+
+// MODEL: gstreturns (per ERD v3.0, aggregate=Finance)
+model GSTReturn {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  returnType               String
+  periodMonth              Int
+  periodYear               Int
+  totalSuppliesCents       Int
+  outputTaxCents           Int
+  inputTaxCreditsCents     Int
+  netTaxPayableCents       Int
+  status                   String
+  filedAt                  DateTime?
+  acknowledgmentNumber     String?
+  filedBy                  String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("gstreturns")
+}
+
+// MODEL: gstreturn_entrys (per ERD v3.0, aggregate=Finance)
+model GSTReturnEntry {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  gstReturnId              String
+  invoiceId                String?
+  expenseId                String?
+  entryType                String
+  taxableAmountCents       Int
+  taxCents                 Int
+  gstnCounterparty         String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("gstreturn_entrys")
+}
+
+// MODEL: tdspayments (per ERD v3.0, aggregate=Finance)
+model TDSPayment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  section                  String
+  periodMonth              Int
+  periodYear               Int
+  totalPaymentCents        Int
+  tdsDeductedCents         Int
+  challanNumber            String
+  paidAt                   DateTime
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("tdspayments")
+}
+
+// MODEL: late_fee_charges (per ERD v3.0, aggregate=Invoice)
+model LateFeeCharge {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  ruleId                   String
+  daysLate                 Int
+  amountCents              Int
+  chargedAt                DateTime
+  waived                   Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("late_fee_charges")
+}
+
+// MODEL: fee_reminders (per ERD v3.0, aggregate=Invoice)
+model FeeReminder {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  invoiceId                String
+  reminderNumber           Int
+  templateId               String
+  scheduledAt              DateTime
+  sentAt                   DateTime?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fee_reminders")
+}
+
+// MODEL: fee_reminder_logs (per ERD v3.0, aggregate=Invoice)
+model FeeReminderLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  feeReminderId            String
+  channel                  BroadcastType
+  recipientUserId          String?
+  status                   String
+  sentAt                   DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fee_reminder_logs")
+}
+
+// MODEL: fee_receipt_counters (per ERD v3.0, aggregate=Invoice)
+model FeeReceiptCounter {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  year                     Int
+  lastReceiptNumber        Int
+  lastInvoiceNumber        Int
+  lastPaymentNumber        Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  userId                   String?
+  departmentId             String?
+  staffId                  String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([year])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fee_receipt_counters")
+}
+
+// MODEL: departments (per ERD v3.0, aggregate=HR)
+model Department {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  departmentType           StaffDepartment
+  description              String?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("departments")
+}
+
+// MODEL: designations (per ERD v3.0, aggregate=HR)
+model Designation {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  designationType          StaffDesignation
+  departmentId             String?
+  grade                    String?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("designations")
+}
+
+// MODEL: staffs (per ERD v3.0, aggregate=Staff)
+model Staff {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  userId                   String?
+  employeeCode             String
+  firstName                String
+  lastName                 String
+  dob                      DateTime
+  gender                   Gender
+  departmentId             String?
+  designationId            String?
+  employmentType           EmploymentType
+  joiningDate              DateTime
+  confirmationDate         DateTime?
+  exitDate                 DateTime?
+  exitType                 ExitType?
+  exitReason               String?
+  status                   StaffStatus
+  qualification            String?
+  experienceYears          Decimal?
+  photoUrl                 String?
+  reportingManagerId       String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  ref                      String?
+  @@index([status])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staffs")
+}
+
+// MODEL: staff_profiles (per ERD v3.0, aggregate=Staff)
+model StaffProfile {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  addressLine1             String
+  addressLine2             String?
+  city                     String
+  state                    String
+  pincode                  String
+  phone                    String
+  altPhone                 String?
+  emergencyContactName     String
+  emergencyContactPhone    String
+  emergencyContactRelationship String?
+  bloodGroup               BloodGroup?
+  maritalStatus            String?
+  spouseName               String?
+  childrenCount            Int?
+  aadhaarNumber            String?
+  aadhaarEncrypted         Bytes?
+  panNumber                String?
+  pfAccountNumber          String?
+  esiNumber                String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_profiles")
+}
+
+// MODEL: staff_documents (per ERD v3.0, aggregate=Staff)
+model StaffDocument {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  documentType             String
+  fileUrl                  String
+  fileHash                 String
+  verified                 Boolean
+  verifiedBy               String?
+  verifiedAt               DateTime?
+  expiresAt                DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_documents")
+}
+
+// MODEL: staff_qualifications (per ERD v3.0, aggregate=Staff)
+model StaffQualification {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  degree                   String
+  institution              String
+  yearPassing              Int
+  percentage               Decimal?
+  certificateUrl           String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_qualifications")
+}
+
+// MODEL: staff_experiences (per ERD v3.0, aggregate=Staff)
+model StaffExperience {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  organization             String
+  designation              String
+  startDate                DateTime
+  endDate                  DateTime?
+  reasonLeaving            String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_experiences")
+}
+
+// MODEL: staff_bank_details (per ERD v3.0, aggregate=Staff)
+model StaffBankDetail {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  bankName                 String
+  branchName               String?
+  accountNumberEncrypted   Bytes
+  accountNumberMasked      String
+  ifscCode                 String
+  isPrimary                Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_bank_details")
+}
+
+// MODEL: employment_type_tbls (per ERD v3.0, aggregate=HR)
+model EmploymentTypeTbl {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  isActive                 Boolean
+  defaultNoticePeriodDays  Int
+  defaultProbationMonths   Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("employment_type_tbls")
+}
+
+// MODEL: payrolls (per ERD v3.0, aggregate=Payroll)
+model Payroll {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  payrollNumber            String
+  periodMonth              Int
+  periodYear               Int
+  totalEarningsCents       Int
+  totalDeductionsCents     Int
+  totalNetCents            Int
+  status                   PayrollStatus
+  processedBy              String?
+  processedAt              DateTime?
+  paidAt                   DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("payrolls")
+}
+
+// MODEL: payroll_components (per ERD v3.0, aggregate=Payroll)
+model PayrollComponent {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  type                     String
+  isTaxable                Boolean
+  isStatutory              Boolean
+  calculationMethod        String
+  defaultValue             Decimal?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("payroll_components")
+}
+
+// MODEL: payslip_components (per ERD v3.0, aggregate=Payroll)
+model PayslipComponent {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  payslipId                String
+  componentId              String
+  amountCents              Int
+  calculationBasis         Json?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("payslip_components")
+}
+
+// MODEL: leave_type_tbls (per ERD v3.0, aggregate=HR)
+model LeaveTypeTbl {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  type                     LeaveType
+  defaultAnnualQuota       Decimal
+  isPaid                   Boolean
+  carryForward             Boolean
+  maxCarryForward          Decimal?
+  encashable               Boolean
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("leave_type_tbls")
+}
+
+// MODEL: leave_approvals (per ERD v3.0, aggregate=HR)
+model LeaveApproval {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  leaveRequestId           String
+  approvalLevel            Int
+  approverId               String
+  decision                 String
+  notes                    String?
+  decidedAt                DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("leave_approvals")
+}
+
+// MODEL: attendance_staffs (per ERD v3.0, aggregate=HR)
+model AttendanceStaff {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  attendanceDate           DateTime
+  status                   String
+  checkInAt                DateTime?
+  checkOutAt               DateTime?
+  workHours                Decimal?
+  overtimeHours            Decimal?
+  source                   String
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("attendance_staffs")
+}
+
+// MODEL: staff_shifts (per ERD v3.0, aggregate=HR)
+model StaffShift {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  startTime                String
+  endTime                  String
+  graceMinutes             Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_shifts")
+}
+
+// MODEL: shift_assignments (per ERD v3.0, aggregate=HR)
+model ShiftAssignment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  shiftId                  String
+  effectiveFrom            DateTime
+  effectiveUntil           DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("shift_assignments")
+}
+
+// MODEL: timesheets (per ERD v3.0, aggregate=HR)
+model Timesheet {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  timesheetDate            DateTime
+  taskCategory             String?
+  description              String?
+  hoursSpent               Decimal
+  classroomId              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("timesheets")
+}
+
+// MODEL: staff_reviews (per ERD v3.0, aggregate=HR)
+model StaffReview {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  reviewPeriod             ReviewPeriod
+  periodYear               Int
+  periodIndex              Int
+  reviewerId               String
+  selfRating               Int?
+  reviewerRating           Int?
+  finalRating              Int?
+  strengths                String?
+  areasToImprove           String?
+  goalsNextPeriod          String?
+  reviewerComments         String?
+  status                   String
+  completedAt              DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_reviews")
+}
+
+// MODEL: review_cycle_tbls (per ERD v3.0, aggregate=HR)
+model ReviewCycleTbl {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  reviewPeriod             ReviewPeriod
+  periodYear               Int
+  periodIndex              Int
+  selfReviewStart          DateTime
+  selfReviewEnd            DateTime
+  reviewerReviewStart      DateTime
+  reviewerReviewEnd        DateTime
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("review_cycle_tbls")
+}
+
+// MODEL: job_openings (per ERD v3.0, aggregate=HR)
+model JobOpening {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  title                    String
+  departmentId             String?
+  designationId            String?
+  employmentType           EmploymentType
+  positionsCount           Int
+  description              String
+  requirements             Json?
+  salaryRangeMinCents      Int?
+  salaryRangeMaxCents      Int?
+  postedAt                 DateTime
+  closingDate              DateTime
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("job_openings")
+}
+
+// MODEL: job_applications (per ERD v3.0, aggregate=HR)
+model JobApplication {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  jobOpeningId             String
+  candidateName            String
+  email                    String
+  phone                    String
+  resumeUrl                String
+  coverLetter              String?
+  currentCompany           String?
+  currentDesignation       String?
+  experienceYears          Decimal?
+  currentSalaryCents       Int?
+  expectedSalaryCents      Int?
+  noticePeriodDays         Int?
+  status                   JobApplicationStatus
+  appliedAt                DateTime
+  source                   String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("job_applications")
+}
+
+// MODEL: interviews (per ERD v3.0, aggregate=HR)
+model Interview {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  jobApplicationId         String
+  interviewRound           Int
+  interviewType            String
+  scheduledAt              DateTime
+  durationMinutes          Int
+  interviewerId            String
+  location                 String?
+  videoLink                String?
+  status                   String
+  completedAt              DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("interviews")
+}
+
+// MODEL: interview_feedbacks (per ERD v3.0, aggregate=HR)
+model InterviewFeedback {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  interviewId              String
+  interviewerId            String
+  rating                   Int
+  strengths                String?
+  concerns                 String?
+  recommendation           String
+  notes                    String?
+  submittedAt              DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("interview_feedbacks")
+}
+
+// MODEL: onboarding_tasks (per ERD v3.0, aggregate=HR)
+model OnboardingTask {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  title                    String
+  description              String?
+  taskType                 String
+  ownerRole                String?
+  defaultDueDays           Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("onboarding_tasks")
+}
+
+// MODEL: offboarding_tasks (per ERD v3.0, aggregate=HR)
+model OffboardingTask {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  title                    String
+  description              String?
+  taskType                 String
+  ownerRole                String?
+  defaultDueDays           Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("offboarding_tasks")
+}
+
+// MODEL: exit_interviews (per ERD v3.0, aggregate=HR)
+model ExitInterview {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  interviewDate            DateTime
+  interviewerId            String
+  primaryReason            String
+  reasonDetails            String?
+  feedbackOnCompany        String?
+  feedbackOnManager        String?
+  wouldRecommend           Boolean?
+  rehireEligible           Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("exit_interviews")
+}
+
+// MODEL: staff_role_assignments (per ERD v3.0, aggregate=HR)
+model StaffRoleAssignment {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  staffId                  String
+  role                     String
+  classroomId              String?
+  academicSessionId        String?
+  isPrimary                Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  roomId                   String?
+  categoryId               String?
+  assetId                  String?
+  maintenanceRequestId     String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("staff_role_assignments")
+}
+
+// MODEL: rooms (per ERD v3.0, aggregate=Admin)
+model Room {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  code                     String
+  roomType                 RoomType
+  floor                    Int?
+  capacity                 Int?
+  areaSqft                 Decimal?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([code])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("rooms")
+}
+
+// MODEL: activity_rooms (per ERD v3.0, aggregate=Admin)
+model ActivityRoom {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  roomId                   String
+  activityType             ActivityType
+  equipment                Json?
+  usageRules               String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("activity_rooms")
+}
+
+// MODEL: room_bookings (per ERD v3.0, aggregate=Admin)
+model RoomBooking {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  roomId                   String
+  bookedBy                 String
+  title                    String
+  startAt                  DateTime
+  endAt                    DateTime
+  status                   String
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("room_bookings")
+}
+
+// MODEL: asset_category_tbls (per ERD v3.0, aggregate=Admin)
+model AssetCategoryTbl {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  description              String?
+  defaultDepreciationYears Int?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("asset_category_tbls")
+}
+
+// MODEL: asset_movements (per ERD v3.0, aggregate=Admin)
+model AssetMovement {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  assetId                  String
+  fromRoomId               String?
+  toRoomId                 String?
+  fromBranchId             String?
+  toBranchId               String?
+  reason                   String
+  movedBy                  String
+  movedAt                  DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("asset_movements")
+}
+
+// MODEL: asset_maintenances (per ERD v3.0, aggregate=Admin)
+model AssetMaintenance {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  assetId                  String
+  maintenanceType          String
+  scheduledDate            DateTime?
+  completedDate            DateTime?
+  costCents                Int?
+  vendorId                 String?
+  notes                    String?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("asset_maintenances")
+}
+
+// MODEL: maintenance_logs (per ERD v3.0, aggregate=Admin)
+model MaintenanceLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  maintenanceRequestId     String
+  actorId                  String?
+  action                   String
+  notes                    String?
+  photoUrls                Json?
+  occurredAt               DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("maintenance_logs")
+}
+
+// MODEL: visitors (per ERD v3.0, aggregate=Admin)
+model Visitor {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  phone                    String?
+  email                    String?
+  organization             String?
+  photoUrl                 String?
+  idProofType              String?
+  idProofNumber            String?
+  isBlacklisted            Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([phone])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("visitors")
+}
+
+// MODEL: visitor_passs (per ERD v3.0, aggregate=Admin)
+model VisitorPass {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  visitorId                String?
+  visitorName              String
+  phone                    String?
+  purpose                  VisitorPurpose
+  hostUserId               String?
+  checkInAt                DateTime
+  checkOutAt               DateTime?
+  passNumber               String
+  status                   VisitorStatus
+  photoUrl                 String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("visitor_passs")
+}
+
+// MODEL: compliances (per ERD v3.0, aggregate=Admin)
+model Compliance {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  type                     ComplianceType
+  title                    String
+  issuingAuthority         String?
+  licenseNumber            String?
+  issuedDate               DateTime?
+  validUntil               DateTime?
+  status                   ComplianceStatus
+  lastInspectionDate       DateTime?
+  nextInspectionDue        DateTime?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([status])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("compliances")
+}
+
+// MODEL: compliance_documents (per ERD v3.0, aggregate=Admin)
+model ComplianceDocument {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  complianceId             String
+  documentType             String
+  fileUrl                  String
+  uploadedBy               String?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("compliance_documents")
+}
+
+// MODEL: compliance_reminders (per ERD v3.0, aggregate=Admin)
+model ComplianceReminder {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  complianceId             String
+  reminderDate             DateTime
+  reminderType             String
+  sentAt                   DateTime?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("compliance_reminders")
+}
+
+// MODEL: drivers (per ERD v3.0, aggregate=Admin)
+model Driver {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  userId                   String?
+  driverCode               String
+  firstName                String
+  lastName                 String
+  phone                    String
+  licenseNumber            String
+  licenseExpiry            DateTime
+  licenseTypes             Json?
+  dob                      DateTime
+  address                  String
+  isInternal               Boolean
+  vendorId                 String?
+  isActive                 Boolean
+  joinedAt                 DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("drivers")
+}
+
+// MODEL: vehicle_maintenances (per ERD v3.0, aggregate=Admin)
+model VehicleMaintenance {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  vehicleId                String
+  maintenanceType          String
+  scheduledDate            DateTime?
+  completedDate            DateTime?
+  odometerKm               Int?
+  costCents                Int?
+  vendorId                 String?
+  notes                    String?
+  status                   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vehicle_maintenances")
+}
+
+// MODEL: fuel_logs (per ERD v3.0, aggregate=Admin)
+model FuelLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  vehicleId                String
+  fuelDate                 DateTime
+  fuelType                 String
+  quantityLiters           Decimal
+  amountCents              Int
+  odometerKm               Int?
+  fuelStation              String?
+  filledBy                 String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  driverId                 String?
+  routeId                  String?
+  studentId                String?
+  stopId                   String?
+  tripId                   String?
+  academicSessionId        String?
+  grantedByGuardianId      String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("fuel_logs")
+}
+
+// MODEL: route_stops (per ERD v3.0, aggregate=Transport)
+model RouteStop {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  routeId                  String
+  sequenceNumber           Int
+  name                     String
+  address                  String?
+  latitude                 Decimal?
+  longitude                Decimal?
+  morningPickupTime        String
+  eveningDropTime          String
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("route_stops")
+}
+
+// MODEL: route_students (per ERD v3.0, aggregate=Transport)
+model RouteStudent {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  routeId                  String
+  stopId                   String
+  academicSessionId        String
+  pickupMode               String
+  effectiveFrom            DateTime
+  effectiveUntil           DateTime?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("route_students")
+}
+
+// MODEL: vehicle_documents (per ERD v3.0, aggregate=Transport)
+model VehicleDocument {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  vehicleId                String
+  documentType             String
+  documentNumber           String?
+  issuedDate               DateTime?
+  expiryDate               DateTime?
+  fileUrl                  String
+  verified                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("vehicle_documents")
+}
+
+// MODEL: driver_documents (per ERD v3.0, aggregate=Transport)
+model DriverDocument {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  driverId                 String
+  documentType             String
+  documentNumber           String?
+  issuedDate               DateTime?
+  expiryDate               DateTime?
+  fileUrl                  String
+  verified                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("driver_documents")
+}
+
+// MODEL: trip_logs (per ERD v3.0, aggregate=Transport)
+model TripLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  tripId                   String
+  loggedAt                 DateTime
+  latitude                 Decimal
+  longitude                Decimal
+  speedKmph                Decimal?
+  headingDegrees           Int?
+  eventType                String?
+  stopId                   String?
+  studentId                String?
+  notes                    String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("trip_logs")
+}
+
+// MODEL: transport_fees (per ERD v3.0, aggregate=Transport)
+model TransportFee {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  routeId                  String
+  academicSessionId        String
+  annualFeeCents           Int
+  paymentFrequency         FeeHeadFrequency
+  perInstallmentCents      Int
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("transport_fees")
+}
+
+// MODEL: pickup_authorization_transports (per ERD v3.0, aggregate=Transport)
+model PickupAuthorizationTransport {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  studentId                String
+  routeId                  String
+  authorizedPersonName     String
+  relationship             String
+  phone                    String?
+  photoUrl                 String?
+  grantedByGuardianId      String
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("pickup_authorization_transports")
+}
+
+// MODEL: transport_route_alternates (per ERD v3.0, aggregate=Transport)
+model TransportRouteAlternate {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  primaryRouteId           String
+  alternateRouteId         String
+  priority                 Int
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  academicSessionId        String?
+  academicCalendarId       String?
+  integrationConfigId      String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("transport_route_alternates")
+}
+
+// MODEL: academic_calendars (per ERD v3.0, aggregate=Settings)
+model AcademicCalendar {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  academicSessionId        String
+  name                     String
+  isPublished              Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("academic_calendars")
+}
+
+// MODEL: working_days (per ERD v3.0, aggregate=Settings)
+model WorkingDay {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  academicSessionId        String?
+  dayOfWeek                Int
+  isWorking                Boolean
+  startTime                String?
+  endTime                  String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("working_days")
+}
+
+// MODEL: report_configs (per ERD v3.0, aggregate=Settings)
+model ReportConfig {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  type                     String
+  schedule                 ReportSchedule
+  format                   ReportFormat
+  recipients               Json?
+  filters                  Json?
+  lastRunAt                DateTime?
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("report_configs")
+}
+
+// MODEL: integration_configs (per ERD v3.0, aggregate=Settings)
+model IntegrationConfig {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  type                     IntegrationType
+  name                     String
+  configEncrypted          Bytes
+  isActive                 Boolean
+  lastSyncAt               DateTime?
+  syncStatus               IntegrationStatus
+  lastError                String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([type])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("integration_configs")
+}
+
+// MODEL: integration_sync_logs (per ERD v3.0, aggregate=Settings)
+model IntegrationSyncLog {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  integrationConfigId      String
+  startedAt                DateTime
+  completedAt              DateTime?
+  recordsProcessed         Int
+  recordsSucceeded         Int
+  recordsFailed            Int
+  status                   String
+  errorMessage             String?
+  payloadSample            Json?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("integration_sync_logs")
+}
+
+// MODEL: schedule_jobs (per ERD v3.0, aggregate=Settings)
+model ScheduleJob {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  name                     String
+  taskType                 String
+  cronExpression           String
+  parameters               Json?
+  lastRunAt                DateTime?
+  nextRunAt                DateTime?
+  isActive                 Boolean
+  concurrentRunPrevention  Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([name])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("schedule_jobs")
+}
+
+// MODEL: system_settings (per ERD v3.0, aggregate=Settings)
+model SystemSetting {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  key                      String
+  value                    String
+  description              String?
+  isEditable               Boolean
+  isSensitive              Boolean
+  category                 String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([key])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("system_settings")
+}
+
+// MODEL: system_feature_flags (per ERD v3.0, aggregate=Settings)
+model SystemFeatureFlag {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  flagKey                  String
+  isEnabled                Boolean
+  overrideReason           String?
+  expiresAt                DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("system_feature_flags")
+}
+
+// MODEL: locale_resources (per ERD v3.0, aggregate=Settings)
+model LocaleResource {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  locale                   String
+  namespace                String
+  key                      String
+  value                    String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  uploadedBy               String?
+  anchor                   String?
+  scope                    String?
+  actor                    String?
+  @@index([locale, namespace, key])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("locale_resources")
+}
+
+// MODEL: file_uploads (per ERD v3.0, aggregate=Shared)
+model FileUpload {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  fileName                 String
+  fileSizeBytes            BigInt
+  mimeType                 String
+  fileHash                 String
+  storageUrl               String
+  storageProvider          String
+  storageBucket            String?
+  storageKey               String?
+  category                 String
+  uploadedBy               String?
+  thumbnailUrl             String?
+  isPublic                 Boolean
+  expiresAt                DateTime?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("file_uploads")
+}
+
+// MODEL: file_storages (per ERD v3.0, aggregate=Shared)
+model FileStorage {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  provider                 String
+  bucketName               String
+  credentialsEncrypted     Bytes
+  region                   String?
+  isDefault                Boolean
+  isActive                 Boolean
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([provider])
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("file_storages")
+}
+
+// MODEL: email_queues (per ERD v3.0, aggregate=Shared)
+model EmailQueue {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  recipientEmail           String
+  recipientName            String?
+  subject                  String
+  bodyHtml                 String
+  attachmentUrls           Json?
+  provider                 String
+  priority                 Int
+  scheduledAt              DateTime?
+  attemptedAt              DateTime?
+  attempts                 Int
+  status                   String
+  referenceType            String?
+  referenceId              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("email_queues")
+}
+
+// MODEL: smsqueues (per ERD v3.0, aggregate=Shared)
+model SMSQueue {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  recipientPhone           String
+  message                  String
+  templateId               String?
+  dltTemplateId            String?
+  senderId                 String?
+  provider                 String
+  priority                 Int
+  scheduledAt              DateTime?
+  attemptedAt              DateTime?
+  attempts                 Int
+  status                   String
+  referenceType            String?
+  referenceId              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("smsqueues")
+}
+
+// MODEL: whats_app_queues (per ERD v3.0, aggregate=Shared)
+model WhatsAppQueue {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  recipientPhone           String
+  templateName             String?
+  templateLanguage         String?
+  templateVariables        Json?
+  bodyText                 String?
+  mediaUrls                Json?
+  provider                 String
+  priority                 Int
+  scheduledAt              DateTime?
+  attemptedAt              DateTime?
+  attempts                 Int
+  status                   String
+  referenceType            String?
+  referenceId              String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("whats_app_queues")
+}
+
+// MODEL: job_queues (per ERD v3.0, aggregate=Shared)
+model JobQueue {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  jobType                  String
+  payload                  Json
+  result                   Json?
+  priority                 Int
+  scheduledAt              DateTime?
+  startedAt                DateTime?
+  completedAt              DateTime?
+  workerId                 String?
+  attemptedAt              DateTime?
+  attempts                 Int
+  status                   JobStatus
+  errorMessage             String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("job_queues")
+}
+
+// MODEL: webhook_outboxs (per ERD v3.0, aggregate=Shared)
+model WebhookOutbox {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  eventType                String
+  targetUrl                String
+  payload                  Json
+  signature                String?
+  headers                  Json?
+  attemptedAt              DateTime?
+  attempts                 Int
+  nextRetryAt              DateTime?
+  status                   String
+  responseStatusCode       Int?
+  responseBody             String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("webhook_outboxs")
+}
+
+// MODEL: event_stores (per ERD v3.0, aggregate=Shared)
+model EventStore {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  aggregateType            String
+  aggregateId              String
+  eventType                String
+  eventVersion             Int
+  payload                  Json
+  metadata                 Json?
+  actorId                  String?
+  occurredAt               DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("event_stores")
+}
+
+// MODEL: snapshots (per ERD v3.0, aggregate=Shared)
+model Snapshot {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  aggregateType            String
+  aggregateId              String
+  state                    Json
+  takenAt                  DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("snapshots")
+}
+
+// MODEL: locks (per ERD v3.0, aggregate=Shared)
+model Lock {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  lockKey                  String
+  holderId                 String
+  acquiredAt               DateTime
+  expiresAt                DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("locks")
+}
+
+// MODEL: sequence_counters (per ERD v3.0, aggregate=Shared)
+model SequenceCounter {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  counterKey               String
+  currentValue             Int
+  paddingLength            Int
+  prefix                   String?
+  suffix                   String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("sequence_counters")
+}
+
+// MODEL: system_health_checks (per ERD v3.0, aggregate=Shared)
+model SystemHealthCheck {
+  id        String   @id @default(uuid())
+  schoolId  String
+  branchId  String?
+  component                String
+  status                   String
+  latencyMs                Int?
+  details                  Json?
+  checkedAt                DateTime
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int      @default(1)
+  @@index([schoolId])
+  @@index([schoolId, deletedAt])
+  @@map("system_health_checks")
+}
+
+// AUTO-GENERATED FALLBACK ENUMS (Wave 13) — placeholder for ERD v3.0 enums not yet defined
+
+enum ActivityType {
+  PLACEHOLDER
+}
+
+enum BackupStatus {
+  PLACEHOLDER
+}
+
+enum BroadcastType {
+  PLACEHOLDER
+}
+
+enum ChatMessageType {
+  PLACEHOLDER
+}
+
+enum ChatRoomType {
+  PLACEHOLDER
+}
+
+enum ChequeStatus {
+  PLACEHOLDER
+}
+
+enum ComplianceType {
+  PLACEHOLDER
+}
+
+enum ConsentType {
+  PLACEHOLDER
+}
+
+enum DamagedItemAction {
+  PLACEHOLDER
+}
+
+enum DiscountType {
+  PLACEHOLDER
+}
+
+enum EmailStatus {
+  PLACEHOLDER
+}
+
+enum EmergencyType {
+  PLACEHOLDER
+}
+
+enum EventStatus {
+  PLACEHOLDER
+}
+
+enum EventType {
+  PLACEHOLDER
+}
+
+enum ExitType {
+  PLACEHOLDER
+}
+
+enum ExpenseStatus {
+  PLACEHOLDER
+}
+
+enum FeeHeadFrequency {
+  PLACEHOLDER
+}
+
+enum FeeHeadType {
+  PLACEHOLDER
+}
+
+enum FinancialReportType {
+  PLACEHOLDER
+}
+
+enum GRNStatus {
+  PLACEHOLDER
+}
+
+enum IncomeStatus {
+  PLACEHOLDER
+}
+
+enum IntegrationStatus {
+  PLACEHOLDER
+}
+
+enum InventoryCategoryName {
+  PLACEHOLDER
+}
+
+enum ItemCondition {
+  PLACEHOLDER
+}
+
+enum JobApplicationStatus {
+  PLACEHOLDER
+}
+
+enum JobStatus {
+  PLACEHOLDER
+}
+
+enum LeadScoreTier {
+  PLACEHOLDER
+}
+
+enum LowStockAlertType {
+  PLACEHOLDER
+}
+
+enum MealAmountEaten {
+  PLACEHOLDER
+}
+
+enum Mood {
+  PLACEHOLDER
+}
+
+enum PaymentMode {
+  PLACEHOLDER
+}
+
+enum PenaltyType {
+  PLACEHOLDER
+}
+
+enum PromotionStatus {
+  PLACEHOLDER
+}
+
+enum RSVPResponse {
+  PLACEHOLDER
+}
+
+enum ReferralStatus {
+  PLACEHOLDER
+}
+
+enum ReportSchedule {
+  PLACEHOLDER
+}
+
+enum ReviewPeriod {
+  PLACEHOLDER
+}
+
+enum RoomType {
+  PLACEHOLDER
+}
+
+enum SMSStatus {
+  PLACEHOLDER
+}
+
+enum StaffDepartment {
+  PLACEHOLDER
+}
+
+enum StaffDesignation {
+  PLACEHOLDER
+}
+
+enum StaffStatus {
+  PLACEHOLDER
+}
+
+enum StockIssueStatus {
+  PLACEHOLDER
+}
+
+enum StockReturnType {
+  PLACEHOLDER
+}
+
+enum ToiletType {
+  PLACEHOLDER
+}
+
+enum TransferReason {
+  PLACEHOLDER
+}
+
+enum TriggerEvent {
+  PLACEHOLDER
+}
+
+enum VisitorPurpose {
+  PLACEHOLDER
+}
+
+enum WhatsAppStatus {
+  PLACEHOLDER
+}
+
+enum WriteOffReason {
+  PLACEHOLDER
+}
+

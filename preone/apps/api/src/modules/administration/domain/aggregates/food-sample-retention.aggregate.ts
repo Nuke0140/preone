@@ -168,8 +168,12 @@ export class FoodSampleRetentionAggregate extends AggregateRoot<FoodSampleRetent
       throw new Error('FoodSample invariant: result text required');
     }
     this._props.labTestResult = result;
-    // If result indicates contamination, retain for legal
-    if (/positive|contaminat|pathogen|salmonella|e\\.?coli/i.test(result)) {
+    // If result indicates POSITIVE contamination, retain for legal.
+    // Only match explicit positive indicators — 'negative for pathogens' must NOT match.
+    const contaminationMatched =
+      /\b(positive|contaminated|contamination)\b/i.test(result) ||
+      /\b(salmonella|e\.?coli|listeria|staphylococcus)\b.*\b(detected|found|present|positive)\b/i.test(result);
+    if (contaminationMatched) {
       this._props.status = 'RETAINED_FOR_LEGAL';
     } else {
       // Negative result — can dispose after retention

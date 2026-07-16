@@ -82,6 +82,7 @@ export class IccCommitteeAggregate extends AggregateRoot<IccCommitteeProps> {
   get fiscalYear(): string { return this._props.fiscalYear; }
   get status(): 'ACTIVE' | 'DISSOLVED' { return this._props.status; }
   get publishedAt(): string | undefined { return this._props.publishedAt; }
+  get dissolvedAt(): string | undefined { return this._props.dissolvedAt; }
   get members(): readonly IccCommitteeMemberProps[] { return this._props.members; }
 
   static create(props: Omit<IccCommitteeProps, 'status' | 'members' | 'createdAt' | 'updatedAt'>): IccCommitteeAggregate {

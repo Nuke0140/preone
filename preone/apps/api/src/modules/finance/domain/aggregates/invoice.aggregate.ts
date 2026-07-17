@@ -14,6 +14,8 @@
  */
 import { AggregateRoot } from '@shared/kernel/aggregate-root';
 
+import { EnforcesRule } from '@common/brc/brc-trace.decorator';
+
 import {
   InvoiceAdjustedEvent, InvoiceGeneratedEvent, InvoiceIssuedEvent,
   InvoiceOverdueEvent, InvoicePaidEvent, InvoiceVoidedEvent,
@@ -95,6 +97,15 @@ const TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
   CANCELLED: [],
 };
 
+@EnforcesRule('R-FIN-001', { kind: 'aggregate' })
+@EnforcesRule('R-FIN-002', { kind: 'aggregate' })
+@EnforcesRule('R-FIN-005', { kind: 'aggregate' })
+@EnforcesRule('R-FIN-006', { kind: 'aggregate' })
+@EnforcesRule('R-FIN-007', { kind: 'aggregate' })
+@EnforcesRule('R-FIN-008', { kind: 'aggregate' })
+@EnforcesRule('R-FIN-013', { kind: 'aggregate' })
+@EnforcesRule('R-FIN-014', { kind: 'aggregate' })
+@EnforcesRule('R-APR-001', { kind: 'aggregate' })
 export class InvoiceAggregate extends AggregateRoot<InvoiceProps> {
   get tenantId(): string { return this._props.tenantId; }
   get invoiceNumber(): string { return this._props.invoiceNumber; }

@@ -17,6 +17,8 @@
  */
 import { AggregateRoot } from '@shared/kernel/aggregate-root';
 
+import { EnforcesRule } from '@common/brc/brc-trace.decorator';
+
 import {
   ItemCreatedEvent, ItemUpdatedEvent, ItemDeactivatedEvent,
   StockAdjustedEvent, StockLowEvent,
@@ -54,6 +56,11 @@ export interface InventoryItemProps {
   updatedAt: string;
 }
 
+@EnforcesRule('R-INV-001', { kind: 'aggregate' })
+@EnforcesRule('R-INV-002', { kind: 'aggregate' })
+@EnforcesRule('R-INV-003', { kind: 'aggregate' })
+@EnforcesRule('R-INV-005', { kind: 'aggregate' })
+@EnforcesRule('R-INV-011', { kind: 'aggregate' })
 export class InventoryItemAggregate extends AggregateRoot<InventoryItemProps> {
   get tenantId(): string { return this._props.tenantId; }
   get itemCode(): string { return this._props.itemCode; }

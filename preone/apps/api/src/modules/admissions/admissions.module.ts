@@ -44,6 +44,7 @@ import { AdmissionsEventTranslator } from './application/services/admissions-eve
 import {
   AdmissionsController, ApplicationsController, WaitingListController,
 } from './controllers/admissions.controllers';
+import { AdmissionsGapFillControllerPart1, AdmissionsGapFillControllerPart2, AdmissionsGapFillControllerPart3 } from './controllers/admissions-gap-fill.controllers';
 import {
   FEE_PLAN_PORT,
   STUDENT_ONBOARDING_PORT,
@@ -84,7 +85,9 @@ class NoOpFeePlanPort implements IFeePlanPort {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [ApplicationsController, AdmissionsController, WaitingListController],
+  controllers: [ApplicationsController, AdmissionsController, WaitingListController,
+    AdmissionsGapFillControllerPart1, AdmissionsGapFillControllerPart2, AdmissionsGapFillControllerPart3,
+  ],
   providers: [
     AdmissionsService,
     // Saga (BTD §15)

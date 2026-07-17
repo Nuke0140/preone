@@ -44,6 +44,7 @@ import {
   AttendanceController, DailyLogsController, DailyReportsController,
   IncidentsController, MedicineAuthorizationsController,
 } from './controllers/attendance.controllers';
+import { AttendanceGapFillControllerPart1, AttendanceGapFillControllerPart2 } from './controllers/attendance-gap-fill.controllers';
 import {
   ATTENDANCE_REPOSITORY, DAILY_LOG_REPOSITORY, DAILY_REPORT_REPOSITORY,
   INCIDENT_REPORT_REPOSITORY, MEDICINE_AUTHORIZATION_REPOSITORY,
@@ -56,9 +57,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    AttendanceController, DailyLogsController, MedicineAuthorizationsController,
+  controllers: [AttendanceController, DailyLogsController, MedicineAuthorizationsController,
     IncidentsController, DailyReportsController,
+    AttendanceGapFillControllerPart1, AttendanceGapFillControllerPart2,
   ],
   providers: [
     AttendanceService,

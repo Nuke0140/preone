@@ -37,6 +37,7 @@ import {
   GoodsIssuesController, GrnsController, InventoryItemsController,
   InventorySuppliersController, PurchaseOrdersController, StockMovementsController,
 } from './controllers/inventory.controllers';
+import { InventoryGapFillControllerPart1, InventoryGapFillControllerPart2, InventoryGapFillControllerPart3 } from './controllers/inventory-gap-fill.controllers';
 import {
   GOODS_ISSUE_REPOSITORY, GOODS_RECEIPT_NOTE_REPOSITORY,
   INVENTORY_ITEM_REPOSITORY, PURCHASE_ORDER_REPOSITORY, SUPPLIER_REPOSITORY,
@@ -48,10 +49,10 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    InventoryItemsController, InventorySuppliersController,
+  controllers: [InventoryItemsController, InventorySuppliersController,
     PurchaseOrdersController, GrnsController, GoodsIssuesController,
     StockMovementsController,
+    InventoryGapFillControllerPart1, InventoryGapFillControllerPart2, InventoryGapFillControllerPart3,
   ],
   providers: [
     InventoryService,

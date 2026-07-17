@@ -63,6 +63,7 @@ import {
   EnrollmentsController, ObservationsController, PortfoliosController,
   ReportCardsController, SectionsController,
 } from './controllers/academics.controllers';
+import { AcademicsGapFillControllerPart1, AcademicsGapFillControllerPart2, AcademicsGapFillControllerPart3 } from './controllers/academics-gap-fill.controllers';
 import {
   ACADEMIC_SESSION_REPOSITORY, ASSESSMENT_REPOSITORY, CURRICULUM_REPOSITORY,
   ENROLLMENT_REPOSITORY, OBSERVATION_REPOSITORY, PORTFOLIO_REPOSITORY,
@@ -77,8 +78,7 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    AcademicSessionsController,
+  controllers: [AcademicSessionsController,
     CurriculaController,
     SectionsController,
     EnrollmentsController,
@@ -86,6 +86,7 @@ import {
     AssessmentsController,
     ReportCardsController,
     PortfoliosController,
+    AcademicsGapFillControllerPart1, AcademicsGapFillControllerPart2, AcademicsGapFillControllerPart3,
   ],
   providers: [
     // ─── CQRS buses ───

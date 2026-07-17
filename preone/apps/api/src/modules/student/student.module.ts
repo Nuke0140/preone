@@ -45,6 +45,7 @@ import {
 } from './application/handlers/student-query-handlers';
 import { StudentService } from './application/services/student.service';
 import { StudentsController } from './controllers/students.controller';
+import { StudentGapFillControllerPart1, StudentGapFillControllerPart2 } from './controllers/student-gap-fill.controllers';
 import {
   GUARDIAN_REPOSITORY, STUDENT_REPOSITORY,
 } from './domain/repositories/tokens';
@@ -57,7 +58,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [StudentsController],
+  controllers: [StudentsController,
+    StudentGapFillControllerPart1, StudentGapFillControllerPart2,
+  ],
   providers: [
     // ─── CQRS buses ───
     CommandBus,

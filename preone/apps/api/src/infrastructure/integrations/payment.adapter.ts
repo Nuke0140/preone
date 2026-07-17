@@ -64,6 +64,8 @@ export interface RefundResult {
   providerRefundId?: string;
   refundedAmountCents?: number;
   error?: string;
+  /** Raw provider response (for debugging + audit). */
+  raw?: unknown;
 }
 
 export const PAYMENT_PROVIDER = 'PAYMENT_PROVIDER';

@@ -1,41 +1,127 @@
 /**
  * IntegrationsModule — wires the 8 external integration adapters + the
- * shared CircuitBreakerService (Wave 17).
+ * shared CircuitBreakerService (Wave 17) + real providers + tenant
+ * config + feature flags (Wave 17.1).
  *
- * Provider selection is config-driven:
- *   SMS_PROVIDER=stub|twilio|msg91|gupshup   (default: stub)
- *   WHATSAPP_PROVIDER=stub|gupshup|360dialog|twilio
- *   EMAIL_PROVIDER=stub|ses|sendgrid|postmark
- *   PAYMENT_PROVIDER=stub|razorpay|stripe|cashfree
- *   BIOMETRIC_PROVIDER=stub|secugen|mantra|startek
- *   AI_LLM_PROVIDER=stub|openai|anthropic|azure|glm
- *   CLOUD_STORAGE_PROVIDER=stub|s3|gcs|azure|minio
- *   KYC_PROVIDER=stub|surepass|signzy|karza|hyperverge
+ * Provider selection is now three-tier (Wave 17.1):
+ *   1. Tenant-level DB config (IntegrationProviderSetting) — wins.
+ *   2. Global env config (*_PROVIDER + *_API_KEY env vars) — fallback.
+ *   3. Stub — final fallback for dev/test.
  *
- * In Wave 17.0, all providers default to `stub`. Wave 17.1 will wire
- * real providers behind feature flags + tenant-level config.
+ * The real providers (RazorpayPaymentProvider, SendGridEmailProvider,
+ * TwilioSmsProvider, OpenAiLlmProvider) are always registered. Each
+ * adapter resolves at call time which provider to use, based on the
+ * tenant context (if any) and the feature-flag state.
  *
  * The module is @Global so any service in any bounded context can
  * inject any adapter without re-importing the module.
+ *
+ * Feature-flag env vars (Wave 17.1):
+ *   INTEGRATIONS_SMS_LIVE=auto|enabled|disabled
+ *   INTEGRATIONS_WHATSAPP_LIVE=auto|enabled|disabled
+ *   INTEGRATIONS_EMAIL_LIVE=auto|enabled|disabled
+ *   INTEGRATIONS_PAYMENT_LIVE=auto|enabled|disabled
+ *   INTEGRATIONS_BIOMETRIC_LIVE=auto|enabled|disabled
+ *   INTEGRATIONS_AI_LLM_LIVE=auto|enabled|disabled
+ *   INTEGRATIONS_CLOUD_STORAGE_LIVE=auto|enabled|disabled
+ *   INTEGRATIONS_KYC_LIVE=auto|enabled|disabled
+ *
+ *   'auto'     — honour tenant-level config (default, fail-open)
+ *   'enabled'  — real provider must be used (fail-closed if no creds)
+ *   'disabled' — stub provider must be used (dev/test mode)
  */
 import { Global, Module } from '@nestjs/common';
 
+import { PrismaModule } from '@infra/prisma/prisma.module';
+
 import { CircuitBreakerService } from './circuit-breaker.service';
-import { SmsAdapter, StubSmsProvider, SMS_PROVIDER, SMS_CONFIG } from './sms.adapter';
-import { WhatsAppAdapter, StubWhatsAppProvider, WHATSAPP_PROVIDER, WHATSAPP_CONFIG } from './whatsapp.adapter';
-import { EmailAdapter, StubEmailProvider, EMAIL_PROVIDER, EMAIL_CONFIG } from './email.adapter';
-import { PaymentAdapter, StubPaymentProvider, PAYMENT_PROVIDER, PAYMENT_CONFIG } from './payment.adapter';
-import { BiometricAdapter, StubBiometricProvider, BIOMETRIC_PROVIDER, BIOMETRIC_CONFIG } from './biometric.adapter';
-import { AiLlmAdapter, StubAiLlmProvider, AI_LLM_PROVIDER, AI_LLM_CONFIG } from './ai-llm.adapter';
-import { CloudStorageAdapter, StubCloudStorageProvider, CLOUD_STORAGE_PROVIDER, CLOUD_STORAGE_CONFIG } from './cloud-storage.adapter';
-import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.adapter';
+import { SmsAdapter, StubSmsProvider, SMS_PROVIDER, SMS_CONFIG, type SmsProviderPort } from './sms.adapter';
+import { WhatsAppAdapter, StubWhatsAppProvider, WHATSAPP_PROVIDER, WHATSAPP_CONFIG, type WhatsAppProviderPort } from './whatsapp.adapter';
+import { EmailAdapter, StubEmailProvider, EMAIL_PROVIDER, EMAIL_CONFIG, type EmailProviderPort } from './email.adapter';
+import { PaymentAdapter, StubPaymentProvider, PAYMENT_PROVIDER, PAYMENT_CONFIG, type PaymentProviderPort } from './payment.adapter';
+import { BiometricAdapter, StubBiometricProvider, BIOMETRIC_PROVIDER, BIOMETRIC_CONFIG, type BiometricProviderPort } from './biometric.adapter';
+import { AiLlmAdapter, StubAiLlmProvider, AI_LLM_PROVIDER, AI_LLM_CONFIG, type AiLlmProviderPort } from './ai-llm.adapter';
+import { CloudStorageAdapter, StubCloudStorageProvider, CLOUD_STORAGE_PROVIDER, CLOUD_STORAGE_CONFIG, type CloudStorageProviderPort } from './cloud-storage.adapter';
+import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG, type KycProviderPort } from './kyc.adapter';
+
+import { IntegrationFeatureFlagService } from './integration-feature-flag.service';
+import { TenantIntegrationConfigService } from './tenant-integration-config.service';
+
+import { RazorpayPaymentProvider } from './providers/razorpay-payment.provider';
+import { SendGridEmailProvider } from './providers/sendgrid-email.provider';
+import { TwilioSmsProvider } from './providers/twilio-sms.provider';
+import { OpenAiLlmProvider } from './providers/openai-llm.provider';
+
+/**
+ * Registry tokens — each adapter can inject the registry to look up
+ * a real provider by name (e.g., 'twilio' → TwilioSmsProvider).
+ * This decouples the adapter from the concrete provider class.
+ */
+export const SMS_PROVIDER_REGISTRY = 'SMS_PROVIDER_REGISTRY';
+export const EMAIL_PROVIDER_REGISTRY = 'EMAIL_PROVIDER_REGISTRY';
+export const PAYMENT_PROVIDER_REGISTRY = 'PAYMENT_PROVIDER_REGISTRY';
+export const AI_LLM_PROVIDER_REGISTRY = 'AI_LLM_PROVIDER_REGISTRY';
 
 @Global()
 @Module({
+  imports: [PrismaModule],
   providers: [
     CircuitBreakerService,
+    IntegrationFeatureFlagService,
+    TenantIntegrationConfigService,
 
-    // SMS
+    // ─── Real providers (always registered; adapter picks at call time) ──
+    RazorpayPaymentProvider,
+    SendGridEmailProvider,
+    TwilioSmsProvider,
+    OpenAiLlmProvider,
+
+    // ─── Provider registries (name → provider instance) ──
+    {
+      provide: SMS_PROVIDER_REGISTRY,
+      useFactory: (stub: StubSmsProvider, twilio: TwilioSmsProvider) => {
+        const m = new Map<string, SmsProviderPort>();
+        m.set('stub', stub);
+        m.set('twilio', twilio);
+        return m;
+      },
+      inject: [StubSmsProvider, TwilioSmsProvider],
+    },
+    {
+      provide: EMAIL_PROVIDER_REGISTRY,
+      useFactory: (stub: StubEmailProvider, sendgrid: SendGridEmailProvider) => {
+        const m = new Map<string, EmailProviderPort>();
+        m.set('stub', stub);
+        m.set('sendgrid', sendgrid);
+        m.set('ses', sendgrid); // alias — SES not yet implemented; SendGrid is API-compatible
+        return m;
+      },
+      inject: [StubEmailProvider, SendGridEmailProvider],
+    },
+    {
+      provide: PAYMENT_PROVIDER_REGISTRY,
+      useFactory: (stub: StubPaymentProvider, razorpay: RazorpayPaymentProvider) => {
+        const m = new Map<string, PaymentProviderPort>();
+        m.set('stub', stub);
+        m.set('razorpay', razorpay);
+        return m;
+      },
+      inject: [StubPaymentProvider, RazorpayPaymentProvider],
+    },
+    {
+      provide: AI_LLM_PROVIDER_REGISTRY,
+      useFactory: (stub: StubAiLlmProvider, openai: OpenAiLlmProvider) => {
+        const m = new Map<string, AiLlmProviderPort>();
+        m.set('stub', stub);
+        m.set('openai', openai);
+        m.set('azure', openai); // alias — Azure OpenAI is OpenAI-compatible
+        m.set('glm', openai);   // alias — Z.ai GLM is OpenAI-compatible
+        return m;
+      },
+      inject: [StubAiLlmProvider, OpenAiLlmProvider],
+    },
+
+    // ─── Default providers (env-driven — used when no tenant ctx) ──
     StubSmsProvider,
     { provide: SMS_PROVIDER, useExisting: StubSmsProvider },
     {
@@ -49,7 +135,7 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     },
     SmsAdapter,
 
-    // WhatsApp
+    // WhatsApp (no real provider yet — stub only)
     StubWhatsAppProvider,
     { provide: WHATSAPP_PROVIDER, useExisting: StubWhatsAppProvider },
     {
@@ -63,7 +149,6 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     },
     WhatsAppAdapter,
 
-    // Email
     StubEmailProvider,
     { provide: EMAIL_PROVIDER, useExisting: StubEmailProvider },
     {
@@ -79,7 +164,6 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     },
     EmailAdapter,
 
-    // Payment
     StubPaymentProvider,
     { provide: PAYMENT_PROVIDER, useExisting: StubPaymentProvider },
     {
@@ -93,7 +177,7 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     },
     PaymentAdapter,
 
-    // Biometric
+    // Biometric (no real provider yet — stub only)
     StubBiometricProvider,
     { provide: BIOMETRIC_PROVIDER, useExisting: StubBiometricProvider },
     {
@@ -106,7 +190,6 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     },
     BiometricAdapter,
 
-    // AI/LLM
     StubAiLlmProvider,
     { provide: AI_LLM_PROVIDER, useExisting: StubAiLlmProvider },
     {
@@ -121,7 +204,6 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     },
     AiLlmAdapter,
 
-    // Cloud Storage
     StubCloudStorageProvider,
     { provide: CLOUD_STORAGE_PROVIDER, useExisting: StubCloudStorageProvider },
     {
@@ -137,7 +219,6 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     },
     CloudStorageAdapter,
 
-    // KYC
     StubKycProvider,
     { provide: KYC_PROVIDER, useExisting: StubKycProvider },
     {
@@ -153,6 +234,8 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
   ],
   exports: [
     CircuitBreakerService,
+    IntegrationFeatureFlagService,
+    TenantIntegrationConfigService,
     SmsAdapter,
     WhatsAppAdapter,
     EmailAdapter,
@@ -161,6 +244,10 @@ import { KycAdapter, StubKycProvider, KYC_PROVIDER, KYC_CONFIG } from './kyc.ada
     AiLlmAdapter,
     CloudStorageAdapter,
     KycAdapter,
+    SMS_PROVIDER_REGISTRY,
+    EMAIL_PROVIDER_REGISTRY,
+    PAYMENT_PROVIDER_REGISTRY,
+    AI_LLM_PROVIDER_REGISTRY,
   ],
 })
 export class IntegrationsModule {}

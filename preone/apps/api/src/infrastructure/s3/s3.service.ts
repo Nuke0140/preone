@@ -14,6 +14,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Readable } from 'node:stream';
 
 
 import type { AppConfig } from '@config/env/app-config.type';
@@ -98,5 +99,37 @@ export class S3Service {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Get a readable stream of an object's body. Used by Wave 19 ClamAV
+   * scanner + Sharp thumbnailer + HLS transcoder to stream object content
+   * without buffering the whole file in memory.
+   */
+  async getObjectStream(objectKey: string, bucket?: string): Promise<Readable> {
+    const response = await this.client.send(
+      new GetObjectCommand({ Bucket: bucket ?? this.bucket, Key: objectKey }),
+    );
+    return response.Body as Readable;
+  }
+
+  /**
+   * Put a buffer to an object key. Used by Wave 19 to write Sharp-generated
+   * thumbnails + HLS playlists back to S3.
+   */
+  async putObject(opts: {
+    objectKey: string;
+    body: Buffer;
+    contentType: string;
+    bucket?: string;
+  }): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: opts.bucket ?? this.bucket,
+        Key: opts.objectKey,
+        Body: opts.body,
+        ContentType: opts.contentType,
+      }),
+    );
   }
 }

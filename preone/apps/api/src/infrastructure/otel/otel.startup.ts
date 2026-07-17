@@ -29,9 +29,14 @@ export async function startOpenTelemetry(): Promise<void> {
 
   const traceExporter = new OTLPTraceExporter({ url: `${endpoint}/v1/traces` });
 
+  // Cast around a known peer-dep version conflict between
+  // @opentelemetry/sdk-node (pulls sdk-trace-base@1.x) and
+  // @opentelemetry/exporter-trace-otlp-http (pulls sdk-trace-base@2.x).
+  // The runtime contract is identical for our usage (HTTP OTLP export).
+  // Track resolution: https://github.com/open-telemetry/opentelemetry-js/issues
   startedSdk = new NodeSDK({
     serviceName,
-    traceExporter,
+    traceExporter: traceExporter as never,
     instrumentations: [
       getNodeAutoInstrumentations({
         '@opentelemetry/instrumentation-fs': { enabled: false },

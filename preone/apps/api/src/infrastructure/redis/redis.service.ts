@@ -104,7 +104,7 @@ export class RedisService implements OnModuleInit {
     return this.mainClient.incr(key);
   }
 
-  /** Increment a key by an arbitrary integer (atomic). Wave 18.1 — AI token budget. */
+  /** Wave 18.1 — used by TenantTokenBudgetService to track monthly token usage. */
   async incrby(key: string, amount: number): Promise<number> {
     return this.mainClient.incrby(key, amount);
   }

@@ -32,7 +32,7 @@ import { EventBusModule } from '../infrastructure/event-bus/event-bus.module';
 import { HealthModule } from '../infrastructure/health/health.module';
 import { IntegrationsModule } from '../infrastructure/integrations/integrations.module';
 import { PrismaModule } from '../infrastructure/prisma/prisma.module';
-import { RealtimeModule } from '../infrastructure/realtime';
+import { RealtimeModule } from '../infrastructure/realtime/realtime.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { S3Module } from '../infrastructure/s3/s3.module';
 
@@ -55,6 +55,8 @@ import { ReportsModule } from '../modules/reports/reports.module';
 import { SettingsModule } from '../modules/settings/settings.module';
 import { StudentModule } from '../modules/student/student.module';
 import { TransportModule } from '../modules/transport/transport.module';
+import { UploadsModule } from '../modules/uploads/uploads.module';
+import { WebhooksModule } from '../modules/webhooks/webhooks.module';
 
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -164,7 +166,10 @@ import type { AppConfig } from '../config/env/app-config.type';
     ReportsModule,
     SettingsModule,
     PlatformModule,
+    // Wave 16-20 new modules
     AiModule,
+    UploadsModule,
+    WebhooksModule,
   ],
   providers: [
     // Global guards — JwtAuthGuard + PermissionsGuard run on every route

@@ -37,6 +37,7 @@ import {
 import {
   AnnouncementsController, ConversationsController, NotificationsController,
 } from './controllers/communication.controllers';
+import { CommunicationGapFillControllerPart1, CommunicationGapFillControllerPart2 } from './controllers/communication-gap-fill.controllers';
 import {
   ANNOUNCEMENT_REPOSITORY, CONVERSATION_REPOSITORY, MESSAGE_REPOSITORY,
   NOTIFICATION_REPOSITORY,
@@ -48,7 +49,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [NotificationsController, AnnouncementsController, ConversationsController],
+  controllers: [NotificationsController, AnnouncementsController, ConversationsController,
+    CommunicationGapFillControllerPart1, CommunicationGapFillControllerPart2,
+  ],
   providers: [
     CommunicationService,
     CommunicationIntegrationEventSubscriber,

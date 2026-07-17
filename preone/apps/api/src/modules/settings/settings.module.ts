@@ -21,6 +21,7 @@ import {
 import {
   CalendarEventsController, SystemConfigsController, UserPreferencesController,
 } from './controllers/settings.controllers';
+import { SettingsGapFillControllerPart1, SettingsGapFillControllerPart2 } from './controllers/settings-gap-fill.controllers';
 import {
   CALENDAR_EVENT_REPOSITORY, SYSTEM_CONFIG_REPOSITORY, USER_PREFERENCE_REPOSITORY,
 } from './domain/repositories/tokens';
@@ -30,7 +31,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [SystemConfigsController, UserPreferencesController, CalendarEventsController],
+  controllers: [SystemConfigsController, UserPreferencesController, CalendarEventsController,
+    SettingsGapFillControllerPart1, SettingsGapFillControllerPart2,
+  ],
   providers: [
     SettingsService,
     { provide: SYSTEM_CONFIG_REPOSITORY, useClass: PrismaSystemConfigRepository },

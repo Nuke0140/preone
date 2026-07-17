@@ -25,6 +25,7 @@ import {
   FeatureFlagsController, PlatformMetricsController, ProvisioningsController,
   SupportTicketsController,
 } from './controllers/platform.controllers';
+import { PlatformGapFillControllerPart1, PlatformGapFillControllerPart2 } from './controllers/platform-gap-fill.controllers';
 import {
   FEATURE_FLAG_REPOSITORY, SUPPORT_TICKET_REPOSITORY, TENANT_PROVISIONING_REPOSITORY,
 } from './domain/repositories/tokens';
@@ -34,9 +35,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    ProvisioningsController, FeatureFlagsController,
+  controllers: [ProvisioningsController, FeatureFlagsController,
     SupportTicketsController, PlatformMetricsController,
+    PlatformGapFillControllerPart1, PlatformGapFillControllerPart2,
   ],
   providers: [
     PlatformService,

@@ -37,6 +37,7 @@ import {
   FeePlansController, InvoicesController, PaymentsController,
   RefundsController,
 } from './controllers/finance.controllers';
+import { FinanceGapFillControllerPart1, FinanceGapFillControllerPart2, FinanceGapFillControllerPart3 } from './controllers/finance-gap-fill.controllers';
 import {
   FEE_PLAN_REPOSITORY, INVOICE_REPOSITORY, PAYMENT_REPOSITORY,
   REFUND_REPOSITORY, STUDENT_FEE_PLAN_REPOSITORY,
@@ -48,7 +49,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [FeePlansController, InvoicesController, PaymentsController, RefundsController],
+  controllers: [FeePlansController, InvoicesController, PaymentsController, RefundsController,
+    FinanceGapFillControllerPart1, FinanceGapFillControllerPart2, FinanceGapFillControllerPart3,
+  ],
   providers: [
     FinanceService,
     FinanceIntegrationEventSubscriber,

@@ -24,6 +24,7 @@ import {
   AnalyticsController, ReportDefinitionsController, ReportExecutionsController,
   ReportSubscriptionsController, SavedReportsController,
 } from './controllers/reports.controllers';
+import { ReportsGapFillControllerPart1, ReportsGapFillControllerPart2 } from './controllers/reports-gap-fill.controllers';
 import {
   REPORT_DEFINITION_REPOSITORY, REPORT_EXECUTION_REPOSITORY,
   REPORT_SUBSCRIPTION_REPOSITORY, SAVED_REPORT_REPOSITORY,
@@ -35,9 +36,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    ReportDefinitionsController, ReportExecutionsController,
+  controllers: [ReportDefinitionsController, ReportExecutionsController,
     SavedReportsController, ReportSubscriptionsController, AnalyticsController,
+    ReportsGapFillControllerPart1, ReportsGapFillControllerPart2,
   ],
   providers: [
     ReportsService,

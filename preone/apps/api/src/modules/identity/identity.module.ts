@@ -61,6 +61,7 @@ import { PermissionsController } from './controllers/permissions.controller';
 import { RolesController } from './controllers/roles.controller';
 import { SchoolsController } from './controllers/schools.controller';
 import { UsersController } from './controllers/users.controller';
+import { IdentityGapFillControllerPart1, IdentityGapFillControllerPart2, IdentityGapFillControllerPart3 } from './controllers/identity-gap-fill.controllers';
 import {
   SCHOOL_REPOSITORY, BRANCH_REPOSITORY, USER_REPOSITORY, ROLE_REPOSITORY,
   PERMISSION_REPOSITORY,
@@ -91,13 +92,13 @@ import {
 } from './infrastructure/repositories/prisma-user.repository';
 
 @Module({
-  controllers: [
-    AuthController,
+  controllers: [AuthController,
     SchoolsController,
     UsersController,
     RolesController,
     PermissionsController,
     BranchesController,
+    IdentityGapFillControllerPart1, IdentityGapFillControllerPart2, IdentityGapFillControllerPart3,
   ],
   providers: [
     // ─── CQRS buses ───

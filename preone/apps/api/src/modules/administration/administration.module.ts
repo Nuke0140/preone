@@ -35,6 +35,7 @@ import {
   AssetsController, FacilityInspectionsController, FacilitiesController,
   MaintenanceRequestsController, VisitorsController,
 } from './controllers/administration.controllers';
+import { AdministrationGapFillControllerPart1, AdministrationGapFillControllerPart2 } from './controllers/administration-gap-fill.controllers';
 import {
   ASSET_REPOSITORY, MAINTENANCE_REQUEST_REPOSITORY, VISITOR_LOG_REPOSITORY,
 } from './domain/repositories/tokens';
@@ -44,9 +45,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    AssetsController, MaintenanceRequestsController, VisitorsController,
+  controllers: [AssetsController, MaintenanceRequestsController, VisitorsController,
     FacilitiesController, FacilityInspectionsController,
+    AdministrationGapFillControllerPart1, AdministrationGapFillControllerPart2,
   ],
   providers: [
     AdministrationService,

@@ -41,6 +41,7 @@ import {
   EmployeesController, LeavesController, PayrollsController,
   PerformanceReviewsController,
 } from './controllers/hr.controllers';
+import { HrGapFillControllerPart1, HrGapFillControllerPart2, HrGapFillControllerPart3 } from './controllers/hr-gap-fill.controllers';
 import {
   EMPLOYEE_REPOSITORY, LEAVE_REPOSITORY, PAYROLL_REPOSITORY,
   PERFORMANCE_REVIEW_REPOSITORY,
@@ -52,9 +53,9 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    EmployeesController, LeavesController, PayrollsController,
+  controllers: [EmployeesController, LeavesController, PayrollsController,
     PerformanceReviewsController,
+    HrGapFillControllerPart1, HrGapFillControllerPart2, HrGapFillControllerPart3,
   ],
   providers: [
     HrService,

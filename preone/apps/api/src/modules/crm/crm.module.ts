@@ -38,6 +38,7 @@ import {
   CampaignsController, CounsellorsController, FollowUpsController,
   LeadsController,
 } from './controllers/crm.controllers';
+import { CrmGapFillControllerPart1, CrmGapFillControllerPart2, CrmGapFillControllerPart3 } from './controllers/crm-gap-fill.controllers';
 import {
   CAMPAIGN_REPOSITORY, FOLLOW_UP_REPOSITORY, LEAD_REPOSITORY,
 } from './domain/repositories/tokens';
@@ -47,8 +48,8 @@ import {
 
 @Module({
   imports: [PrismaModule, EventBusModule],
-  controllers: [
-    LeadsController, CampaignsController, FollowUpsController, CounsellorsController,
+  controllers: [LeadsController, CampaignsController, FollowUpsController, CounsellorsController,
+    CrmGapFillControllerPart1, CrmGapFillControllerPart2, CrmGapFillControllerPart3,
   ],
   providers: [
     CrmService,

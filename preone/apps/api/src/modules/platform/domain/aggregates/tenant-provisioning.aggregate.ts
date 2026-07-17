@@ -13,6 +13,8 @@
  */
 import { AggregateRoot } from '@shared/kernel/aggregate-root';
 
+import { EnforcesRule } from '@common/brc/brc-trace.decorator';
+
 import {
   TenantProvisioningCompletedEvent, TenantProvisioningFailedEvent,
   TenantProvisioningStartedEvent, TenantProvisioningStepCompletedEvent,
@@ -42,6 +44,9 @@ export interface TenantProvisioningProps {
   updatedAt: string;
 }
 
+@EnforcesRule('R-PLT-001', { kind: 'aggregate' })
+@EnforcesRule('R-PLT-009', { kind: 'aggregate' })
+@EnforcesRule('R-PLT-010', { kind: 'aggregate' })
 export class TenantProvisioningAggregate extends AggregateRoot<TenantProvisioningProps> {
   get schoolId(): string { return this._props.schoolId; }
   get status(): ProvisioningStatus { return this._props.status; }

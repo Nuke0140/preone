@@ -19,6 +19,8 @@
  */
 import { AggregateRoot } from '@shared/kernel/aggregate-root';
 
+import { EnforcesRule } from '@common/brc/brc-trace.decorator';
+
 import {
   EmployeeOnboardedEvent, EmployeeOffboardedEvent, EmployeePromotedEvent,
   EmployeeSuspendedEvent, EmployeeReactivatedEvent, EmployeeResignedEvent,
@@ -106,6 +108,11 @@ const TRANSITIONS: Record<EmployeeStatus, EmployeeStatus[]> = {
   EXITED: [],
 };
 
+@EnforcesRule('R-HR-001', { kind: 'aggregate' })
+@EnforcesRule('R-HR-002', { kind: 'aggregate' })
+@EnforcesRule('R-HR-008', { kind: 'aggregate' })
+@EnforcesRule('R-HR-012', { kind: 'aggregate' })
+@EnforcesRule('R-APR-010', { kind: 'aggregate' })
 export class EmployeeAggregate extends AggregateRoot<EmployeeProps> {
   get tenantId(): string { return this._props.tenantId; }
   get employeeCode(): string { return this._props.employeeCode; }

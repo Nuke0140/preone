@@ -17,6 +17,7 @@ import { WsJwtVerifier } from '../auth/ws-jwt-verifier';
 import { WsConnectionManager } from '../gateway/ws-connection-manager';
 import { WsSubscriptionManager } from '../subscription/ws-subscription-manager';
 import { WsScopeResolver } from '../subscription/ws-scope-resolver';
+import { WsScopeCheckService } from '../subscription/ws-scope-check.service';
 import { WsPubSubBridge } from '../bridge/ws-pubsub-bridge';
 import {
   WsNamespace,
@@ -126,7 +127,14 @@ describe('WsBaseGateway (via TestGateway)', () => {
     } as unknown as WsJwtVerifier;
 
     connMgr = new WsConnectionManager();
-    scopeResolver = new WsScopeResolver();
+    // Mock the DB-backed scope check service (Wave 16.1) — default allow-all.
+    const scopeCheck = {
+      canTeacherAccessSection: vi.fn().mockResolvedValue(true),
+      canParentAccessSection: vi.fn().mockResolvedValue(true),
+      canParentAccessTrip: vi.fn().mockResolvedValue(true),
+      invalidate: vi.fn().mockResolvedValue(undefined),
+    } as unknown as WsScopeCheckService;
+    scopeResolver = new WsScopeResolver(scopeCheck);
     subMgr = new WsSubscriptionManager(connMgr, scopeResolver);
     bridge = {
       publish: vi.fn(async () => undefined),

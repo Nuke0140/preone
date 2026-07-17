@@ -16,6 +16,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { EventBusService } from '@infra/event-bus/event-bus.service';
 import { PrismaService } from '@infra/prisma/prisma.service';
+import { RealtimeEventPublisher } from '@infra/realtime/bridge/realtime-event-publisher';
 
 import { AnnouncementAggregate } from '../../domain/aggregates/announcement.aggregate';
 import { ConversationAggregate } from '../../domain/aggregates/conversation.aggregate';
@@ -41,6 +42,7 @@ export class CommunicationService {
     @Inject(MESSAGE_REPOSITORY) private readonly messages: MessageRepository,
     private readonly eventBus: EventBusService,
     private readonly prisma: PrismaService,
+    private readonly realtime: RealtimeEventPublisher,
   ) {}
 
   // ─── Notifications ────────────────────────────────────────────
@@ -96,6 +98,31 @@ export class CommunicationService {
     n.markSent(sentAt);
     await this.notifications.save(n);
     await this.eventBus.publishAll(n.commit());
+
+    // Wave 16.1 — push to the notifications WS namespace so the recipient's
+    // open browser tab receives the new notification immediately.
+    // Access private props via the established `(n as any)._props` pattern
+    // (same as resolveAudienceRecipients below) — avoids widening the public
+    // aggregate API just for the realtime push.
+    const nProps = (n as any)._props as {
+      recipientIds: string[]; subject?: string; body: string;
+    };
+    for (const recipientId of nProps.recipientIds) {
+      await this.realtime.publishToUser(
+        'notifications',
+        tenantId,
+        recipientId,
+        'notification.created',
+        {
+          notificationId: n.id,
+          channel: n.channel,
+          priority: n.priority,
+          subject: nProps.subject,
+          body: nProps.body,
+          sentAt,
+        },
+      );
+    }
   }
 
   async markNotificationRead(notificationId: string, recipientId: string, tenantId: string): Promise<void> {
@@ -149,6 +176,25 @@ export class CommunicationService {
     await this.announcements.save(a);
     await this.eventBus.publishAll(a.commit());
     this.logger.log(`Published announcement ${a.id} to ${recipientIds.length} recipient(s)`);
+
+    // Wave 16.1 — push the announcement to each recipient's private
+    // notifications channel so open tabs render the new announcement
+    // without polling. We use the notifications namespace (not chat)
+    // because announcements are one-to-many broadcast, not conversational.
+    for (const recipientId of recipientIds) {
+      await this.realtime.publishToUser(
+        'notifications',
+        tenantId,
+        recipientId,
+        'announcement.published',
+        {
+          announcementId: a.id,
+          title: a.title,
+          audience: a.audience,
+          publishedAt: new Date().toISOString(),
+        },
+      );
+    }
   }
 
   async acknowledgeAnnouncement(announcementId: string, recipientId: string, tenantId: string, _note?: string): Promise<void> {
@@ -240,6 +286,28 @@ export class CommunicationService {
     await this.conversations.save(c);
     await this.eventBus.publishAll(c.commit());
     this.logger.debug(`Message ${messageId} sent in conversation ${props.conversationId}`);
+
+    // Wave 16.1 — broadcast the new message to all subscribers of the
+    // conversation's chat room. The room channel is `room:<conversationId>`
+    // (per WS channel taxonomy). The scope resolver permits subscription
+    // only to participants (for DIRECT/GROUP) or to teachers/parents of
+    // the linked classroom (for CLASSROOM conversations).
+    await this.realtime.publish(
+      'chat',
+      props.tenantId,
+      `room:${props.conversationId}`,
+      'chat.message.sent',
+      {
+        messageId,
+        conversationId: props.conversationId,
+        senderId: props.senderId,
+        body: props.body,
+        attachments: props.attachments ?? [],
+        replyToId: props.replyToId,
+        sentAt: now,
+      },
+    );
+
     return { messageId };
   }
 

@@ -104,6 +104,11 @@ export class RedisService implements OnModuleInit {
     return this.mainClient.incr(key);
   }
 
+  /** Increment a key by an arbitrary integer (atomic). Wave 18.1 — AI token budget. */
+  async incrby(key: string, amount: number): Promise<number> {
+    return this.mainClient.incrby(key, amount);
+  }
+
   async expire(key: string, ttlSeconds: number): Promise<boolean> {
     return (await this.mainClient.expire(key, ttlSeconds)) === 1;
   }

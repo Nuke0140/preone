@@ -30,6 +30,7 @@ import { AuditModule } from '../infrastructure/audit/audit.module';
 import { CacheModule } from '../infrastructure/cache/cache.module';
 import { EventBusModule } from '../infrastructure/event-bus/event-bus.module';
 import { HealthModule } from '../infrastructure/health/health.module';
+import { IntegrationsModule } from '../infrastructure/integrations/integrations.module';
 import { PrismaModule } from '../infrastructure/prisma/prisma.module';
 import { RealtimeModule } from '../infrastructure/realtime';
 import { RedisModule } from '../infrastructure/redis/redis.module';
@@ -41,6 +42,7 @@ import { S3Module } from '../infrastructure/s3/s3.module';
 import { AcademicsModule } from '../modules/academics/academics.module';
 import { AdministrationModule } from '../modules/administration/administration.module';
 import { AdmissionsModule } from '../modules/admissions/admissions.module';
+import { AiModule } from '../modules/ai/ai.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { CommunicationModule } from '../modules/communication/communication.module';
 import { CrmModule } from '../modules/crm/crm.module';
@@ -144,6 +146,7 @@ import type { AppConfig } from '../config/env/app-config.type';
     HealthModule,
     AuditModule,
     RealtimeModule,
+    IntegrationsModule,
 
     // 6. Business modules (14 bounded contexts) — added progressively
     IdentityModule,
@@ -161,6 +164,7 @@ import type { AppConfig } from '../config/env/app-config.type';
     ReportsModule,
     SettingsModule,
     PlatformModule,
+    AiModule,
   ],
   providers: [
     // Global guards — JwtAuthGuard + PermissionsGuard run on every route

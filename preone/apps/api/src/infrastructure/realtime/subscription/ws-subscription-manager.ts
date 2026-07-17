@@ -62,7 +62,7 @@ export class WsSubscriptionManager {
       return;
     }
 
-    const resolution = this.scopeResolver.resolve(ctx.user, channel);
+    const resolution = await this.scopeResolver.resolve(ctx.user, channel);
     if (!resolution.ok) {
       this.emitError(socket, {
         event: 'error',
@@ -120,7 +120,10 @@ export class WsSubscriptionManager {
   }
 
   /** Convenience for tests — exposes the scope resolver's decision. */
-  explainScope(user: Parameters<WsScopeResolver['resolve']>[0], channel: string): ScopeResolution {
+  async explainScope(
+    user: Parameters<WsScopeResolver['resolve']>[0],
+    channel: string,
+  ): Promise<ScopeResolution> {
     return this.scopeResolver.resolve(user, channel);
   }
 }

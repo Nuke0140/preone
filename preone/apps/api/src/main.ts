@@ -134,6 +134,7 @@ async function bootstrap(): Promise<void> {
       .addTag('reports', 'Cross-domain Reports, Analytics')
       .addTag('settings', 'Academic Years, Calendars, Configs')
       .addTag('platform', 'Subscriptions, Billing, Feature Flags')
+      .addTag('ai', 'AI-powered endpoints — Lesson Plans, Report Cards, Observations, Reply Suggestions, Insights')
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('docs', app, document, {

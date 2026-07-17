@@ -8,6 +8,7 @@ import {
   ConflictException, NotFoundException, ValidationException,
 } from '@common/errors/exceptions';
 import { EventBusService } from '@infra/event-bus/event-bus.service';
+import { RealtimeEventPublisher } from '@infra/realtime/bridge/realtime-event-publisher';
 
 import {
   AttendanceAggregate, AttendanceStatus, ArrivalMode, PickupMode,
@@ -44,6 +45,7 @@ export class AttendanceService {
     @Inject(DAILY_REPORT_REPOSITORY) private readonly dailyReports: DailyReportRepository,
     @Inject(MEDICINE_AUTHORIZATION_REPOSITORY) private readonly medicineAuths: MedicineAuthorizationRepository,
     private readonly eventBus: EventBusService,
+    private readonly realtime: RealtimeEventPublisher,
   ) {}
 
   // ─── Attendance ────────────────────────────────────
@@ -74,6 +76,29 @@ export class AttendanceService {
       }
       await this.attendances.save(existing);
       await this.eventBus.publishAll(existing.commit());
+
+      // Wave 16.1 — broadcast update to the classroom's live attendance
+      // channel so teachers + parents watching the class see the change.
+      await this.realtime.publish(
+        'attendance',
+        tenantId,
+        `class:${props.classroomId}`,
+        'attendance.updated',
+        {
+          attendanceId: existing.id,
+          studentId: props.studentId,
+          classroomId: props.classroomId,
+          attendanceDate: props.attendanceDate,
+          status: props.status,
+          checkInAt: props.checkInAt,
+          checkOutAt: props.checkOutAt,
+          arrivalMode: props.arrivalMode,
+          pickupMode: props.pickupMode,
+          markedBy: actorId,
+          markedAt: new Date().toISOString(),
+          source: props.source,
+        },
+      );
       return existing;
     }
 
@@ -95,6 +120,29 @@ export class AttendanceService {
     });
     await this.attendances.save(attendance);
     await this.eventBus.publishAll(attendance.commit());
+
+    // Wave 16.1 — broadcast the new attendance mark to the classroom's
+    // live attendance channel.
+    await this.realtime.publish(
+      'attendance',
+      tenantId,
+      `class:${props.classroomId}`,
+      'attendance.marked',
+      {
+        attendanceId: attendance.id,
+        studentId: props.studentId,
+        classroomId: props.classroomId,
+        attendanceDate: props.attendanceDate,
+        status: props.status,
+        checkInAt: props.checkInAt,
+        checkOutAt: props.checkOutAt,
+        arrivalMode: props.arrivalMode,
+        pickupMode: props.pickupMode,
+        markedBy: actorId,
+        markedAt: new Date().toISOString(),
+        source: props.source,
+      },
+    );
     return attendance;
   }
 

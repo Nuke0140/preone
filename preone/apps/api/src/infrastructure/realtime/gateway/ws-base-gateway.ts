@@ -125,8 +125,13 @@ export abstract class WsBaseGateway
     this.scheduleHeartbeat(socket, user);
 
     // 5. Wire up control event handlers.
+    // The handler returns the async promise so unit tests can `await` it.
+    // Socket.IO itself does NOT await handlers in production — fire-and-
+    // forget semantics are preserved — but returning the promise makes
+    // the handler's behaviour observable in tests, which is necessary
+    // because the Wave 16.1 WsScopeResolver is now async (DB-backed).
     socket.on(this.namespace, (msg: unknown) => {
-      this.onSocketEvent(socket, msg).catch((err) => {
+      return this.onSocketEvent(socket, msg).catch((err) => {
         this.logger.error(
           `Error handling event on /${this.namespace} for ${socket.id}: ${(err as Error).message}`,
         );

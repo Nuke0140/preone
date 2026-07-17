@@ -1,18 +1,26 @@
 /**
- * Unit tests for AiService (Wave 18).
+ * Unit tests for AiService (Wave 18 + Wave 18.1).
  *
- * Verifies:
+ * Wave 18:
  *   - Each of the 5 endpoints constructs the right prompt + parses the
  *     LLM response correctly.
  *   - PII redaction in prompts (Aadhaar, PAN, phone, email).
  *   - Fallback behaviour when the LLM circuit is OPEN or returns no text.
  *   - KPI computation for the /insights endpoint (mocked Prisma).
+ *
+ * Wave 18.1 (additional tests at the bottom):
+ *   - Redis prompt cache hit short-circuits the LLM call
+ *   - Per-tenant token budget exceeded → fallback stub response
+ *   - Streaming lesson plan yields chunks from completeStream()
+ *   - Budget recorded after successful LLM call
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AiService } from '../application/services/ai.service';
 import { AiLlmAdapter } from '../../../../infrastructure/integrations/ai-llm.adapter';
-import type { CompletionResult } from '../../../../infrastructure/integrations/ai-llm.adapter';
+import type { CompletionResult, CompletionStreamChunk } from '../../../../infrastructure/integrations/ai-llm.adapter';
+import { AiPromptCacheService } from '../application/services/ai-prompt-cache.service';
+import { AiTokenBudgetService } from '../application/services/ai-token-budget.service';
 
 function makeLlmMock(overrides: Partial<AiLlmAdapter> = {}) {
   return {
@@ -47,15 +55,47 @@ function makePrismaMock() {
   } as any;
 }
 
+/** Mock AiPromptCacheService — default cache MISS (so LLM is called). */
+function makeCacheMock(opts: { hit?: CompletionResult } = {}) {
+  return {
+    get: vi.fn().mockResolvedValue(opts.hit ?? undefined),
+    set: vi.fn().mockResolvedValue(undefined),
+    invalidate: vi.fn().mockResolvedValue(undefined),
+  } as unknown as AiPromptCacheService & {
+    get: ReturnType<typeof vi.fn>;
+    set: ReturnType<typeof vi.fn>;
+  };
+}
+
+/** Mock AiTokenBudgetService — default allow. */
+function makeBudgetMock(opts: { allowed?: boolean; quota?: number; usedToday?: number } = {}) {
+  const allowed = opts.allowed ?? true;
+  const quota = opts.quota ?? 500_000;
+  const usedToday = opts.usedToday ?? 0;
+  return {
+    checkBudget: vi.fn().mockResolvedValue({ allowed, usedToday, quota, remaining: quota - usedToday }),
+    recordUsage: vi.fn().mockResolvedValue({ recorded: true, usedToday: usedToday + 30, quota, exceededAfterRecord: false }),
+    getUsage: vi.fn().mockResolvedValue({ allowed, usedToday, quota, remaining: quota - usedToday }),
+    reset: vi.fn().mockResolvedValue(undefined),
+  } as unknown as AiTokenBudgetService & {
+    checkBudget: ReturnType<typeof vi.fn>;
+    recordUsage: ReturnType<typeof vi.fn>;
+  };
+}
+
 describe('AiService', () => {
   let service: AiService;
   let llm: ReturnType<typeof makeLlmMock>;
   let prisma: ReturnType<typeof makePrismaMock>;
+  let cache: ReturnType<typeof makeCacheMock>;
+  let budget: ReturnType<typeof makeBudgetMock>;
 
   beforeEach(() => {
     llm = makeLlmMock();
     prisma = makePrismaMock();
-    service = new AiService(llm, prisma);
+    cache = makeCacheMock();
+    budget = makeBudgetMock();
+    service = new AiService(llm, prisma, cache, budget);
   });
 
   describe('generateLessonPlan', () => {
@@ -307,6 +347,214 @@ describe('AiService', () => {
       const userPrompt = llm.complete.mock.calls[0][0].messages[1].content;
       expect(userPrompt).toContain('+91-XXXX-XXX-XXX');
       expect(userPrompt).not.toContain('+91 98765 43210');
+    });
+  });
+
+  // ─── Wave 18.1 — cache + budget + streaming ───────────────────
+
+  describe('Wave 18.1 — Redis prompt cache', () => {
+    it('should short-circuit on cache hit and NOT call the LLM', async () => {
+      const cached: CompletionResult = {
+        ok: true,
+        text: '# Cached Lesson Plan\n\n(previously generated)',
+        model: 'gpt-4o-mini',
+        totalTokens: 250,
+        finishReason: 'stop',
+      };
+      cache = makeCacheMock({ hit: cached });
+      service = new AiService(llm, prisma, cache, budget);
+
+      const result = await service.generateLessonPlan(
+        {
+          ageGroup: 'Nursery',
+          durationMinutes: 30,
+          topics: [{ title: 'Animals' }],
+        },
+        '01HSCH',
+      );
+
+      expect(llm.complete).not.toHaveBeenCalled();
+      expect(result.lessonPlanMarkdown).toBe(cached.text);
+      expect(result.model).toBe('gpt-4o-mini');
+      expect(result.totalTokens).toBe(250);
+    });
+
+    it('should populate the cache after a successful LLM call', async () => {
+      await service.generateLessonPlan(
+        {
+          ageGroup: 'Nursery',
+          durationMinutes: 30,
+          topics: [{ title: 'Animals' }],
+        },
+        '01HSCH',
+      );
+
+      expect(cache.set).toHaveBeenCalledTimes(1);
+      const setArgs = cache.set.mock.calls[0];
+      expect(setArgs[0].tenantId).toBe('01HSCH');
+      // The cache key components include model + temperature + maxTokens.
+      expect(setArgs[0].temperature).toBe(0.7);
+      expect(setArgs[0].maxOutputTokens).toBe(2048);
+      // The second arg is the CompletionResult.
+      expect(setArgs[1].ok).toBe(true);
+      expect(setArgs[1].text).toBe('Mock LLM response');
+    });
+
+    it('should NOT populate the cache when the LLM fails', async () => {
+      llm.complete.mockResolvedValueOnce({ ok: false, error: 'circuit open' });
+      await service.generateLessonPlan(
+        {
+          ageGroup: 'Nursery',
+          durationMinutes: 30,
+          topics: [{ title: 'Animals' }],
+        },
+        '01HSCH',
+      );
+      expect(cache.set).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Wave 18.1 — per-tenant token budget', () => {
+    it('should return fallback when budget is exceeded', async () => {
+      budget = makeBudgetMock({ allowed: false, usedToday: 500_000, quota: 500_000 });
+      service = new AiService(llm, prisma, cache, budget);
+
+      const result = await service.generateLessonPlan(
+        {
+          ageGroup: 'Nursery',
+          durationMinutes: 30,
+          topics: [{ title: 'Animals' }],
+        },
+        '01HSCH',
+      );
+
+      // LLM should NOT be called (budget check fails first).
+      expect(llm.complete).not.toHaveBeenCalled();
+      // Fallback plan should be returned.
+      expect(result.lessonPlanMarkdown).toContain('Lesson Plan');
+      expect(result.model).toBe('fallback');
+      expect(result.totalTokens).toBe(0);
+    });
+
+    it('should record actual token usage after a successful LLM call', async () => {
+      llm.complete.mockResolvedValueOnce({
+        ok: true,
+        text: 'A response',
+        model: 'mock',
+        totalTokens: 42,
+        finishReason: 'stop',
+      });
+      await service.generateLessonPlan(
+        {
+          ageGroup: 'Nursery',
+          durationMinutes: 30,
+          topics: [{ title: 'X' }],
+        },
+        '01HSCH',
+      );
+      expect(budget.recordUsage).toHaveBeenCalledWith('01HSCH', 42);
+    });
+
+    it('should NOT record usage when the LLM fails', async () => {
+      llm.complete.mockResolvedValueOnce({ ok: false, error: 'fail' });
+      await service.generateLessonPlan(
+        {
+          ageGroup: 'Nursery',
+          durationMinutes: 30,
+          topics: [{ title: 'X' }],
+        },
+        '01HSCH',
+      );
+      expect(budget.recordUsage).not.toHaveBeenCalled();
+    });
+
+    it('should NOT record usage when served from cache', async () => {
+      cache = makeCacheMock({
+        hit: {
+          ok: true,
+          text: 'cached',
+          model: 'mock',
+          totalTokens: 100,
+          finishReason: 'stop',
+        },
+      });
+      service = new AiService(llm, prisma, cache, budget);
+      await service.generateLessonPlan(
+        {
+          ageGroup: 'Nursery',
+          durationMinutes: 30,
+          topics: [{ title: 'X' }],
+        },
+        '01HSCH',
+      );
+      expect(budget.recordUsage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Wave 18.1 — SSE streaming', () => {
+    it('should yield chunks from the LLM completeStream()', async () => {
+      const chunks: CompletionStreamChunk[] = [
+        { text: 'Hello', done: false },
+        { text: ' world', done: false },
+        { text: '', done: true, usage: { promptTokens: 5, completionTokens: 2, totalTokens: 7 }, finishReason: 'stop' },
+      ];
+      // Mock the adapter's completeStream as an async generator.
+      (llm as any).completeStream = async function* () {
+        for (const c of chunks) yield c;
+      };
+
+      const collected: CompletionStreamChunk[] = [];
+      for await (const c of service.streamLessonPlan(
+        { ageGroup: 'Nursery', durationMinutes: 30, topics: [{ title: 'X' }] },
+        '01HSCH',
+      )) {
+        collected.push(c);
+      }
+
+      expect(collected).toHaveLength(3);
+      expect(collected[0].text).toBe('Hello');
+      expect(collected[1].text).toBe(' world');
+      expect(collected[2].done).toBe(true);
+      expect(collected[2].usage?.totalTokens).toBe(7);
+      // Budget should be recorded after the stream completes.
+      expect(budget.recordUsage).toHaveBeenCalledWith('01HSCH', 7);
+    });
+
+    it('should yield a single error chunk when budget is exceeded', async () => {
+      budget = makeBudgetMock({ allowed: false });
+      (llm as any).completeStream = async function* () {
+        yield { text: 'should not be called', done: false };
+      };
+      service = new AiService(llm, prisma, cache, budget);
+
+      const collected: CompletionStreamChunk[] = [];
+      for await (const c of service.streamLessonPlan(
+        { ageGroup: 'Nursery', durationMinutes: 30, topics: [{ title: 'X' }] },
+        '01HSCH',
+      )) {
+        collected.push(c);
+      }
+
+      // The generator yields the budget error chunk + the fallback.
+      expect(collected.length).toBeGreaterThanOrEqual(1);
+      // First chunk should signal the error.
+      const errChunk = collected.find((c) => c.error);
+      expect(errChunk?.error).toMatch(/budget exceeded/i);
+    });
+
+    it('should NOT record usage if the stream emits no usage info', async () => {
+      (llm as any).completeStream = async function* () {
+        yield { text: 'hi', done: false };
+        yield { text: '', done: true, finishReason: 'stop' };
+        // Note: no usage field.
+      };
+      for await (const _ of service.streamLessonPlan(
+        { ageGroup: 'Nursery', durationMinutes: 30, topics: [{ title: 'X' }] },
+        '01HSCH',
+      )) {
+        // consume
+      }
+      expect(budget.recordUsage).not.toHaveBeenCalled();
     });
   });
 });

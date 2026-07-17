@@ -437,3 +437,169 @@ Stage Summary:
   - /home/z/my-project/preone/packages/database/prisma/zz_sentinel.prisma (bug workaround)
   - /home/z/my-project/preone/packages/database/prisma/SCHEMA_LAYOUT.md (documentation)
   - /home/z/my-project/preone/packages/database/package.json (updated scripts)
+
+---
+Task ID: 6
+Agent: Main (Super Z)
+Task: Wave 17.1 + 18.1 follow-ups + triage of 2 pre-existing ws-base-gateway.spec.ts failures. Push 3 branches, raise 3 PRs, run tests.
+
+Work Log:
+- Baseline: feat/wave-18-ai-endpoints branch had 1000 tests, 3 failing
+  (2 pre-existing ws-base-gateway + 1 introduced by Wave 18: ai.execute
+  permission code mismatch).
+
+- Triage (PR #29: fix/pre-existing-test-failures):
+  - WsBaseGateway socket event handler was a void arrow fn — did NOT
+    return the async promise from onSocketEvent(). Wave 16.1 made
+    WsScopeResolver async (DB-backed), so test `await handler(...)`
+    resolved before the async subscribe completed. Fix: return the
+    promise (1-line change). Fire-and-forget semantics in production
+    preserved (Socket.IO doesn't await handlers), but tests can now
+    observe the async work.
+  - Wave 18 added `ai.execute` permission (2 segments) which doesn't
+    match the catalog's required 3-segment pattern. Renamed to
+    `ai.execute.tenant` (matches scopeType: 'TENANT'). Updated 5
+    @Permissions() decorator references in ai.controllers.ts.
+  - Result: 1000/1000 tests pass on this branch.
+
+- Wave 17.1 (PR #30: feat/wave-17.1-real-providers-feature-flags):
+  - Created IntegrationFeatureFlagService — 3-tier flag resolution
+    (USER → TENANT → PLATFORM env default). Reads from existing
+    SystemFeatureFlag table (no schema change). 8 integration keys.
+    Flag values: enabled|disabled|auto (fail-open). 5s in-process
+    cache per (integration, tenant, user) tuple.
+  - Created TenantIntegrationConfigService — per-tenant provider
+    config resolver. Checks new integration_provider_settings table
+    (forward-compat; falls back to env when table missing). 60s cache.
+    Fail-safe: Prisma errors fall back to env-only config.
+  - Created 4 real provider implementations:
+    * RazorpayPaymentProvider (createOrder + verifyPayment HMAC-SHA256
+      + refundPayment, HTTP Basic auth, paise amounts)
+    * SendGridEmailProvider (send multipart text+HTML, Bearer auth,
+      handles 202 Accepted)
+    * TwilioSmsProvider (send URL-encoded form, HTTP Basic auth,
+      MessagingServiceSid via senderId)
+    * OpenAiLlmProvider (complete + embed, Bearer auth, apiBaseUrl
+      override for Azure/Z.ai GLM via aliases)
+  - Created 4 provider registries (SMS_PROVIDER_REGISTRY,
+    EMAIL_PROVIDER_REGISTRY, PAYMENT_PROVIDER_REGISTRY,
+    AI_LLM_PROVIDER_REGISTRY) — Maps name → provider instance.
+    Includes aliases (ses→sendgrid, azure/glm→openai).
+  - Upgraded SmsAdapter to Wave 17.1 — tenant-aware send() with
+    optional tenantCtx parameter. Tenant-aware resolution:
+    1. Feature flag check (disabled → stub fallback)
+    2. Tenant config resolution (DB override or env fallback)
+    3. Provider lookup from registry
+    4. Per-call config built from tenant override
+    Backward compatible: no tenantCtx → uses global default (Wave 17).
+  - Updated IntegrationsModule to wire all new providers + registries
+    + flag service + tenant config service. Added PrismaModule import.
+  - Wrote 23 new tests:
+    * real-providers.spec.ts (19 tests) — covers all 4 providers with
+      mocked fetch; success paths + 4xx errors + missing creds +
+      HMAC verification + network errors
+    * sms.adapter.spec.ts (4 new Wave 17.1 tests) — no-tenant global
+      default + flag-disabled stub fallback + flag-enabled real
+      provider call with tenant creds + provider-not-registered stub
+      fallback
+  - TypeScript: zero errors in new files (only pre-existing OTel
+    error remains)
+  - All 1023 tests pass
+
+- Wave 18.1 (PR #31: feat/wave-18.1-redis-cache-sse-token-budget):
+  - Created AiPromptCacheService — Redis-backed cache for identical
+    LLM prompts. Key = sha256(tenantId|model|temperature|maxTokens|
+    messages). 24h TTL. TenantId in hash input for PII isolation.
+    Temperature rounded to 2 decimals (0.7 == 0.7001). Fail-open
+    on Redis errors.
+  - Created AiTokenBudgetService — per-tenant daily token budget.
+    Redis key: ai:budget:<tenantId>:<YYYY-MM-DD> (UTC midnight reset).
+    36h TTL on first write. Atomic INCRBY for usage recording. Default
+    quota 500_000 tokens/day (Standard tier, env-overridable). Fail-
+    open on Redis down. Methods: checkBudget() (pre-flight),
+    recordUsage() (post-call atomic incr), getUsage() (dashboards),
+    reset() (admin).
+  - Added CompletionStreamChunk interface + completeStream?() method
+    to AiLlmProviderPort. AiLlmAdapter.completeStream() delegates to
+    provider, falls back to single-chunk emission from complete()
+    if provider doesn't support streaming. Circuit breaker NOT
+    applied to streaming (would trip on long streams; failures
+    visible immediately via SSE close).
+  - Implemented StubAiLlmProvider.completeStream() — emits full
+    response as one chunk (useful for tests).
+  - Implemented OpenAiLlmProvider.completeStream() — calls
+    /chat/completions with stream:true + stream_options.include_usage:
+    true. Parses SSE chunk-by-chunk. Yields delta.content as it
+    arrives. Handles [DONE] terminator + final usage chunk.
+  - Refactored AiService with new private completeWithCache() helper
+    — all 5 endpoint methods share this flow:
+    1. Cache check → hit? return cached text + fromCache=true
+    2. Budget check → exceeded? return fallback + budgetExceeded=true
+    3. LLM call → on success, record usage + populate cache
+    4. On LLM failure, return empty text (caller falls back to stub)
+  - Added *streamLessonPlan() async generator — yields chunks from
+    AiLlmAdapter.completeStream(), budget check upfront, records
+    usage after stream completes.
+  - Refactored generateLessonPlan to use completeWithCache().
+    Other 4 endpoints unchanged (can be migrated incrementally).
+  - Added 2 new endpoints to AiController:
+    * POST /v1/ai/lesson-plan/stream — SSE streaming. Sets Content-
+      Type: text/event-stream. Disables NGINX buffering (X-Accel-
+      Buffering: no). Each chunk emitted as: data: {json}\n\n.
+      Catches errors → emits single error chunk → ends response.
+    * GET /v1/ai/budget — returns tenant's daily usage + quota.
+  - Updated AiModule to import RedisModule + provide/export the 2
+    new services.
+  - Added RedisService.incrby() — atomic integer increment for
+    budget recording.
+  - Wrote 33 new tests:
+    * ai-cache-budget.spec.ts (20 tests) — cache miss/hit/round-trip,
+      tenant isolation, temperature rounding, invalidation, fail-open
+      on Redis errors, budget check allow/deny, record accumulation,
+      TTL set on first write only, exceededAfterRecord flag, zero-
+      token no-op, reset, fail-open on Redis errors, date-stamped key
+    * ai.service.spec.ts (10 new Wave 18.1 tests) — cache hit short-
+      circuits LLM, cache populated on success, cache NOT populated
+      on failure, budget exceeded → fallback, budget recorded on
+      success, budget NOT recorded on failure, budget NOT recorded
+      on cache hit, streaming yields chunks, streaming budget-
+      exceeded → error chunk + fallback, streaming no usage → no
+      budget record
+  - All 1053 tests pass. TypeScript clean (only pre-existing OTel).
+
+- Branch topology (clean linear chain):
+  - main (109bc10) — current remote main
+  - feat/wave-18-ai-endpoints (990e1ff) — Wave 16.1 + 17 + 18 base
+  - fix/pre-existing-test-failures (40dde16) — triage fix (PR #29)
+  - feat/wave-17.1-real-providers-feature-flags (648eafd) — Wave 17.1 (PR #30)
+  - feat/wave-18.1-redis-cache-sse-token-budget (81e9627) — Wave 18.1 (PR #31)
+
+- All 3 branches pushed to origin
+- Created 3 PRs via GitHub REST API:
+  - PR #29: fix/pre-existing-test-failures → feat/wave-18-ai-endpoints
+    https://github.com/Nuke0140/preone/pull/29
+  - PR #30: feat/wave-17.1-real-providers-feature-flags → feat/wave-18-ai-endpoints
+    https://github.com/Nuke0140/preone/pull/30
+  - PR #31: feat/wave-18.1-redis-cache-sse-token-budget → feat/wave-17.1-real-providers-feature-flags
+    https://github.com/Nuke0140/preone/pull/31
+
+- Final test run on wave-18.1 branch (includes all 3 PRs):
+  1053 tests across 60 files, ALL PASSING
+  - 17 Wave 18 AI service tests
+  - 10 Wave 18.1 AI service tests (cache + budget + streaming)
+  - 20 Wave 18.1 cache+budget service tests
+  - 19 Wave 17.1 real provider tests (Razorpay/SendGrid/Twilio/OpenAI)
+  - 10 Wave 17.1 SmsAdapter tests (6 Wave 17 + 4 Wave 17.1 tenant-aware)
+  - 12 Wave 17 circuit breaker tests
+  - 48 Wave 16.1 realtime tests (resolver + scope-check + publisher + subscription mgr)
+  - 937 Wave 1-18 pre-existing tests
+
+Stage Summary:
+- 3 PRs raised: #29 (triage fix), #30 (Wave 17.1), #31 (Wave 18.1)
+- 1053 tests pass on the final branch (was 997 before — added 56 new tests + fixed 3 pre-existing)
+- Zero TypeScript errors in any new/modified file (only pre-existing OTel)
+- No schema changes (uses existing SystemFeatureFlag table + env vars + optional forward-compat integration_provider_settings table)
+- No migrations needed
+- No frontend changes
+- Recommended merge order: PR #29 → PR #30 → PR #31 (stacked)
+- Follow-up recommended: migrate other 4 AI endpoints (report-card, observation, reply, insights) to completeWithCache() helper for cache + budget support; add real providers for WhatsApp/Biometric/CloudStorage/KYC (same pattern as SMS/Email/Payment/AI); add integration_provider_settings Prisma migration when first tenant needs DB-backed config

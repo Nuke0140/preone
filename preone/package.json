@@ -2,7 +2,7 @@
   "name": "preone",
   "version": "1.0.0",
   "private": true,
-  "description": "PreOne — Enterprise Preschool Operating System (Modular Monorepo)",
+  "description": "PreOne \u2014 Enterprise Preschool Operating System (Modular Monorepo)",
   "license": "UNLICENSED",
   "packageManager": "pnpm@9.12.0",
   "engines": {
@@ -35,7 +35,9 @@
     "docker:down": "docker compose -f infra/docker/docker-compose.dev.yml down",
     "docker:logs": "docker compose -f infra/docker/docker-compose.dev.yml logs -f",
     "prepare": "husky install",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "dev:storybook": "turbo run dev --filter=@preone/storybook",
+    "build:ui": "turbo run build --filter=@preone/ui --filter=@preone/design-tokens --filter=@preone/core --filter=@preone/env --filter=@preone/config"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",

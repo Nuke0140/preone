@@ -1,0 +1,29 @@
+{
+  "name": "@preone/design-tokens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PreOne design system tokens — colors, spacing, typography, shadows, radii, transitions, breakpoints",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./colors": "./src/colors.ts",
+    "./spacing": "./src/spacing.ts",
+    "./typography": "./src/typography.ts",
+    "./borders": "./src/borders.ts",
+    "./shadows": "./src/shadows.ts",
+    "./transitions": "./src/transitions.ts",
+    "./breakpoints": "./src/breakpoints.ts",
+    "./tokens": "./src/tokens.ts",
+    "./css": "./src/css.ts"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'No lint configured yet'",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  }
+}

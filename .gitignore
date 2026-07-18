@@ -1,2 +1,11 @@
-skills/
-node_modules/
+node_modules
+dist
+.turbo
+.next
+storybook-static
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
+coverage
+.DS_Store

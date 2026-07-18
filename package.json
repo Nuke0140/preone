@@ -1,0 +1,24 @@
+{
+  "name": "preone",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PreOne Enterprise Platform Monorepo",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.0",
+    "prettier": "^3.5.0"
+  },
+  "packageManager": "pnpm@11.14.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@preone/core",
+  "version": "0.1.0",
+  "description": "Core utilities and types for PreOne — framework independent, pure TypeScript",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./types": { "types": "./dist/types/index.d.ts", "import": "./dist/types/index.js" },
+    "./utils": { "types": "./dist/utils/index.d.ts", "import": "./dist/utils/index.js" },
+    "./errors": { "types": "./dist/errors/index.d.ts", "import": "./dist/errors/index.js" },
+    "./logger": { "types": "./dist/logger/index.d.ts", "import": "./dist/logger/index.js" },
+    "./events": { "types": "./dist/events/index.d.ts", "import": "./dist/events/index.js" }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@preone/env": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT"
+}

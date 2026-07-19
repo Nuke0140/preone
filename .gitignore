@@ -1,2 +1,55 @@
-skills/
+# Dependencies
 node_modules/
+.pnpm-store/
+
+# Build
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Next.js
+.next/
+out/
+
+# Storybook
+storybook-static/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Changeset
+.changeset/*.md
+!.changeset/README.md
+!.changeset/config.json
+
+# Backend (never track these from frontend work)
+preone/
+
+# Download / upload
+download/
+upload/
+
+# Tools
+tool-results/
+agent-ctx/
+
+# Docs that are not part of frontend
+ddd-review/
+enterprise-compatibility-audit.md
+prisma-review.md
+cleanup-report.md

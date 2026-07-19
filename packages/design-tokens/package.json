@@ -1,0 +1,36 @@
+{
+  "name": "@preone/design-tokens",
+  "version": "0.1.0",
+  "description": "Enterprise design tokens for PreOne — CSS vars, Tailwind, TypeScript, JSON",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./css": {
+      "import": "./dist/generated/tokens.css"
+    },
+    "./tailwind": {
+      "import": "./dist/generated/tailwind-theme.js"
+    },
+    "./json": {
+      "import": "./dist/generated/tokens.json"
+    }
+  },
+  "scripts": {
+    "build": "tsc && node dist/generators/generate-all.js",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "generate": "node dist/generators/generate-all.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT"
+}

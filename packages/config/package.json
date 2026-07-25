@@ -1,0 +1,52 @@
+{
+  "name": "@preone/config",
+  "version": "0.1.0",
+  "description": "Shared configuration for PreOne frontend monorepo",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tsconfig": {
+      "types": "./dist/tsconfig/index.d.ts",
+      "import": "./dist/tsconfig/index.js"
+    },
+    "./eslint": {
+      "types": "./dist/eslint/index.d.ts",
+      "import": "./dist/eslint/index.js"
+    },
+    "./prettier": {
+      "types": "./dist/prettier/index.d.ts",
+      "import": "./dist/prettier/index.js"
+    },
+    "./vitest": {
+      "types": "./dist/vitest/index.d.ts",
+      "import": "./dist/vitest/index.js"
+    },
+    "./turbo": {
+      "types": "./dist/turbo/index.d.ts",
+      "import": "./dist/turbo/index.js"
+    },
+    "./changesets": {
+      "types": "./dist/changesets/index.d.ts",
+      "import": "./dist/changesets/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "typescript": "^5.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT"
+}
